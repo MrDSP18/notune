@@ -256,7 +256,7 @@ android {
     }
     sourceSets {
         getByName("main") {
-            java.srcDir(protoGenDir.get().asFile)
+            java.directories.add(protoGenDir.get().asFile.path)
         }
     }
 }
@@ -264,9 +264,12 @@ android {
 ksp {
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    dependsOn(generateProtoTask)
+tasks.configureEach {
+    if (name.contains("ksp", ignoreCase = true) || name.contains("Kotlin", ignoreCase = true) || name.contains("Java", ignoreCase = true)) {
+        dependsOn(generateProtoTask)
+    }
 }
+
 
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {

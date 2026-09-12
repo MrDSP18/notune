@@ -40,9 +40,12 @@ subprojects {
 allprojects {
     configurations.all {
         resolutionStrategy {
-            force("com.google.protobuf:protobuf-javalite:4.35.0")
+            force("com.google.protobuf:protobuf-javalite:${libs.versions.protobuf.get()}")
             force("com.github.TeamNewPipe:nanojson:c7a6c1c08d16b6d5ecded34758e6415e07be2166")
         }
-        exclude(group = "com.google.protobuf", module = "protobuf-java")
+        if (!name.contains("lint", ignoreCase = true)) {
+            exclude(group = "com.google.protobuf", module = "protobuf-java")
+        }
     }
 }
+
