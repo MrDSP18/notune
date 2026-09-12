@@ -4,7 +4,7 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import echo.music.iad1tya.constants.PrivateSessionEnabledKey
 import echo.music.iad1tya.utils.dataStore
-import echo.music.iad1tya.utils.get
+import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,10 +34,10 @@ class PrivateSessionManager @Inject constructor(
     }
 
     suspend fun setPrivateSession(enabled: Boolean) {
-        context.dataStore.get(PrivateSessionEnabledKey, false)
-        context.dataStore.data.collect {
-            _isPrivateSession.value = enabled
+        context.dataStore.edit { preferences ->
+            preferences[PrivateSessionEnabledKey] = enabled
         }
+        _isPrivateSession.value = enabled
     }
 
     /**

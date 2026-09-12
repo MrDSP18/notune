@@ -4,6 +4,7 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.utils.dataStore
+import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -56,6 +57,8 @@ class DataDeletionManager @Inject constructor(
             clearListeningHistory()
             clearSearchHistory()
             clearAiData()
+            database.clearAllData()
+            context.dataStore.edit { it.clear() }
 
             // Delete exported files
             val exportDir = File(context.cacheDir, "exports")

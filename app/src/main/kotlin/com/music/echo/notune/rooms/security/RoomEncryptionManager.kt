@@ -104,7 +104,7 @@ class RoomEncryptionManager @Inject constructor(
 
             Base64.encodeToString(combined, Base64.NO_WRAP)
         } catch (e: Exception) {
-            plainText
+            throw SecurityException("Room message encryption failed", e)
         }
     }
 
@@ -134,7 +134,7 @@ class RoomEncryptionManager @Inject constructor(
 
             String(cipher.doFinal(cipherText), Charsets.UTF_8)
         } catch (e: Exception) {
-            cipherTextBase64
+            throw SecurityException("Room message decryption failed", e)
         }
     }
 

@@ -99,6 +99,8 @@ class MusicDatabase(
         }
 
     fun close() = delegate.close()
+
+    fun clearAllData() = delegate.clearAllTables()
 }
 
 @Database(
