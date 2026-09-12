@@ -233,7 +233,7 @@
     <string name="unique_artists">Artis Unik</string>
     <string name="unique_albums">Album Unik</string>
     <string name="selected_period">Tempoh Dipilih</string>
-    <string name="hours_minutes_format">%1$d j %2$d min</string>
+    <string name="notune_hours_minutes_format">%1$d j %2$d min</string>
     <string name="default_open_tab">Tab lalai semasa dibuka</string>
     <string name="grid_cell_size">Saiz sel grid</string>
     <string name="small">Kecil</string>

@@ -418,7 +418,7 @@
     <string name="unique_artists">Edinstveni izvajalci</string>
     <string name="unique_albums">Edinstveni albumi</string>
     <string name="selected_period">Izbrano obdobje</string>
-    <string name="hours_minutes_format">%1$d h %2$d min</string>
+    <string name="notune_hours_minutes_format">%1$d h %2$d min</string>
     <string name="content_sponsor_block">SponsorBlock (samodejni preskok)</string>
     <string name="content_sponsor_block_desc">Samodejno preskoči sponzorske vsebine, uvode in dele videoposnetkov brez glasbe</string>
     <string name="spotify_import_by_link">Uvozi seznam predvajanja prek povezave</string>

@@ -390,7 +390,7 @@
     <string name="unique_artists">Različiti izvođači</string>
     <string name="unique_albums">Različiti albumi</string>
     <string name="selected_period">Izabrani period</string>
-    <string name="hours_minutes_format">%1$d č %2$d min</string>
+    <string name="notune_hours_minutes_format">%1$d č %2$d min</string>
     <string name="content_sponsor_block">SponsorBlock (automatsko preskakanje)</string>
     <string name="content_sponsor_block_desc">Automatski preskače sponzorisane delove, uvode i delove video-snimaka bez muzike</string>
     <string name="spotify_import_by_link">Uvezi plejlistu putem veze</string>

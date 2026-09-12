@@ -243,7 +243,7 @@
     <string name="unique_artists">অনন্য শিল্পীসকল</string>
     <string name="unique_albums">অনন্য এলবামসমূহ</string>
     <string name="selected_period">নিৰ্বাচিত সময়কাল</string>
-    <string name="hours_minutes_format">%1$d ঘণ্টা %2$d মিনিট</string>
+    <string name="notune_hours_minutes_format">%1$d ঘণ্টা %2$d মিনিট</string>
     <string name="default_open_tab">অবিকল্পিতভাৱে খোলা টেব</string>
     <string name="grid_cell_size">গ্ৰিড কোষৰ আকাৰ</string>
     <string name="small">সৰু</string>

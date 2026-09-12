@@ -419,7 +419,7 @@
     <string name="unique_artists">الفنانون الفريدون</string>
     <string name="unique_albums">الألبومات الفريدة</string>
     <string name="selected_period">الفترة المحددة</string>
-    <string name="hours_minutes_format">%1$d س %2$d د</string>
+    <string name="notune_hours_minutes_format">%1$d س %2$d د</string>
     <string name="content_sponsor_block">SponsorBlock (تخطي تلقائي)</string>
     <string name="content_sponsor_block_desc">تخطي الإعلانات الممولة والمقدمات والمقاطع غير الموسيقية في الفيديوهات تلقائيًا</string>
     <string name="spotify_import_by_link">استيراد قائمة تشغيل عبر رابط</string>

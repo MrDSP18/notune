@@ -1072,7 +1072,7 @@ private fun activitySourceLabel(source: ActivitySource): String =
         ActivitySource.ARTIST -> stringResource(R.string.artist_name)
         ActivitySource.ALBUM -> "Album Name"
         ActivitySource.SONG -> stringResource(R.string.song_title)
-        ActivitySource.APP -> stringResource(R.string.app_name)
+        ActivitySource.APP -> stringResource(R.string.notune_app_name)
     }
 
 @Composable
@@ -1190,7 +1190,7 @@ fun RichPresence(
     isPlaying: Boolean = false,
 ) {
     val context = LocalContext.current
-    val appName = stringResource(R.string.app_name)
+    val appName = stringResource(R.string.notune_app_name)
     val artistNameFallback = stringResource(R.string.artist_name)
     val albumNameFallback = "Album Name"
     val songTitleFallback = stringResource(R.string.song_title)

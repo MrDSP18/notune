@@ -391,7 +391,7 @@
     <string name="unique_artists">Unique Artists</string>
     <string name="unique_albums">Unique Albums</string>
     <string name="selected_period">Selected Period</string>
-    <string name="hours_minutes_format">%1$dh %2$dm</string>
+    <string name="notune_hours_minutes_format">%1$dh %2$dm</string>
     <string name="content_sponsor_block">SponsorBlock (Auto-skip)</string>
     <string name="content_sponsor_block_desc">Automatically skip sponsorships, intros, and non-music sections in videos</string>
     <string name="spotify_import_by_link">Import playlist by link</string>

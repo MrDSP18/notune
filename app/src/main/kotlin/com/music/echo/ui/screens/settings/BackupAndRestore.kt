@@ -181,7 +181,7 @@ fun BackupAndRestore(
                                 onClick = {
                                     val formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
                                     backupLauncher.launch(
-                                        "${context.getString(R.string.app_name)}_${
+                                        "${context.getString(R.string.notune_app_name)}_${
                                             LocalDateTime.now().format(formatter)
                                         }.backup"
                                     )

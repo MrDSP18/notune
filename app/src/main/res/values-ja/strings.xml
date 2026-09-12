@@ -371,7 +371,7 @@
     <string name="unique_artists">ユニークなアーティスト</string>
     <string name="unique_albums">ユニークなアルバム</string>
     <string name="selected_period">選択した期間</string>
-    <string name="hours_minutes_format">%1$d時間%2$d分</string>
+    <string name="notune_hours_minutes_format">%1$d時間%2$d分</string>
     <string name="content_sponsor_block">SponsorBlock（自動スキップ）</string>
     <string name="content_sponsor_block_desc">動画内のスポンサー部分、イントロ、音楽以外の部分を自動的にスキップします</string>
     <string name="spotify_import_by_link">リンクからプレイリストをインポート</string>

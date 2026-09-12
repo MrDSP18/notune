@@ -429,7 +429,7 @@
     <string name="unique_artists">Унікальні виконавці</string>
     <string name="unique_albums">Унікальні альбоми</string>
     <string name="selected_period">Вибраний період</string>
-    <string name="hours_minutes_format">%1$dгод %2$dхв</string>
+    <string name="notune_hours_minutes_format">%1$dгод %2$dхв</string>
     <string name="content_sponsor_block">SponsorBlock (автопропуск)</string>
     <string name="content_sponsor_block_desc">Автоматично пропускати спонсорські інтеграції, вступи та немузичні фрагменти у відео</string>
     <string name="spotify_import_by_link">Імпортувати плейлист за посиланням</string>

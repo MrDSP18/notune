@@ -400,7 +400,7 @@
     <string name="unique_artists">Jedineční interpreti</string>
     <string name="unique_albums">Jedinečné albumy</string>
     <string name="selected_period">Vybrané obdobie</string>
-    <string name="hours_minutes_format">%1$d h %2$d min</string>
+    <string name="notune_hours_minutes_format">%1$d h %2$d min</string>
     <string name="content_sponsor_block">SponsorBlock (automatické preskakovanie)</string>
     <string name="content_sponsor_block_desc">Automaticky preskakovať sponzorské pasáže, úvody a nehudobné časti videí</string>
     <string name="spotify_import_by_link">Importovať zoznam skladieb pomocou odkazu</string>

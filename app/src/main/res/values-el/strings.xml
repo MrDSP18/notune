@@ -379,7 +379,7 @@
     <string name="unique_artists">Μοναδικοί καλλιτέχνες</string>
     <string name="unique_albums">Μοναδικά άλμπουμ</string>
     <string name="selected_period">Επιλεγμένη περίοδος</string>
-    <string name="hours_minutes_format">%1$dω %2$dλ</string>
+    <string name="notune_hours_minutes_format">%1$dω %2$dλ</string>
     <string name="content_sponsor_block">SponsorBlock (αυτόματη παράλειψη)</string>
     <string name="content_sponsor_block_desc">Αυτόματη παράλειψη χορηγιών, εισαγωγών και ενοτήτων χωρίς μουσική στα βίντεο</string>
     <string name="spotify_import_by_link">Εισαγωγή λίστας αναπαραγωγής μέσω συνδέσμου</string>

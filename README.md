@@ -71,5 +71,5 @@ cd notune
 
 ## 👥 Contributors
 
-<!-- readme-contributors-start -->
-<!-- readme-contributors-end -->
+<!-- readme: contributors -start -->
+<!-- readme: contributors -end -->

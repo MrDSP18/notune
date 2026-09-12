@@ -400,7 +400,7 @@
     <string name="unique_artists">Уникальные исполнители</string>
     <string name="unique_albums">Уникальные альбомы</string>
     <string name="selected_period">Выбранный период</string>
-    <string name="hours_minutes_format">%1$dч %2$dм</string>
+    <string name="notune_hours_minutes_format">%1$dч %2$dм</string>
     <string name="content_sponsor_block">SponsorBlock (Автопропуск)</string>
     <string name="content_sponsor_block_desc">Автоматический пропуск спонсорских интеграций, заставок и немузыкальных фрагментов в видео</string>
     <string name="spotify_import_by_link">Импорт плейлиста по ссылке</string>

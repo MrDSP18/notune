@@ -379,7 +379,7 @@
     <string name="unique_artists">Уникални изпълнители</string>
     <string name="unique_albums">Уникални албуми</string>
     <string name="selected_period">Избран период</string>
-    <string name="hours_minutes_format">%1$d ч %2$d мин</string>
+    <string name="notune_hours_minutes_format">%1$d ч %2$d мин</string>
     <string name="content_sponsor_block">SponsorBlock (автоматично пропускане)</string>
     <string name="content_sponsor_block_desc">Автоматично пропускане на спонсорства, интрота и немузикални части във видеоклиповете</string>
     <string name="spotify_import_by_link">Импортиране на плейлист чрез връзка</string>

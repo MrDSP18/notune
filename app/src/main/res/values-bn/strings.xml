@@ -379,7 +379,7 @@
     <string name="unique_artists">স্বতন্ত্র শিল্পী</string>
     <string name="unique_albums">স্বতন্ত্র অ্যালবাম</string>
     <string name="selected_period">নির্বাচিত সময়কাল</string>
-    <string name="hours_minutes_format">%1$d ঘণ্টা %2$d মিনিট</string>
+    <string name="notune_hours_minutes_format">%1$d ঘণ্টা %2$d মিনিট</string>
     <string name="content_sponsor_block">SponsorBlock (স্বয়ংক্রিয়ভাবে এড়িয়ে যাওয়া)</string>
     <string name="content_sponsor_block_desc">ভিডিওর স্পনসরশিপ, ভূমিকা ও সঙ্গীতবহির্ভূত অংশ স্বয়ংক্রিয়ভাবে এড়িয়ে যান</string>
     <string name="spotify_import_by_link">লিংক দিয়ে প্লেলিস্ট আমদানি করুন</string>

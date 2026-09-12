@@ -366,7 +366,7 @@
     <string name="unique_artists">不重複藝人</string>
     <string name="unique_albums">不重複專輯</string>
     <string name="selected_period">所選期間</string>
-    <string name="hours_minutes_format">%1$d 小時 %2$d 分鐘</string>
+    <string name="notune_hours_minutes_format">%1$d 小時 %2$d 分鐘</string>
     <string name="action_login">登入</string>
     <string name="content_sponsor_block">SponsorBlock（自動略過）</string>
     <string name="content_sponsor_block_desc">自動略過影片中的贊助內容、片頭和非音樂片段</string>

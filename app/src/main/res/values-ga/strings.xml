@@ -271,7 +271,7 @@
     <string name="unique_artists">Ealaíontóirí uathúla</string>
     <string name="unique_albums">Albaim uathúla</string>
     <string name="selected_period">Tréimhse roghnaithe</string>
-    <string name="hours_minutes_format">%1$du %2$dn</string>
+    <string name="notune_hours_minutes_format">%1$du %2$dn</string>
     <string name="default_open_tab">Cluaisín réamhshocraithe oscailte</string>
     <string name="grid_cell_size">Méid cille na greille</string>
     <string name="small">Beag</string>

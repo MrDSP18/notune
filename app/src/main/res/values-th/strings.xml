@@ -233,7 +233,7 @@
     <string name="unique_artists">จำนวนศิลปินที่ฟัง</string>
     <string name="unique_albums">จำนวนอัลบั้มที่ฟัง</string>
     <string name="selected_period">ช่วงเวลาที่เลือก</string>
-    <string name="hours_minutes_format">%1$d ชม. %2$d น.</string>
+    <string name="notune_hours_minutes_format">%1$d ชม. %2$d น.</string>
     <string name="default_open_tab">แท็บเริ่มต้นที่เปิด</string>
     <string name="grid_cell_size">ขนาดตารางกริด</string>
     <string name="small">เล็ก</string>

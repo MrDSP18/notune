@@ -379,7 +379,7 @@
     <string name="unique_artists">Unikaalsed artistid</string>
     <string name="unique_albums">Unikaalsed albumid</string>
     <string name="selected_period">Valitud periood</string>
-    <string name="hours_minutes_format">%1$dt %2$dm</string>
+    <string name="notune_hours_minutes_format">%1$dt %2$dm</string>
     <string name="content_sponsor_block">SponsorBlock (automaatne vahelejätmine)</string>
     <string name="content_sponsor_block_desc">Jäta automaatselt vahele sponsorlus, introd ja muusikavälised osad videotest</string>
     <string name="spotify_import_by_link">Impordi esitusloend lingi kaudu</string>

@@ -86,7 +86,7 @@ class DiscordRPC(
         }
 
         val translatedMap = translateSongFields(song)
-        val appName = context.getString(R.string.app_name)
+        val appName = context.getString(R.string.notune_app_name)
         val namePref = context.dataStore[DiscordActivityNameKey] ?: "APP"
         val detailsPref = context.dataStore[DiscordActivityDetailsKey] ?: "SONG"
         val statePref = context.dataStore[DiscordActivityStateKey] ?: "ARTIST"
@@ -248,7 +248,7 @@ class DiscordRPC(
             "ARTIST" -> translatedMap["{artist}"] ?: song.artists.firstOrNull()?.name ?: default
             "ALBUM" -> translatedMap["{album}"] ?: song.song.albumName ?: song.album?.title ?: default
             "SONG" -> translatedMap["{song}"] ?: song.song.title.ifBlank { default }
-            "APP" -> context.getString(R.string.app_name)
+            "APP" -> context.getString(R.string.notune_app_name)
             else -> default
         }
 
@@ -387,7 +387,7 @@ class DiscordRPC(
 
     private fun String?.toDiscordUrl(): String? = this?.normalizeUrl()?.take(256)
 
-    private fun String.toButtonLabel(): String = trim().take(32).ifBlank { context.getString(R.string.app_name) }
+    private fun String.toButtonLabel(): String = trim().take(32).ifBlank { context.getString(R.string.notune_app_name) }
 
     private fun Song.youtubeMusicUrl(): String? =
         song.id

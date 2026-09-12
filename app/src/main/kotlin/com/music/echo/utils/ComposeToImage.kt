@@ -267,7 +267,7 @@ object ComposeToImage {
         }
         
         
-        val appName = context.getString(R.string.app_name)
+        val appName = context.getString(R.string.notune_app_name)
         val appNamePaint = TextPaint().apply {
             color = secondaryTxtColor
             textSize = 14f * scale

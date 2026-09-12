@@ -379,7 +379,7 @@
     <string name="unique_artists">വ്യത്യസ്ത കലാകാരന്മാർ</string>
     <string name="unique_albums">വ്യത്യസ്ത ആൽബങ്ങൾ</string>
     <string name="selected_period">തിരഞ്ഞെടുത്ത കാലയളവ്</string>
-    <string name="hours_minutes_format">%1$d മ. %2$d മി.</string>
+    <string name="notune_hours_minutes_format">%1$d മ. %2$d മി.</string>
     <string name="content_sponsor_block">SponsorBlock (സ്വയമേവ ഒഴിവാക്കൽ)</string>
     <string name="content_sponsor_block_desc">വീഡിയോകളിലെ സ്പോൺസർഷിപ്പുകൾ, ആമുഖങ്ങൾ, സംഗീതേതര ഭാഗങ്ങൾ എന്നിവ സ്വയമേവ ഒഴിവാക്കുക</string>
     <string name="spotify_import_by_link">ലിങ്ക് ഉപയോഗിച്ച് പ്ലേലിസ്റ്റ് ഇറക്കുമതി ചെയ്യുക</string>

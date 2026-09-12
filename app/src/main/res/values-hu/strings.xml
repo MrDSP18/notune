@@ -379,7 +379,7 @@
     <string name="unique_artists">Egyedi előadók</string>
     <string name="unique_albums">Egyedi albumok</string>
     <string name="selected_period">Kiválasztott időszak</string>
-    <string name="hours_minutes_format">%1$d ó %2$d p</string>
+    <string name="notune_hours_minutes_format">%1$d ó %2$d p</string>
     <string name="content_sponsor_block">SponsorBlock (automatikus átugrás)</string>
     <string name="content_sponsor_block_desc">A szponzorált, bevezető és nem zenei szakaszok automatikus átugrása a videókban</string>
     <string name="spotify_import_by_link">Lejátszási lista importálása hivatkozással</string>

@@ -785,7 +785,7 @@ constructor(
         .setMediaMetadata(
             MediaMetadata
                 .Builder()
-                .setTitle(context.getString(R.string.app_name))
+                .setTitle(context.getString(R.string.notune_app_name))
                 .setIsPlayable(false)
                 .setIsBrowsable(true)
                 .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)

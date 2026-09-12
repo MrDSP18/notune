@@ -233,7 +233,7 @@
     <string name="unique_artists">សិល្បករខុសៗគ្នា</string>
     <string name="unique_albums">អាល់ប៊ុមខុសៗគ្នា</string>
     <string name="selected_period">រយៈពេលដែលបានជ្រើសរើស</string>
-    <string name="hours_minutes_format">%1$d ម៉ោង %2$d នាទី</string>
+    <string name="notune_hours_minutes_format">%1$d ម៉ោង %2$d នាទី</string>
     <string name="default_open_tab">ផ្ទាំងបើកលំនាំដើម</string>
     <string name="grid_cell_size">ទំហំក្រឡាចត្រង្គ</string>
     <string name="small">តូច</string>

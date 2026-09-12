@@ -405,7 +405,7 @@
     <string name="unique_artists">Artistes uniques</string>
     <string name="unique_albums">Albums uniques</string>
     <string name="selected_period">Période sélectionnée</string>
-    <string name="hours_minutes_format">%1$dh %2$dm</string>
+    <string name="notune_hours_minutes_format">%1$dh %2$dm</string>
     <string name="content_sponsor_block">SponsorBlock (Saut automatique)</string>
     <string name="content_sponsor_block_desc">Ignorer automatiquement les publicités, les intros et les passages non musicaux dans les vidéos</string>
     <string name="spotify_import_by_link">Importer une playlist à partir d\'un lien</string>

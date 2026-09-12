@@ -398,7 +398,7 @@
     <string name="recognition_notification_processing">Identifikujem…</string>
     <string name="recognition_notification_no_match">Nije pronadjeno podudaranje</string>
     <string name="recognition_notification_failed">Prepoznavanje nije uspjelo</string>
-    <string name="hours_minutes_format">%1$dh %2$dm</string>
+    <string name="notune_hours_minutes_format">%1$dh %2$dm</string>
     <string name="content_sponsor_block_desc">Automatski preskoči sponzorstva, uvode i dijelove videozapisa koji nisu muzika</string>
     <string name="spotify_import_by_link">Uvoz plajlistu putem linka</string>
     <string name="spotify_import_by_link_desc">Zalijepite link Spotify liste za reprodukciju da biste je uvezli - čak i plajliste koje ne posjedujete</string>

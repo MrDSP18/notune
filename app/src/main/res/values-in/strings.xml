@@ -369,7 +369,7 @@
     <string name="unique_artists">Artis Unik</string>
     <string name="unique_albums">Album Unik</string>
     <string name="selected_period">Periode Terpilih</string>
-    <string name="hours_minutes_format">%1$d j %2$d mnt</string>
+    <string name="notune_hours_minutes_format">%1$d j %2$d mnt</string>
     <string name="content_sponsor_block">SponsorBlock (Lewati otomatis)</string>
     <string name="content_sponsor_block_desc">Secara otomatis melewati sponsor, intro, dan bagian nonmusik dalam video</string>
     <string name="spotify_import_by_link">Impor playlist melalui tautan</string>

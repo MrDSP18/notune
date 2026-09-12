@@ -242,7 +242,7 @@
     <string name="unique_artists">Verschideni Künschtler</string>
     <string name="unique_albums">Verschideni Albe</string>
     <string name="selected_period">Usgwählte Zitraum</string>
-    <string name="hours_minutes_format">%1$d Std. %2$d Min.</string>
+    <string name="notune_hours_minutes_format">%1$d Std. %2$d Min.</string>
     <string name="default_open_tab">Standardmässig offne Reiter</string>
     <string name="grid_cell_size">Grössi va de Rasterfälder</string>
     <string name="small">Chli</string>

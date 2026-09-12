@@ -7,7 +7,7 @@
 <!-- Translators: Do not modify this file for translations, use InnerTune's Weblate instead. -->
 
 <resources>
-    <string name="app_name">NØTUNE</string>
+    <string name="notune_app_name">NØTUNE</string>
     <!-- Bottom navigation -->
     <string name="home">Home</string>
     <string name="music">NØTUNE</string>
@@ -315,7 +315,7 @@
     <string name="unique_artists">Unique Artists</string>
     <string name="unique_albums">Unique Albums</string>
     <string name="selected_period">Selected Period</string>
-    <string name="hours_minutes_format">%1$dh %2$dm</string>
+    <string name="notune_hours_minutes_format">%1$dh %2$dm</string>
     <string name="default_open_tab">Default open tab</string>
     <string name="grid_cell_size">Grid cell size</string>
     <string name="small">Small</string>

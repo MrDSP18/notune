@@ -398,7 +398,7 @@
     <string name="unique_artists">Benzersiz Sanatçılar</string>
     <string name="unique_albums">Benzersiz Albümler</string>
     <string name="selected_period">Seçilen Dönem</string>
-    <string name="hours_minutes_format">%1$d sa %2$d dk</string>
+    <string name="notune_hours_minutes_format">%1$d sa %2$d dk</string>
     <string name="content_sponsor_block">SponsorBlock (Otomatik atlama)</string>
     <string name="content_sponsor_block_desc">Videolardaki sponsorlukları, girişleri ve müzik dışı bölümleri otomatik olarak atla</string>
     <string name="spotify_import_by_link">Bağlantıyla çalma listesi içe aktar</string>

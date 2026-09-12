@@ -243,7 +243,7 @@
     <string name="unique_artists">Unike artistar</string>
     <string name="unique_albums">Unike album</string>
     <string name="selected_period">Vald periode</string>
-    <string name="hours_minutes_format">%1$dt %2$dmin</string>
+    <string name="notune_hours_minutes_format">%1$dt %2$dmin</string>
     <string name="default_open_tab">Standardfane ved opning</string>
     <string name="grid_cell_size">Storleik på rutenettceller</string>
     <string name="small">Liten</string>

@@ -379,7 +379,7 @@
     <string name="unique_artists">Eri artisteja</string>
     <string name="unique_albums">Eri albumeita</string>
     <string name="selected_period">Valittu ajanjakso</string>
-    <string name="hours_minutes_format">%1$d t %2$d min</string>
+    <string name="notune_hours_minutes_format">%1$d t %2$d min</string>
     <string name="content_sponsor_block">SponsorBlock (automaattinen ohitus)</string>
     <string name="content_sponsor_block_desc">Ohita automaattisesti sponsoriosuudet, aloitukset ja videoiden osuudet, jotka eivät sisällä musiikkia</string>
     <string name="spotify_import_by_link">Tuo soittolista linkistä</string>

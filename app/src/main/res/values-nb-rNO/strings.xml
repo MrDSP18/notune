@@ -376,7 +376,7 @@
     <string name="unique_artists">Unike artister</string>
     <string name="unique_albums">Unike album</string>
     <string name="selected_period">Valgt periode</string>
-    <string name="hours_minutes_format">%1$dt %2$dmin</string>
+    <string name="notune_hours_minutes_format">%1$dt %2$dmin</string>
     <string name="action_login">Logg inn</string>
     <string name="content_sponsor_block">SponsorBlock (hopp over automatisk)</string>
     <string name="content_sponsor_block_desc">Hopp automatisk over sponsorinnhold, introduksjoner og deler uten musikk i videoer</string>

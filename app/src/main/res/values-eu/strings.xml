@@ -243,7 +243,7 @@
     <string name="unique_artists">Artista bakarrak</string>
     <string name="unique_albums">Album bakarrak</string>
     <string name="selected_period">Hautatutako aldia</string>
-    <string name="hours_minutes_format">%1$d h %2$d min</string>
+    <string name="notune_hours_minutes_format">%1$d h %2$d min</string>
     <string name="default_open_tab">Irekitzeko fitxa lehenetsia</string>
     <string name="grid_cell_size">Saretako gelaxken tamaina</string>
     <string name="small">Txikia</string>

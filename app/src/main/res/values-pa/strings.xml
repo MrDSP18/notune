@@ -376,7 +376,7 @@
     <string name="unique_artists">ਵਿਲੱਖਣ ਕਲਾਕਾਰ</string>
     <string name="unique_albums">ਵਿਲੱਖਣ ਐਲਬਮਾਂ</string>
     <string name="selected_period">ਚੁਣੀ ਹੋਈ ਮਿਆਦ</string>
-    <string name="hours_minutes_format">%1$d ਘੰ. %2$d ਮਿੰ.</string>
+    <string name="notune_hours_minutes_format">%1$d ਘੰ. %2$d ਮਿੰ.</string>
     <string name="action_logout">ਲੌਗ ਆਉਟ ਕਰੋ</string>
     <string name="action_login">ਲੌਗ ਇਨ ਕਰੋ</string>
     <string name="login_failed">ਲੌਗ ਇਨ ਅਸਫਲ ਰਿਹਾ</string>

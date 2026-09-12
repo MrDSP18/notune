@@ -404,7 +404,7 @@
     <string name="unique_artists">Унікальныя выканаўцы</string>
     <string name="unique_albums">Унікальныя альбомы</string>
     <string name="selected_period">Выбраны перыяд</string>
-    <string name="hours_minutes_format">%1$d г %2$d хв</string>
+    <string name="notune_hours_minutes_format">%1$d г %2$d хв</string>
     <string name="content_sponsor_block">SponsorBlock (аўтапрапусканне)</string>
     <string name="content_sponsor_block_desc">Аўтаматычна прапускаць рэкламу спонсараў, уступы і немузычныя часткі відэа</string>
     <string name="spotify_import_by_link">Імпартаваць плэй-ліст па спасылцы</string>

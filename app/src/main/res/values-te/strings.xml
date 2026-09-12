@@ -379,7 +379,7 @@
     <string name="unique_artists">విభిన్న కళాకారులు</string>
     <string name="unique_albums">విభిన్న ఆల్బమ్‌లు</string>
     <string name="selected_period">ఎంచుకున్న వ్యవధి</string>
-    <string name="hours_minutes_format">%1$dగం %2$dని</string>
+    <string name="notune_hours_minutes_format">%1$dగం %2$dని</string>
     <string name="content_sponsor_block">SponsorBlock (స్వయంచాలక దాటవేత)</string>
     <string name="content_sponsor_block_desc">వీడియోలలోని స్పాన్సర్‌షిప్‌లు, పరిచయాలు మరియు సంగీతేతర భాగాలను స్వయంచాలకంగా దాటవేయండి</string>
     <string name="spotify_import_by_link">లింక్ ద్వారా ప్లేలిస్ట్‌ను దిగుమతి చేయండి</string>

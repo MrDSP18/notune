@@ -389,7 +389,7 @@
     <string name="unique_artists">אמנים ייחודיים</string>
     <string name="unique_albums">אלבומים ייחודיים</string>
     <string name="selected_period">התקופה שנבחרה</string>
-    <string name="hours_minutes_format">%1$d שעות ו-%2$d דקות</string>
+    <string name="notune_hours_minutes_format">%1$d שעות ו-%2$d דקות</string>
     <string name="content_sponsor_block">SponsorBlock (דילוג אוטומטי)</string>
     <string name="content_sponsor_block_desc">דילוג אוטומטי על חסויות, פתיחים וקטעים שאינם מוזיקה בסרטונים</string>
     <string name="spotify_import_by_link">ייבוא פלייליסט באמצעות קישור</string>

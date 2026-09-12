@@ -369,7 +369,7 @@
     <string name="unique_artists">고유 아티스트</string>
     <string name="unique_albums">고유 앨범</string>
     <string name="selected_period">선택한 기간</string>
-    <string name="hours_minutes_format">%1$d시간 %2$d분</string>
+    <string name="notune_hours_minutes_format">%1$d시간 %2$d분</string>
     <string name="content_sponsor_block">SponsorBlock(자동 건너뛰기)</string>
     <string name="content_sponsor_block_desc">동영상의 스폰서십, 인트로 및 음악이 아닌 구간을 자동으로 건너뜁니다</string>
     <string name="spotify_import_by_link">링크로 재생목록 가져오기</string>

@@ -379,7 +379,7 @@
     <string name="unique_artists">Unieke artiesten</string>
     <string name="unique_albums">Unieke albums</string>
     <string name="selected_period">Geselecteerde periode</string>
-    <string name="hours_minutes_format">%1$du %2$dm</string>
+    <string name="notune_hours_minutes_format">%1$du %2$dm</string>
     <string name="content_sponsor_block">SponsorBlock (automatisch overslaan)</string>
     <string name="content_sponsor_block_desc">Sla sponsoring, intro\'s en delen zonder muziek in video\'s automatisch over</string>
     <string name="spotify_import_by_link">Afspeellijst importeren via link</string>

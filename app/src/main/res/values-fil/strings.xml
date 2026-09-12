@@ -392,7 +392,7 @@
     <string name="unique_artists">Mga Natatanging Artist</string>
     <string name="unique_albums">Mga Natatanging Album</string>
     <string name="selected_period">Napiling Panahon</string>
-    <string name="hours_minutes_format">%1$d oras %2$d min</string>
+    <string name="notune_hours_minutes_format">%1$d oras %2$d min</string>
     <string name="content_sponsor_block">SponsorBlock (Awtomatikong laktawan)</string>
     <string name="content_sponsor_block_desc">Awtomatikong laktawan ang mga sponsorship, intro, at bahaging walang musika sa mga video</string>
     <string name="spotify_import_by_link">Mag-import ng playlist gamit ang link</string>

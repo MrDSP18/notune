@@ -263,7 +263,7 @@
     <string name="unique_artists">Unikalūs atlikėjai</string>
     <string name="unique_albums">Unikalūs albumai</string>
     <string name="selected_period">Pasirinktas laikotarpis</string>
-    <string name="hours_minutes_format">%1$d val. %2$d min.</string>
+    <string name="notune_hours_minutes_format">%1$d val. %2$d min.</string>
     <string name="default_open_tab">Numatytasis atidaromas skirtukas</string>
     <string name="grid_cell_size">Tinklelio langelio dydis</string>
     <string name="small">Mažas</string>

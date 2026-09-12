@@ -389,7 +389,7 @@
     <string name="unique_artists">Unikátní interpreti</string>
     <string name="unique_albums">Unikátní alba</string>
     <string name="selected_period">Vybrané období</string>
-    <string name="hours_minutes_format">%1$dh %2$dmin</string>
+    <string name="notune_hours_minutes_format">%1$dh %2$dmin</string>
     <string name="content_sponsor_block">SponsorBlock (automatické přeskakování)</string>
     <string name="content_sponsor_block_desc">Automaticky přeskakovat sponzorské pasáže, úvody a nehudební části videí</string>
     <string name="spotify_import_by_link">Importovat playlist pomocí odkazu</string>

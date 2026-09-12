@@ -390,7 +390,7 @@
     <string name="unique_artists">Jedinstveni umjetnici</string>
     <string name="unique_albums">Jedinstveni albumi</string>
     <string name="selected_period">Odabrano razdoblje</string>
-    <string name="hours_minutes_format">%1$dh %2$dm</string>
+    <string name="notune_hours_minutes_format">%1$dh %2$dm</string>
     <string name="content_sponsor_block">SponsorBlock (Automatsko preskakanje)</string>
     <string name="content_sponsor_block_desc">Automatski preskoči sponzorstva, uvode i dijelove koji nisu glazba u videozapisima</string>
     <string name="spotify_import_by_link">Uvoz popisa za reprodukciju putem poveznice</string>

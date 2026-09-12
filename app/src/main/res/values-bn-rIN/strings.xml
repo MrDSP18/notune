@@ -385,7 +385,7 @@
     <string name="unique_artists">অনন্য শিল্পী</string>
     <string name="unique_albums">অনন্য অ্যালবাম</string>
     <string name="selected_period">নির্বাচিত সময়কাল</string>
-    <string name="hours_minutes_format">%1$d ঘণ্টা %2$d মিনিট</string>
+    <string name="notune_hours_minutes_format">%1$d ঘণ্টা %2$d মিনিট</string>
     <string name="content_sponsor_block">SponsorBlock (স্বয়ংক্রিয়ভাবে এড়িয়ে যান)</string>
     <string name="content_sponsor_block_desc">ভিডিওর স্পনসরশিপ, ভূমিকা ও সঙ্গীতবহির্ভূত অংশ স্বয়ংক্রিয়ভাবে এড়িয়ে যান</string>
     <string name="spotify_import_by_link">লিংকের মাধ্যমে প্লেলিস্ট ইমপোর্ট করুন</string>

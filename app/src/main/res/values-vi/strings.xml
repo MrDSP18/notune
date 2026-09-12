@@ -366,7 +366,7 @@
     <string name="unique_artists">Nghệ sĩ riêng biệt</string>
     <string name="unique_albums">Album riêng biệt</string>
     <string name="selected_period">Khoảng thời gian đã chọn</string>
-    <string name="hours_minutes_format">%1$d giờ %2$d phút</string>
+    <string name="notune_hours_minutes_format">%1$d giờ %2$d phút</string>
     <string name="content_sponsor_block">SponsorBlock (Tự động bỏ qua)</string>
     <string name="content_sponsor_block_desc">Tự động bỏ qua nội dung tài trợ, phần giới thiệu và các đoạn không có nhạc trong video</string>
     <string name="spotify_import_by_link">Nhập danh sách phát bằng liên kết</string>

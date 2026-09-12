@@ -390,7 +390,7 @@
     <string name="unique_artists">Artiști unici</string>
     <string name="unique_albums">Albume unice</string>
     <string name="selected_period">Perioada selectată</string>
-    <string name="hours_minutes_format">%1$dh %2$min</string>
+    <string name="notune_hours_minutes_format">%1$dh %2$min</string>
     <string name="content_sponsor_block">SponsorBlock (omitere automată)</string>
     <string name="content_sponsor_block_desc">Omite automat sponsorizările, introducerile și secțiunile fără muzică din videoclipuri</string>
     <string name="spotify_import_by_link">Importă lista de redare prin link</string>

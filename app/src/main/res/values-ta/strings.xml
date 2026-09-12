@@ -379,7 +379,7 @@
     <string name="unique_artists">தனித்துவமான கலைஞர்கள்</string>
     <string name="unique_albums">தனித்துவமான ஆல்பங்கள்</string>
     <string name="selected_period">தேர்ந்தெடுக்கப்பட்ட காலம்</string>
-    <string name="hours_minutes_format">%1$dமணி %2$dநிமி</string>
+    <string name="notune_hours_minutes_format">%1$dமணி %2$dநிமி</string>
     <string name="content_sponsor_block">SponsorBlock (தானாகத் தவிர்த்தல்)</string>
     <string name="content_sponsor_block_desc">காணொளிகளில் உள்ள விளம்பர ஆதரவுப் பகுதிகள், அறிமுகங்கள் மற்றும் இசையற்ற பகுதிகளைத் தானாகத் தவிர்</string>
     <string name="spotify_import_by_link">இணைப்பு மூலம் பிளேலிஸ்ட்டை இறக்குமதி செய்</string>

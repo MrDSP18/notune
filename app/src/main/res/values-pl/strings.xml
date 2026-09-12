@@ -400,7 +400,7 @@
     <string name="unique_artists">Unikalni wykonawcy</string>
     <string name="unique_albums">Unikalne albumy</string>
     <string name="selected_period">Wybrany okres</string>
-    <string name="hours_minutes_format">%1$d godz. %2$d min</string>
+    <string name="notune_hours_minutes_format">%1$d godz. %2$d min</string>
     <string name="content_sponsor_block">SponsorBlock (automatyczne pomijanie)</string>
     <string name="content_sponsor_block_desc">Automatycznie pomijaj sponsorowane fragmenty, wstępy i sekcje bez muzyki w filmach</string>
     <string name="spotify_import_by_link">Importuj playlistę z linku</string>

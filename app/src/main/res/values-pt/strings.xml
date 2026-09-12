@@ -389,7 +389,7 @@
     <string name="unique_artists">Artistas únicos</string>
     <string name="unique_albums">Álbuns únicos</string>
     <string name="selected_period">Período selecionado</string>
-    <string name="hours_minutes_format">%1$dh %2$dmin</string>
+    <string name="notune_hours_minutes_format">%1$dh %2$dmin</string>
     <string name="content_sponsor_block">SponsorBlock (avanço automático)</string>
     <string name="content_sponsor_block_desc">Ignorar automaticamente patrocínios, introduções e secções sem música nos vídeos</string>
     <string name="spotify_import_by_link">Importar lista de reprodução através de uma ligação</string>
