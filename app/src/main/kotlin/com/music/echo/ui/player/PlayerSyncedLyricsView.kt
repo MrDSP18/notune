@@ -113,27 +113,27 @@ fun PlayerSyncedLyricsView(
             }
             val currentLine = lines.getOrNull(currentLineIndex)?.text ?: ""
 
-            AnimatedContent(
-                targetState = currentLine,
-                transitionSpec = {
-                    (fadeIn() + slideInVertically { height -> height }).togetherWith(
-                        fadeOut() + slideOutVertically { height -> -height }
-                    ).using(SizeTransform(clip = false))
-                },
-                label = "SyncedLyrics",
-                modifier = Modifier.weight(1f)
-            ) { lineText ->
-                Text(
-                    text = lineText,
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Left,
-                    modifier = Modifier.fillMaxWidth().clickable {
-                        navController?.navigate("notune/ask")
-                        // AI prompt logic could be added here to AskNoTuneViewModel
-                    }
-                )
+            Box(modifier = Modifier.weight(1f)) {
+                AnimatedContent(
+                    targetState = currentLine,
+                    transitionSpec = {
+                        (fadeIn() + slideInVertically { height -> height }).togetherWith(
+                            fadeOut() + slideOutVertically { height -> -height }
+                        ).using(SizeTransform(clip = false))
+                    },
+                    label = "SyncedLyrics"
+                ) { lineText ->
+                    Text(
+                        text = lineText,
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Left,
+                        modifier = Modifier.fillMaxWidth().clickable {
+                            navController?.navigate("notune/ask")
+                        }
+                    )
+                }
             }
 
             IconButton(

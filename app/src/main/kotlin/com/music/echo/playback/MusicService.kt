@@ -221,6 +221,12 @@ private const val INSTANT_SILENCE_SKIP_SETTLE_MS = 350L
 
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @androidx.annotation.OptIn(UnstableApi::class)
+@Serializable
+data class AiSongSuggestion(
+    val title: String,
+    val artist: String
+)
+
 @AndroidEntryPoint
 class MusicService :
     MediaLibraryService(),
@@ -1604,7 +1610,7 @@ class MusicService :
                     val cleanJson = response.text.replace("```json", "").replace("```", "").trim()
                     val resolvedSongs = mutableListOf<com.music.innertube.models.SongItem>()
                     try {
-                        val jsonArray = kotlinx.serialization.json.Json.decodeFromString<List<echo.music.iad1tya.notune.GeminiSongSuggestion>>(cleanJson)
+                        val jsonArray = kotlinx.serialization.json.Json.decodeFromString<List<AiSongSuggestion>>(cleanJson)
                         for (suggestion in jsonArray) {
                             com.music.innertube.YouTube.search("${suggestion.title} ${suggestion.artist}", com.music.innertube.YouTube.SearchFilter.FILTER_SONG).getOrNull()?.items?.filterIsInstance<com.music.innertube.models.SongItem>()?.firstOrNull()?.let {
                                 resolvedSongs.add(it)
@@ -1645,6 +1651,7 @@ class MusicService :
                 if (radioItems.isNotEmpty()) {
                     val itemCount = player.mediaItemCount
 
+                    val currentIndex = player.currentMediaItemIndex
                     if (itemCount > currentIndex + 1) {
                         player.removeMediaItems(currentIndex + 1, itemCount)
                     }
@@ -1676,6 +1683,7 @@ class MusicService :
 
                             if (radioItems.isNotEmpty()) {
                                 val itemCount = player.mediaItemCount
+                                val currentIndex = player.currentMediaItemIndex
                                 if (itemCount > currentIndex + 1) {
                                     player.removeMediaItems(currentIndex + 1, itemCount)
                                 }

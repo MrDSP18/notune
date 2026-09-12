@@ -14,6 +14,7 @@ import androidx.media3.common.PlaybackException
 import com.music.innertube.NewPipeExtractor
 import com.music.innertube.YouTube
 import com.music.innertube.models.YouTubeClient
+import com.music.innertube.models.YouTubeClient
 import com.music.innertube.models.YouTubeClient.Companion.ANDROID_CREATOR
 import com.music.innertube.models.YouTubeClient.Companion.ANDROID_NO_SDK
 import com.music.innertube.models.YouTubeClient.Companion.ANDROID_TESTSUITE

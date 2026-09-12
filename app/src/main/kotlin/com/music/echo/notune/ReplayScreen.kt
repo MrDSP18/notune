@@ -18,7 +18,8 @@ import echo.music.iad1tya.playback.queues.ListQueue
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.SongListItem
 import echo.music.iad1tya.ui.theme.NothingFont
-import echo.music.iad1tya.utils.toMediaItem
+import echo.music.iad1tya.extensions.toMediaItem
+import androidx.compose.ui.res.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

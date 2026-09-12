@@ -29,7 +29,7 @@ import echo.music.iad1tya.ui.theme.NothingFont
 
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.playback.queues.ListQueue
-import echo.music.iad1tya.utils.toMediaItem
+import echo.music.iad1tya.extensions.toMediaItem
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)

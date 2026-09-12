@@ -7,6 +7,8 @@ import com.music.innertube.models.SongItem
 import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.notune.ai.ToolCall
 import echo.music.iad1tya.playback.PlayerConnection
+import echo.music.iad1tya.extensions.toMediaItem
+import echo.music.iad1tya.extensions.toMediaMetadata
 import echo.music.iad1tya.playback.queues.ListQueue
 import echo.music.iad1tya.playback.queues.YouTubeQueue
 import echo.music.iad1tya.utils.toMediaItem

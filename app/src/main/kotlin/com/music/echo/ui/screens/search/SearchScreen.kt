@@ -28,9 +28,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import android.content.Intent
-import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -98,7 +95,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import androidx.compose.runtime.collectAsState
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyColumn
@@ -117,7 +113,6 @@ import echo.music.iad1tya.ui.menu.YouTubeAlbumMenu
 import echo.music.iad1tya.constants.GridThumbnailHeight
 import echo.music.iad1tya.constants.GridItemsSizeKey
 import echo.music.iad1tya.ui.theme.NothingFont
-import echo.music.iad1tya.notune.GeminiRepository
 import echo.music.iad1tya.constants.GridItemSize
 import androidx.hilt.navigation.compose.hiltViewModel
 

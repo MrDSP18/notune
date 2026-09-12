@@ -195,12 +195,9 @@ fun NewActionGrid(
                         checked = false,
                         onCheckedChange = { performAction = true },
                         enabled = action.enabled,
-                        shapes = when {
-                            actions.size == 1 -> RoundedCornerShape(4.dp)
-                            index == 0 -> RoundedCornerShape(4.dp)
-                            index == actions.lastIndex -> RoundedCornerShape(4.dp)
-                            else -> RoundedCornerShape(4.dp)
-                        },
+                        shapes = ToggleButtonDefaults.shapes(
+                            shape = RoundedCornerShape(4.dp)
+                        ),
                         colors = ToggleButtonDefaults.toggleButtonColors(
                             containerColor = Color.White.copy(alpha = 0.05f),
                             contentColor = Color.White,

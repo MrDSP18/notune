@@ -479,36 +479,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @Inject
-    lateinit var aiEngine: echo.music.iad1tya.notune.ai.AiEngine
-
-    @Inject
-    lateinit var aiToolManager: echo.music.iad1tya.notune.ai.tools.AiToolManager
-
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 1001 && resultCode == RESULT_OK) {
-            val results = data?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)
-            val spokenText = results?.firstOrNull()
-            if (!spokenText.isNullOrBlank()) {
-                lifecycleScope.launch {
-                    val result = aiEngine.generateResponse(
-                        prompt = spokenText,
-                        tools = aiEngine.getMusicTools(),
-                        systemInstruction = "You are NØTUNE, handling a voice command. Execute the most relevant tool. Spoken command: $spokenText"
-                    )
-                    result.onSuccess { response ->
-                        response.toolCalls?.forEach { aiToolManager.executeTool(it) }
-                        if (response.text.isNotBlank()) {
-                            Toast.makeText(this@MainActivity, response.text, Toast.LENGTH_LONG).show()
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
     @Composable

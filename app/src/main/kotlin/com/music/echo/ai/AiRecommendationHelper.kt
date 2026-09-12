@@ -17,11 +17,12 @@ import org.json.JSONArray
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private const val PLAYLIST_NAME = "Recommended by AI"
+
 @Singleton
 class AiRecommendationHelper @Inject constructor(
     private val aiEngine: AiEngine
 ) {
-    private const val PLAYLIST_NAME = "Recommended by AI"
 
     suspend fun generateRecommendations(
         context: Context,

@@ -11,6 +11,7 @@ import echo.music.iad1tya.notune.ai.*
 import echo.music.iad1tya.notune.ai.tools.AiToolManager
 import echo.music.iad1tya.utils.dataStore
 import echo.music.iad1tya.utils.get
+import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow

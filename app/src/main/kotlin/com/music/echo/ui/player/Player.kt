@@ -239,7 +239,6 @@ import androidx.media3.ui.PlayerView
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import echo.music.iad1tya.ui.component.NoTuneSpectrum
-import echo.music.iad1tya.ui.theme.NothingFont
 import echo.music.iad1tya.applecanvas.AppleMusicCanvasProvider
 import echo.music.iad1tya.canvas.CanvasArtwork
 import echo.music.iad1tya.canvas.TidalCanvasProvider
@@ -1401,7 +1400,8 @@ fun BottomSheetPlayer(
             )
         },
     ) {
-        val controlsContent: @Composable ColumnScope.(MediaMetadata) -> Unit = { mediaMetadata ->
+        @Composable
+        fun ColumnScope.ControlsContent(mediaMetadata: MediaMetadata) {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
@@ -2725,7 +2725,7 @@ fun BottomSheetPlayer(
                         }
 
                         if (mediaMetadata != null) {
-                            controlsContent(mediaMetadata!!)
+                            ControlsContent(mediaMetadata!!)
                         }
 
                         Spacer(Modifier.weight(1f))
@@ -2800,7 +2800,7 @@ fun BottomSheetPlayer(
                     }
 
                     if (mediaMetadata != null) {
-                        controlsContent(mediaMetadata!!)
+                        ControlsContent(mediaMetadata!!)
                     }
 
                     Spacer(Modifier.height(if (useNewPlayerDesign) 30.dp else 8.dp))
