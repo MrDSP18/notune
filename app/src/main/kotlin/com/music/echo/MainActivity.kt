@@ -1019,14 +1019,6 @@ class MainActivity : ComponentActivity() {
                 val (liquidGlassTextColorInt) = rememberPreference(LiquidGlassTextColorKey, defaultValue = 0)
                 val (liquidGlassPlayerEnabled) = rememberPreference(LiquidGlassPlayerEnabledKey, defaultValue = true)
                 val (liquidGlassMiniPlayerEnabled) = rememberPreference(LiquidGlassMiniPlayerEnabledKey, defaultValue = true)
-                val (liquidGlassNavBarEnabled) = rememberPreference(LiquidGlassNavBarEnabledKey, defaultValue = true)
-                val glassEffectConfig = remember(
-                    liquidGlassGlobalEnabled, useFloatingNavBar, liquidGlassVibrancy, liquidGlassBlurRadius,
-                    liquidGlassLensHeight, liquidGlassLensAmount, liquidGlassChromaticAberration,
-                    liquidGlassDepthEffect, liquidGlassSurfaceTintColorInt,
-                    liquidGlassSurfaceOpacity, liquidGlassTextColorInt, liquidGlassPlayerEnabled,
-                    liquidGlassMiniPlayerEnabled, liquidGlassNavBarEnabled,
-                ) {
                 val (themePreset) = rememberEnumPreference(ThemePresetKey, ThemePreset.NOTHING)
                 val (liquidGlassBlurRadius) = rememberPreference(BlurIntensityKey, defaultValue = 12f)
                 val (liquidGlassSurfaceOpacity) = rememberPreference(GlassIntensityKey, defaultValue = 0.05f)
@@ -1045,7 +1037,6 @@ class MainActivity : ComponentActivity() {
                         miniPlayerEnabled = true,
                         navBarEnabled = true,
                     )
-                }
                 }
                 
                 val baseBg = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer
