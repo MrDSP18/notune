@@ -1,4 +1,3 @@
-@file:Suppress("DEPRECATION")
 plugins {
     id("com.android.library")
     alias(libs.plugins.kotlin.serialization)
