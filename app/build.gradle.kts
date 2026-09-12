@@ -13,8 +13,44 @@ plugins {
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.protobufPlugin)
 }
+
+val protocConfig by configurations.creating
+
+val osName = System.getProperty("os.name").lowercase()
+val osArch = System.getProperty("os.arch").lowercase()
+val protocClassifier = when {
+    osName.contains("mac") || osName.contains("darwin") -> if (osArch.contains("aarch64") || osArch.contains("arm")) "osx-aarch_64" else "osx-x86_64"
+    osName.contains("win") -> if (osArch.contains("64")) "windows-x86_64" else "windows-x86_32"
+    else -> if (osArch.contains("aarch64") || osArch.contains("arm")) "linux-aarch_64" else "linux-x86_64"
+}
+
+dependencies {
+    protocConfig("com.google.protobuf:protoc:${libs.versions.protobuf.get()}:$protocClassifier@exe")
+}
+
+val protoGenDir = layout.buildDirectory.dir("generated/source/proto/main/java")
+
+val generateProtoTask = tasks.register<Exec>("generateProtoFromSchema") {
+    val protoDir = file("src/main/proto")
+    val protoFile = file("src/main/proto/listentogether.proto")
+    inputs.file(protoFile)
+    outputs.dir(protoGenDir)
+
+    doFirst {
+        val outputDirFile = protoGenDir.get().asFile
+        outputDirFile.mkdirs()
+        val protocExecutable = protocConfig.singleFile
+        protocExecutable.setExecutable(true)
+        commandLine(
+            protocExecutable.absolutePath,
+            "-I${protoDir.absolutePath}",
+            "--java_out=lite:${outputDirFile.absolutePath}",
+            protoFile.absolutePath
+        )
+    }
+}
+
 
 val hasGoogleServicesConfig = file("google-services.json").exists()
 
@@ -218,28 +254,20 @@ android {
             excludes += "META-INF/DEPENDENCIES"
         }
     }
-}
-
-protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
-    }
-    generateProtoTasks {
-        all().forEach { task ->
-            task.builtins {
-                create("java") {
-                    option("lite")
-                }
-                create("kotlin") {
-                    option("lite")
-                }
-            }
+    sourceSets {
+        getByName("main") {
+            java.srcDir(protoGenDir.get().asFile)
         }
     }
 }
 
 ksp {
 }
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    dependsOn(generateProtoTask)
+}
+
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     compilerOptions {
