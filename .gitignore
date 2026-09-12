@@ -53,3 +53,8 @@ scratch/
 bin/
 */bin/
 
+# Debug API response dumps
+*_next.json
+*_dump.json
+
+
