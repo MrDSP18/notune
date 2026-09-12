@@ -259,13 +259,13 @@ object YouTube {
         val descriptionRuns = sequence {
             // Check all tabs in twoColumnBrowseResultsRenderer
             response.contents?.twoColumnBrowseResultsRenderer?.tabs?.forEach { tab ->
-                tab.tabRenderer?.content?.sectionListRenderer?.contents?.forEach { content ->
+                tab?.tabRenderer?.content?.sectionListRenderer?.contents?.forEach { content ->
                     content.musicDescriptionShelfRenderer?.description?.runs?.let { yield(it) }
                 }
             }
             // Check all tabs in singleColumnBrowseResultsRenderer
             response.contents?.singleColumnBrowseResultsRenderer?.tabs?.forEach { tab ->
-                tab.tabRenderer?.content?.sectionListRenderer?.contents?.forEach { content ->
+                tab?.tabRenderer?.content?.sectionListRenderer?.contents?.forEach { content ->
                     content.musicDescriptionShelfRenderer?.description?.runs?.let { yield(it) }
                 }
             }
@@ -277,12 +277,12 @@ object YouTube {
             
             // Check musicResponsiveHeaderRenderer in contents
             response.contents?.twoColumnBrowseResultsRenderer?.tabs?.forEach { tab ->
-                tab.tabRenderer?.content?.sectionListRenderer?.contents?.forEach { content ->
+                tab?.tabRenderer?.content?.sectionListRenderer?.contents?.forEach { content ->
                     content.musicResponsiveHeaderRenderer?.description?.runs?.let { yield(it) }
                 }
             }
             response.contents?.singleColumnBrowseResultsRenderer?.tabs?.forEach { tab ->
-                tab.tabRenderer?.content?.sectionListRenderer?.contents?.forEach { content ->
+                tab?.tabRenderer?.content?.sectionListRenderer?.contents?.forEach { content ->
                     content.musicResponsiveHeaderRenderer?.description?.runs?.let { yield(it) }
                 }
             }
