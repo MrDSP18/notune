@@ -321,8 +321,10 @@ dependencies {
     implementation(libs.apache.lang3)
 
     implementation(libs.hilt)
+    implementation(libs.hilt.work)
     implementation(libs.jsoup)
     ksp(libs.hilt.compiler)
+    ksp(libs.hilt.work.compiler)
 
     implementation(project(":innertube"))
     implementation(project(":lyrics"))
