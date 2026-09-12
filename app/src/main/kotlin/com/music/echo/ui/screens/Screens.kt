@@ -42,6 +42,27 @@ sealed class Screens(
         route = "library"
     )
 
+    object CoupleMode : Screens(
+        titleId = R.string.together,
+        iconIdInactive = R.drawable.group_outlined,
+        iconIdActive = R.drawable.group_filled,
+        route = "couple_mode"
+    )
+
+    object RoomsDiscovery : Screens(
+        titleId = R.string.together,
+        iconIdInactive = R.drawable.group_outlined,
+        iconIdActive = R.drawable.group_filled,
+        route = "rooms_discovery"
+    )
+
+    object CoupleHome : Screens(
+        titleId = R.string.together,
+        iconIdInactive = R.drawable.group_outlined,
+        iconIdActive = R.drawable.group_filled,
+        route = "couple_home"
+    )
+
     companion object {
         val MainScreens = listOf(Home, Search, ListenTogether, Library)
     }

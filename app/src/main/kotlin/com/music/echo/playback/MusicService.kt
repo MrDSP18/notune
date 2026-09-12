@@ -207,6 +207,7 @@ import kotlinx.coroutines.plus
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import timber.log.Timber
 import java.io.ObjectInputStream

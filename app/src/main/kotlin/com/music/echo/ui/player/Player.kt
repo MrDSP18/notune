@@ -318,12 +318,6 @@ fun BottomSheetPlayer(
     val automixDebug by playerConnection.automixDebugInfo.collectAsState()
     val automixDebugOverlayEnabled by rememberPreference(echo.music.iad1tya.constants.AutomixDebugOverlayKey, false)
 
-    val playPauseRoundness by animateDpAsState(
-        targetValue = if (isPlaying) 2.dp else 4.dp, // Sharper for Nothing
-        animationSpec = tween(durationMillis = 90, easing = LinearEasing),
-        label = "playPauseRoundness",
-    )
-
     var currentAudioFormat by remember { mutableStateOf<androidx.media3.common.Format?>(null) }
     DisposableEffect(playerConnection, isCrossfading) {
         val playerToListen = playerConnection.player
@@ -1400,6 +1394,12 @@ fun BottomSheetPlayer(
             )
         },
     ) {
+        val playPauseRoundness by animateDpAsState(
+            targetValue = if (isPlaying) 2.dp else 4.dp, // Sharper for Nothing
+            animationSpec = tween(durationMillis = 90, easing = LinearEasing),
+            label = "playPauseRoundness",
+        )
+
         @Composable
         fun ColumnScope.ControlsContent(mediaMetadata: MediaMetadata) {
             Row(

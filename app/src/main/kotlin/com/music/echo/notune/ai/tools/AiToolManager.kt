@@ -11,7 +11,6 @@ import echo.music.iad1tya.extensions.toMediaItem
 import echo.music.iad1tya.extensions.toMediaMetadata
 import echo.music.iad1tya.playback.queues.ListQueue
 import echo.music.iad1tya.playback.queues.YouTubeQueue
-import echo.music.iad1tya.utils.toMediaItem
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
 import javax.inject.Inject

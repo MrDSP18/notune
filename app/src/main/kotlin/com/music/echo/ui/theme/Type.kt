@@ -136,3 +136,38 @@ val TypographyGeometric = Typography(
     bodyLarge = TextStyle(fontFamily = FontFamily.SansSerif),
     labelLarge = TextStyle(fontFamily = FontFamily.SansSerif)
 )
+
+val TypographyFuturistic = Typography(
+    displayLarge = TextStyle(fontFamily = FontFamily.Cursive), // Placeholder for actual futuristic font
+    bodyLarge = TextStyle(fontFamily = FontFamily.Cursive)
+)
+
+val TypographyTechBold = Typography(
+    displayLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.ExtraBold),
+    bodyLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold)
+)
+
+val TypographyElegantThin = Typography(
+    displayLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.ExtraLight),
+    bodyLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Light)
+)
+
+val TypographyRetroPixel = Typography(
+    displayLarge = TextStyle(fontFamily = FontFamily.Monospace),
+    bodyLarge = TextStyle(fontFamily = FontFamily.Monospace)
+)
+
+val TypographyIndustrialWide = Typography(
+    displayLarge = TextStyle(fontFamily = FontFamily.SansSerif, letterSpacing = 2.sp),
+    bodyLarge = TextStyle(fontFamily = FontFamily.SansSerif, letterSpacing = 1.sp)
+)
+
+val TypographyMinimalist = Typography(
+    displayLarge = TextStyle(fontFamily = FontFamily.Default, fontWeight = FontWeight.Light),
+    bodyLarge = TextStyle(fontFamily = FontFamily.Default, fontWeight = FontWeight.Normal)
+)
+
+val TypographyClassicStylish = Typography(
+    displayLarge = TextStyle(fontFamily = FontFamily.Serif, fontWeight = FontWeight.Medium),
+    bodyLarge = TextStyle(fontFamily = FontFamily.Serif, fontWeight = FontWeight.Normal)
+)

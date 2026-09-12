@@ -40,6 +40,15 @@ import echo.music.iad1tya.db.entities.SongEntity
 import echo.music.iad1tya.db.entities.SpeedDialItem
 import echo.music.iad1tya.db.entities.SortedSongAlbumMap
 import echo.music.iad1tya.db.entities.SortedSongArtistMap
+import echo.music.iad1tya.db.entities.CoupleSessionEntity
+import echo.music.iad1tya.db.entities.OurSongEntity
+import echo.music.iad1tya.db.entities.MemoryCapsuleEntity
+import echo.music.iad1tya.db.entities.CoupleReactionEntity
+import echo.music.iad1tya.db.entities.RoomEntity
+import echo.music.iad1tya.db.entities.RoomMessageEntity
+import echo.music.iad1tya.db.entities.RoomMemberEntity
+import echo.music.iad1tya.db.daos.CoupleDao
+import echo.music.iad1tya.db.daos.RoomDao
 import echo.music.iad1tya.extensions.toSQLiteQuery
 import timber.log.Timber
 import java.time.Instant
@@ -52,6 +61,12 @@ class MusicDatabase(
 ) : DatabaseDao by delegate.dao {
     val speedDialDao: SpeedDialDao
         get() = delegate.speedDialDao
+
+    val coupleDao: CoupleDao
+        get() = delegate.coupleDao
+
+    val roomDao: RoomDao
+        get() = delegate.roomDao
 
     val openHelper: SupportSQLiteOpenHelper
         get() = delegate.openHelper
@@ -105,14 +120,21 @@ class MusicDatabase(
         PlayCountEntity::class,
         RecognitionHistory::class,
         SpeedDialItem::class,
-        BeatInfoEntity::class
+        BeatInfoEntity::class,
+        CoupleSessionEntity::class,
+        OurSongEntity::class,
+        MemoryCapsuleEntity::class,
+        CoupleReactionEntity::class,
+        RoomEntity::class,
+        RoomMessageEntity::class,
+        RoomMemberEntity::class,
     ],
     views = [
         SortedSongArtistMap::class,
         SortedSongAlbumMap::class,
         PlaylistSongMapPreview::class,
     ],
-    version = 46,
+    version = 48,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
@@ -154,6 +176,7 @@ class MusicDatabase(
 abstract class InternalDatabase : RoomDatabase() {
     abstract val dao: DatabaseDao
     abstract val speedDialDao: SpeedDialDao
+    abstract val coupleDao: CoupleDao
 
     companion object {
         const val DB_NAME = "song.db"
@@ -182,6 +205,7 @@ abstract class InternalDatabase : RoomDatabase() {
                             MIGRATION_43_44,
                             MIGRATION_44_45,
                             MIGRATION_45_46,
+                            MIGRATION_46_47,
                         )
                         .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
                         .setTransactionExecutor(java.util.concurrent.Executors.newFixedThreadPool(4))
@@ -1016,5 +1040,117 @@ val MIGRATION_44_45 = object : Migration(44, 45) {
             db.execSQL("ALTER TABLE `playlist` ADD COLUMN `isLocal` INTEGER NOT NULL DEFAULT 0")
             Timber.tag("MIGRATION_44_45").i("Added missing isLocal column to playlist")
         }
+    }
+}
+val MIGRATION_46_47 = object : Migration(46, 47) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Couple Session table
+        db.execSQL(
+            """CREATE TABLE IF NOT EXISTS `couple_session` (
+                `id` TEXT NOT NULL,
+                `localAlias` TEXT NOT NULL,
+                `partnerAlias` TEXT NOT NULL,
+                `relationshipStartDate` INTEGER,
+                `pairedAt` INTEGER NOT NULL,
+                `isActive` INTEGER NOT NULL DEFAULT 1,
+                `pairingCode` TEXT,
+                PRIMARY KEY(`id`)
+            )""".trimIndent()
+        )
+        // Our Song table
+        db.execSQL(
+            """CREATE TABLE IF NOT EXISTS `our_song` (
+                `id` TEXT NOT NULL,
+                `sessionId` TEXT NOT NULL,
+                `songId` TEXT NOT NULL,
+                `songTitle` TEXT NOT NULL,
+                `artistName` TEXT NOT NULL,
+                `thumbnailUrl` TEXT,
+                `note` TEXT,
+                `addedAt` INTEGER NOT NULL,
+                `isPrimary` INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY(`id`)
+            )""".trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_our_song_sessionId` ON `our_song` (`sessionId`)")
+        // Memory Capsule table
+        db.execSQL(
+            """CREATE TABLE IF NOT EXISTS `memory_capsule` (
+                `id` TEXT NOT NULL,
+                `sessionId` TEXT NOT NULL,
+                `songId` TEXT,
+                `songTitle` TEXT,
+                `artistName` TEXT,
+                `message` TEXT,
+                `voiceNoteUri` TEXT,
+                `photoUri` TEXT,
+                `createdAt` INTEGER NOT NULL,
+                `unlockAt` INTEGER,
+                `isOpened` INTEGER NOT NULL DEFAULT 0,
+                `openedAt` INTEGER,
+                PRIMARY KEY(`id`)
+            )""".trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_memory_capsule_sessionId` ON `memory_capsule` (`sessionId`)")
+        // Couple Reaction table
+        db.execSQL(
+            """CREATE TABLE IF NOT EXISTS `couple_reaction` (
+                `id` TEXT NOT NULL,
+                `sessionId` TEXT NOT NULL,
+                `songId` TEXT NOT NULL,
+                `reaction` TEXT NOT NULL,
+                `isLocal` INTEGER NOT NULL,
+                `reactedAt` INTEGER NOT NULL,
+                PRIMARY KEY(`id`)
+            )""".trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_couple_reaction_sessionId_songId` ON `couple_reaction` (`sessionId`, `songId`)")
+    }
+}
+
+val MIGRATION_47_48 = object : Migration(47, 48) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """CREATE TABLE IF NOT EXISTS `room_table` (
+                `id` TEXT NOT NULL,
+                `name` TEXT NOT NULL,
+                `description` TEXT NOT NULL,
+                `roomType` TEXT NOT NULL,
+                `isEncrypted` INTEGER NOT NULL,
+                `memberLimit` INTEGER NOT NULL,
+                `hostId` TEXT NOT NULL,
+                `hostName` TEXT NOT NULL,
+                `genreTag` TEXT,
+                `createdAt` INTEGER NOT NULL,
+                PRIMARY KEY(`id`)
+            )""".trimIndent()
+        )
+        db.execSQL(
+            """CREATE TABLE IF NOT EXISTS `room_message_table` (
+                `id` TEXT NOT NULL,
+                `roomId` TEXT NOT NULL,
+                `senderId` TEXT NOT NULL,
+                `senderName` TEXT NOT NULL,
+                `encryptedContent` TEXT NOT NULL,
+                `timestamp` INTEGER NOT NULL,
+                `isEncrypted` INTEGER NOT NULL,
+                `attachedSongId` TEXT,
+                `attachedSongTitle` TEXT,
+                PRIMARY KEY(`id`)
+            )""".trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_room_message_roomId` ON `room_message_table` (`roomId`)")
+        db.execSQL(
+            """CREATE TABLE IF NOT EXISTS `room_member_table` (
+                `id` TEXT NOT NULL,
+                `roomId` TEXT NOT NULL,
+                `userId` TEXT NOT NULL,
+                `username` TEXT NOT NULL,
+                `role` TEXT NOT NULL,
+                `joinedAt` INTEGER NOT NULL,
+                PRIMARY KEY(`id`)
+            )""".trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_room_member_roomId` ON `room_member_table` (`roomId`)")
     }
 }

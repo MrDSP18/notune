@@ -126,6 +126,36 @@ fun notuneTheme(
                 style = PaletteStyle.Monochrome
             )
         }
+        ThemePreset.VAPORWAVE -> {
+            rememberDynamicColorScheme(
+                seedColor = Color(0xFFFF71CE),
+                isDark = true,
+                style = PaletteStyle.Vibrant
+            ).copy(
+                primary = Color(0xFF01CDFE),
+                background = Color(0xFF241734)
+            )
+        }
+        ThemePreset.NORD -> {
+            rememberDynamicColorScheme(
+                seedColor = Color(0xFF88C0D0),
+                isDark = true,
+                style = PaletteStyle.TonalSpot
+            ).copy(
+                background = Color(0xFF2E3440),
+                surface = Color(0xFF3B4252)
+            )
+        }
+        ThemePreset.GLASS -> {
+            rememberDynamicColorScheme(
+                seedColor = Color.White,
+                isDark = true,
+                style = PaletteStyle.Monochrome
+            ).copy(
+                background = Color.Transparent,
+                surface = Color.White.copy(alpha = 0.1f)
+            )
+        }
         else -> {
             rememberDynamicColorScheme(
                 seedColor = customAccentColor,

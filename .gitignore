@@ -34,3 +34,22 @@ lastfm-empty/build/
 
 # Logs
 *.log
+
+# Firebase — contains project-specific credentials; not for source control
+# Copy google-services.json.template to google-services.json and fill in your values
+app/google-services.json
+
+# Signing keystores
+*.jks
+*.keystore
+!persistent-debug.keystore
+
+# Temporary test homes & scratch
+.android_home/
+.gradle_home/
+.user_home/
+scratch/
+.vscode/
+bin/
+*/bin/
+

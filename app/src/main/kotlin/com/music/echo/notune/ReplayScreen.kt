@@ -36,7 +36,7 @@ fun ReplayScreen(
                 title = { Text("NØTUNE REPLAY", style = MaterialTheme.typography.titleLarge.copy(fontFamily = NothingFont, letterSpacing = 2.sp)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(painter = androidx.compose.ui.res.painterResource(id = R.drawable.arrow_back), contentDescription = null)
+                        Icon(painter = painterResource(id = R.drawable.arrow_back), contentDescription = null)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black, titleContentColor = Color.White, navigationIconContentColor = Color.White)

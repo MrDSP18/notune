@@ -776,60 +776,72 @@ fun PlayerMenu(
 
         item {
             Material3MenuGroup(
-                items = buildList {
-                    add(
+                items = listOf(
+                    Material3MenuItemData(
+                        title = { Text(text = "SET AS RINGTONE") },
+                        icon = { Icon(painter = painterResource(R.drawable.edit), contentDescription = null) },
+                        onClick = {
+                            onDismiss()
+                            echo.music.iad1tya.utils.RingtoneUtils.setAsRingtone(context, mediaMetadata)
+                        }
+                    ),
+                    Material3MenuItemData(
+                        title = { Text(text = stringResource(R.string.details)) },
+                        description = { Text(text = stringResource(R.string.details_desc)) },
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.info),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        },
+                        onClick = {
+                            onShowDetailsDialog()
+                            onDismiss()
+                        }
+                    )
+                )
+            )
+        }
+
+        if (isQueueTrigger != true) {
+            item { Spacer(modifier = Modifier.height(12.dp)) }
+            item {
+                Material3MenuGroup(
+                    items = listOf(
                         Material3MenuItemData(
-                            title = { Text(text = stringResource(R.string.details)) },
-                            description = { Text(text = stringResource(R.string.details_desc)) },
+                            title = { Text(text = stringResource(R.string.equalizer)) },
+                            description = { Text(text = stringResource(R.string.equalizer_desc)) },
                             icon = {
                                 Icon(
-                                    painter = painterResource(R.drawable.info),
+                                    painter = painterResource(R.drawable.equalizer),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp)
                                 )
                             },
                             onClick = {
-                                onShowDetailsDialog()
+                                navController.navigate("equalizer")
                                 onDismiss()
+                            }
+                        ),
+                        Material3MenuItemData(
+                            title = { Text(text = stringResource(R.string.advanced)) },
+                            description = { Text(text = stringResource(R.string.advanced_desc)) },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.tune),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            onClick = {
+                                showPitchTempoDialog = true
                             }
                         )
                     )
-
-                    if (isQueueTrigger != true) {
-                        add(
-                            Material3MenuItemData(
-                                title = { Text(text = stringResource(R.string.equalizer)) },
-                                description = { Text(text = stringResource(R.string.equalizer_desc)) },
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.equalizer),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                },
-                                onClick = {
-                                    navController.navigate("equalizer")
-                                    onDismiss()
-                                }
-                            )
-                        )
-                        add(
-                            Material3MenuItemData(
-                                title = { Text(text = stringResource(R.string.advanced)) },
-                                description = { Text(text = stringResource(R.string.advanced_desc)) },
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.tune),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                },
-                                onClick = {
-                                    showPitchTempoDialog = true
-                                }
-                            )
-                        )
-                    }
+                )
+            }
+        }
                 }
             )
         }
@@ -2086,5 +2098,3 @@ fun ListenTogetherDialog(
             }
         }
     }
-}
-}

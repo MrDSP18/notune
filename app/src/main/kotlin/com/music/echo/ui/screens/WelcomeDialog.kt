@@ -5,6 +5,8 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -57,18 +59,28 @@ fun WelcomeDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                when (stage) {
-                    0 -> OnboardingIntro { stage++ }
-                    1 -> OnboardingPermissions {
-                        val perms = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            arrayOf(Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.POST_NOTIFICATIONS)
-                        } else {
-                            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+                AnimatedContent(
+                    targetState = stage,
+                    transitionSpec = {
+                        (fadeIn(tween(600)) + slideInHorizontally { it }).togetherWith(
+                            fadeOut(tween(400)) + slideOutHorizontally { -it }
+                        )
+                    },
+                    label = "OnboardingTransition"
+                ) { currentStage ->
+                    when (currentStage) {
+                        0 -> OnboardingIntro { stage++ }
+                        1 -> OnboardingPermissions {
+                            val perms = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                arrayOf(Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.POST_NOTIFICATIONS)
+                            } else {
+                                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+                            }
+                            permissionLauncher.launch(perms)
                         }
-                        permissionLauncher.launch(perms)
+                        2 -> OnboardingAiFeatures { stage++ }
+                        3 -> OnboardingFinal { onDismissRequest() }
                     }
-                    2 -> OnboardingAiFeatures { stage++ }
-                    3 -> OnboardingFinal { onDismissRequest() }
                 }
             }
         }

@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build Signed APK
+    name: Build, Lint & Test
     runs-on: ubuntu-latest
 
     steps:
@@ -24,12 +24,42 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
+    - name: Restore google-services.json (GMS builds)
+      if: ${{ env.GOOGLE_SERVICES_JSON_BASE64 != '' }}
+      env:
+        GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+      run: |
+        echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > app/google-services.json
+
     - name: Decode Keystore
       if: ${{ env.KEYSTORE_BASE64 != '' }}
       env:
         KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
       run: |
         echo "$KEYSTORE_BASE64" | base64 -d > keystore.jks
+
+    - name: Run Lint
+      run: |
+        chmod +x gradlew
+        ./gradlew lintUniversalFossDebug
+
+    - name: Run Unit Tests
+      run: |
+        ./gradlew testUniversalFossDebugUnitTest
+
+    - name: Upload Lint Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: lint-results
+        path: app/build/reports/lint-results-*.html
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: app/build/reports/tests/
 
     - name: Build Release APK
       if: ${{ env.KEYSTORE_BASE64 != '' }}
@@ -38,14 +68,17 @@ jobs:
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+        LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+        LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
       run: |
-        chmod +x gradlew
         ./gradlew assembleUniversalGmsRelease
 
     - name: Build Debug APK (fork PR fallback without signing)
       if: ${{ env.KEYSTORE_BASE64 == '' }}
       env:
         KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+        LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
       run: |
         mkdir -p "$HOME/.android"
         keytool -genkeypair \
@@ -56,7 +89,6 @@ jobs:
           -dname "CN=Android Debug,O=Android,C=US" \
           -keyalg RSA \
           -validity 10000
-        chmod +x gradlew
         ./gradlew assembleUniversalFossDebug
 
     - name: Upload Universal APK

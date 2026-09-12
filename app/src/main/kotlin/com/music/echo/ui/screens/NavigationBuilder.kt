@@ -71,6 +71,10 @@ import echo.music.iad1tya.notune.commitscreen.CommitScreen
 import echo.music.iad1tya.ui.screens.equalizer.axion.AxionEqScreen
 import echo.music.iad1tya.ui.screens.ambient.AmbientModeScreen
 
+import echo.music.iad1tya.ui.screens.couple.CoupleModeScreen
+import echo.music.iad1tya.notune.rooms.ui.PublicDiscoveryScreen
+import echo.music.iad1tya.notune.rooms.ui.CoupleHomeScreen
+
 @OptIn(ExperimentalMaterial3Api::class)
 fun NavGraphBuilder.navigationBuilder(
     navController: NavHostController,
@@ -80,6 +84,18 @@ fun NavGraphBuilder.navigationBuilder(
 ) {
     composable(Screens.Home.route) {
         HomeScreen(navController = navController, snackbarHostState = snackbarHostState)
+    }
+
+    composable(Screens.CoupleMode.route) {
+        CoupleModeScreen(navController = navController)
+    }
+
+    composable(Screens.RoomsDiscovery.route) {
+        PublicDiscoveryScreen(navController = navController, onRoomSelected = { room -> })
+    }
+
+    composable(Screens.CoupleHome.route) {
+        CoupleHomeScreen(navController = navController)
     }
 
     composable(Screens.Search.route) {

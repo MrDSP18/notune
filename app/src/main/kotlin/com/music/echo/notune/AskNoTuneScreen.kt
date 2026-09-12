@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import echo.music.iad1tya.ui.theme.NothingFont
+import echo.music.iad1tya.R
 
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.playback.queues.ListQueue

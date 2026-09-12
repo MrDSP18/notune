@@ -40,10 +40,9 @@ class GeminiProvider @Inject constructor(
 
         val contents = mutableListOf<JsonObject>()
         
-        // System instruction if supported by model (for Gemini we often put it in a separate field or as first message)
+        // System instruction format for Gemini REST API v1beta
         val systemObj = systemInstruction?.let {
              buildJsonObject {
-                 put("role", "system")
                  put("parts", buildJsonArray { add(buildJsonObject { put("text", it) }) })
              }
         }

@@ -866,6 +866,8 @@ enum class ThemePreset {
     RETRO,
     MATRIX,
     SYNTHWAVE,
+    VAPORWAVE,
+    NORD,
     MATERIAL,
     CUSTOM
 }
@@ -891,5 +893,27 @@ enum class TypographyStyle {
     NOTHING_DOT_MATRIX,
     GEOMETRIC,
     MONOSPACE,
-    SERIF
+    SERIF,
+    FUTURISTIC,
+    TECH_BOLD,
+    ELEGANT_THIN,
+    RETRO_PIXEL,
+    INDUSTRIAL_WIDE,
+    CYBER_PUNK,
+    MINIMALIST,
+    CLASSIC_STYLISH,
+    MODERN_CONDENSED,
+    VINTAGE_SERIF
 }
+
+// ─── Gesture Center ─────────────────────────────────────────────────────────
+// Each key stores the name of a GestureAction enum value.
+val GestureSwipeLeftKey       = stringPreferencesKey("gesture_swipe_left")
+val GestureSwipeRightKey      = stringPreferencesKey("gesture_swipe_right")
+val GestureSwipeUpKey         = stringPreferencesKey("gesture_swipe_up")
+val GestureSwipeDownKey       = stringPreferencesKey("gesture_swipe_down")
+val GestureDoubleTapCenterKey = stringPreferencesKey("gesture_double_tap_center")
+val GestureDoubleTapLeftKey   = stringPreferencesKey("gesture_double_tap_left")
+val GestureDoubleTapRightKey  = stringPreferencesKey("gesture_double_tap_right")
+val GestureLongPressKey       = stringPreferencesKey("gesture_long_press")
+val GestureTwoFingerTapKey    = stringPreferencesKey("gesture_two_finger_tap")
