@@ -53,14 +53,14 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: lint-results
-        path: app/build/reports/lint-results-*.html
+        path: "**/build/reports/lint-results-*.html"
 
     - name: Upload Test Results
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: test-results
-        path: app/build/reports/tests/
+        path: "**/build/reports/tests/"
 
     - name: Build Release APK
       if: ${{ env.KEYSTORE_BASE64 != '' }}
