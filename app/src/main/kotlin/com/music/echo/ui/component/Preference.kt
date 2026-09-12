@@ -217,11 +217,13 @@ fun SwitchPreference(
 fun EditTextPreference(
     modifier: Modifier = Modifier,
     title: @Composable () -> Unit,
+    description: String? = null,
     icon: (@Composable () -> Unit)? = null,
     value: String,
     onValueChange: (String) -> Unit,
     singleLine: Boolean = true,
     isInputValid: (String) -> Boolean = { it.isNotEmpty() },
+    trailingContent: (@Composable () -> Unit)? = null,
     isEnabled: Boolean = true,
 ) {
     var showDialog by remember {
@@ -245,8 +247,9 @@ fun EditTextPreference(
     PreferenceEntry(
         modifier = modifier,
         title = title,
-        description = value,
+        description = description ?: value,
         icon = icon,
+        trailingContent = trailingContent,
         onClick = { showDialog = true },
         isEnabled = isEnabled,
     )

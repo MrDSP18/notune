@@ -210,7 +210,7 @@ private fun OnboardingAiFeatures(onNext: () -> Unit) {
 private fun OnboardingFinal(onFinish: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(
-            painter = painterResource(R.drawable.check_circle),
+            painter = painterResource(R.drawable.check),
             contentDescription = null,
             tint = Color(0xFF00FF41),
             modifier = Modifier.size(64.dp)

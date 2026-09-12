@@ -7,6 +7,8 @@ import echo.music.iad1tya.utils.isLocalMediaId
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition

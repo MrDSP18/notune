@@ -20,6 +20,7 @@ import echo.music.iad1tya.ui.theme.NothingFont
 import echo.music.iad1tya.utils.rememberPreference
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.notune.ai.AiProviderType
+import kotlinx.coroutines.launch
 
 import androidx.hilt.navigation.compose.hiltViewModel
 import echo.music.iad1tya.notune.ai.AiEngine
@@ -141,7 +142,7 @@ fun AiSettings(
             PreferenceEntry(
                 title = { Text("AI Playground") },
                 description = "Test models and prompts directly.",
-                icon = { Icon(painter = painterResource(R.drawable.science), contentDescription = null) },
+                icon = { Icon(painter = painterResource(R.drawable.sparks), contentDescription = null) },
                 onClick = { navController.navigate("notune/lab/playground") }
             )
         }

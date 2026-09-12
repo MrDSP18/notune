@@ -210,6 +210,8 @@ import echo.music.iad1tya.ui.utils.ShowMediaInfo
 import echo.music.iad1tya.ui.utils.ShowOffsetDialog
 import echo.music.iad1tya.utils.makeTimeString
 import echo.music.iad1tya.utils.isLocalMediaId
+import echo.music.iad1tya.ui.theme.NothingFont
+import echo.music.iad1tya.ui.theme.NothingRed
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.utils.rememberPreference
 import dagger.hilt.android.EntryPointAccessors
@@ -316,6 +318,12 @@ fun BottomSheetPlayer(
     val isAutomixing by playerConnection.isAutomixing.collectAsState()
     val automixDebug by playerConnection.automixDebugInfo.collectAsState()
     val automixDebugOverlayEnabled by rememberPreference(echo.music.iad1tya.constants.AutomixDebugOverlayKey, false)
+
+    val playPauseRoundness by animateDpAsState(
+        targetValue = if (isPlaying) 2.dp else 4.dp, // Sharper for Nothing
+        animationSpec = tween(durationMillis = 90, easing = LinearEasing),
+        label = "playPauseRoundness",
+    )
 
     var currentAudioFormat by remember { mutableStateOf<androidx.media3.common.Format?>(null) }
     DisposableEffect(playerConnection, isCrossfading) {
@@ -1394,12 +1402,6 @@ fun BottomSheetPlayer(
         },
     ) {
         val controlsContent: @Composable ColumnScope.(MediaMetadata) -> Unit = { mediaMetadata ->
-            val playPauseRoundness by animateDpAsState(
-                targetValue = if (isPlaying) 2.dp else 4.dp, // Sharper for Nothing
-                animationSpec = tween(durationMillis = 90, easing = LinearEasing),
-                label = "playPauseRoundness",
-            )
-
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
@@ -2723,8 +2725,8 @@ fun BottomSheetPlayer(
                             )
                         }
 
-                        mediaMetadata?.let {
-                            controlsContent(it)
+                        if (mediaMetadata != null) {
+                            controlsContent(mediaMetadata!!)
                         }
 
                         Spacer(Modifier.weight(1f))
@@ -2798,8 +2800,8 @@ fun BottomSheetPlayer(
                         )
                     }
 
-                    mediaMetadata?.let {
-                        controlsContent(it)
+                    if (mediaMetadata != null) {
+                        controlsContent(mediaMetadata!!)
                     }
 
                     Spacer(Modifier.height(if (useNewPlayerDesign) 30.dp else 8.dp))

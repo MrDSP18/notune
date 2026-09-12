@@ -97,6 +97,10 @@ constructor(
                 is YouTubeUrlParser.ParsedUrl.Artist -> {
                     YouTube.artist(parsedUrl.id).getOrNull()?.artist
                 }
+
+                is YouTubeUrlParser.ParsedUrl.Playlist -> {
+                    YouTube.playlist(parsedUrl.id).getOrNull()?.playlist
+                }
             }
         } catch (e: Exception) {
             null

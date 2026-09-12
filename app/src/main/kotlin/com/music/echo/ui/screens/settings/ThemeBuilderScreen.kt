@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -117,7 +118,7 @@ fun ThemeBuilderScreen(
                 selectedValue = typographyStyle,
                 onValueSelected = onTypographyStyleChange,
                 valueText = { it.name.replace("_", " ") },
-                icon = { Icon(painter = painterResource(R.drawable.text_format), contentDescription = null) }
+                icon = { Icon(painter = painterResource(R.drawable.edit), contentDescription = null) }
             )
 
             PreferenceGroupTitle(title = "Glass & Blur")

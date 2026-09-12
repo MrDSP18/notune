@@ -88,9 +88,9 @@ fun PlayerSyncedLyricsView(
         parseLyrics(lyricsText).filter { it.text.isNotBlank() }
     }
 
-    Box(
+    Row(
         modifier = modifier.fillMaxWidth().padding(horizontal = echo.music.iad1tya.constants.PlayerHorizontalPadding),
-        contentAlignment = Alignment.CenterStart
+        verticalAlignment = Alignment.CenterVertically
     ) {
         if (currentLyrics == null) {
             // Loading skeleton
