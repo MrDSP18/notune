@@ -177,12 +177,12 @@ import echo.music.iad1tya.constants.MiniPlayerBottomSpacing
 import echo.music.iad1tya.constants.MiniPlayerHeight
 import echo.music.iad1tya.constants.NavigationBarAnimationSpec
 import echo.music.iad1tya.constants.NavigationBarHeight
-import echo.music.iad1tya.echomusic.updater.checkForUpdate
-import echo.music.iad1tya.echomusic.updater.getAutoUpdateCheckSetting
-import echo.music.iad1tya.echomusic.updater.isNewerVersion
-import echo.music.iad1tya.echomusic.updater.saveUpdateAvailableState
-import echo.music.iad1tya.echomusic.updater.getUpdateNotificationsSetting
-import echo.music.iad1tya.echomusic.UpdateNotificationHelper
+import echo.music.iad1tya.notune.updater.checkForUpdate
+import echo.music.iad1tya.notune.updater.getAutoUpdateCheckSetting
+import echo.music.iad1tya.notune.updater.isNewerVersion
+import echo.music.iad1tya.notune.updater.saveUpdateAvailableState
+import echo.music.iad1tya.notune.updater.getUpdateNotificationsSetting
+import echo.music.iad1tya.notune.UpdateNotificationHelper
 import android.util.Log
 import androidx.compose.ui.platform.LocalContext
 import echo.music.iad1tya.constants.PauseListenHistoryKey
@@ -216,7 +216,7 @@ import echo.music.iad1tya.ui.screens.settings.DarkMode
 import echo.music.iad1tya.ui.screens.settings.NavigationTab
 import echo.music.iad1tya.ui.theme.ColorSaver
 import echo.music.iad1tya.ui.theme.DefaultThemeColor
-import echo.music.iad1tya.ui.theme.echomusicTheme
+import echo.music.iad1tya.ui.theme.notuneTheme
 import echo.music.iad1tya.ui.theme.extractThemeColor
 import echo.music.iad1tya.ui.utils.appBarScrollBehavior
 import echo.music.iad1tya.ui.utils.resetHeightOffset
@@ -523,22 +523,22 @@ class MainActivity : ComponentActivity() {
         val context = LocalContext.current
         var showUpdateDialog by remember { androidx.compose.runtime.mutableStateOf(false) }
         var availableUpdateVersion by remember { androidx.compose.runtime.mutableStateOf("") }
-        var availableUpdateChangelog by remember { androidx.compose.runtime.mutableStateOf<List<echo.music.iad1tya.echomusic.updater.ChangelogSection>>(emptyList()) }
+        var availableUpdateChangelog by remember { androidx.compose.runtime.mutableStateOf<List<echo.music.iad1tya.notune.updater.ChangelogSection>>(emptyList()) }
         var availableUpdateDescription by remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
-        var whatsNewInfo by remember { androidx.compose.runtime.mutableStateOf<echo.music.iad1tya.echomusic.updater.WhatsNewInfo?>(null) }
+        var whatsNewInfo by remember { androidx.compose.runtime.mutableStateOf<echo.music.iad1tya.notune.updater.WhatsNewInfo?>(null) }
 
         LaunchedEffect(Unit) {
             val currentVersion = BuildConfig.VERSION_NAME
-            val lastSeenVersion = echo.music.iad1tya.echomusic.updater.getLastSeenChangelogVersion(context)
+            val lastSeenVersion = echo.music.iad1tya.notune.updater.getLastSeenChangelogVersion(context)
             if (lastSeenVersion.isEmpty()) {
                 // Fresh install, not an update — nothing "new" to show, so mark this
                 // version seen right away rather than waiting on a dialog dismissal.
-                echo.music.iad1tya.echomusic.updater.saveLastSeenChangelogVersion(context, currentVersion)
+                echo.music.iad1tya.notune.updater.saveLastSeenChangelogVersion(context, currentVersion)
             } else if (lastSeenVersion != currentVersion) {
                 // Only mark the version seen once its changelog is actually shown (see
                 // onDismiss below) — if the fetch fails here, retry on the next launch
                 // instead of losing that version's release notes forever.
-                whatsNewInfo = echo.music.iad1tya.echomusic.updater.fetchChangelogForVersion(currentVersion)
+                whatsNewInfo = echo.music.iad1tya.notune.updater.fetchChangelogForVersion(currentVersion)
             }
         }
 
@@ -667,7 +667,7 @@ class MainActivity : ComponentActivity() {
         val view = LocalView.current
         var lastScrollHapticTime by remember { mutableStateOf(0L) }
 
-        echomusicTheme(
+        notuneTheme(
             darkTheme = useDarkTheme,
             pureBlack = pureBlack,
             themeColor = themeColor,
@@ -675,7 +675,7 @@ class MainActivity : ComponentActivity() {
 
 
         if (showUpdateDialog) {
-            echo.music.iad1tya.echomusic.component.UpdateAvailableDialog(
+            echo.music.iad1tya.notune.component.UpdateAvailableDialog(
                 version = availableUpdateVersion,
                 changelog = availableUpdateChangelog,
                 description = availableUpdateDescription,
@@ -683,11 +683,11 @@ class MainActivity : ComponentActivity() {
             )
         } else {
             whatsNewInfo?.let { info ->
-                echo.music.iad1tya.echomusic.updater.WhatsNewDialog(
+                echo.music.iad1tya.notune.updater.WhatsNewDialog(
                     version = BuildConfig.VERSION_NAME,
                     info = info,
                     onDismiss = {
-                        echo.music.iad1tya.echomusic.updater.saveLastSeenChangelogVersion(
+                        echo.music.iad1tya.notune.updater.saveLastSeenChangelogVersion(
                             context,
                             BuildConfig.VERSION_NAME,
                         )
@@ -1625,7 +1625,7 @@ class MainActivity : ComponentActivity() {
             else -> {
                 val videoId = when {
                     path == "watch" -> uri.getQueryParameter("v")
-                    uri.host == "youtu.be" || uri.host == "share.echomusic.fun" -> uri.pathSegments.firstOrNull()
+                    uri.host == "youtu.be" || uri.host == "share.notune.fun" -> uri.pathSegments.firstOrNull()
                     else -> null
                 }
 

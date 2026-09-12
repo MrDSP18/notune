@@ -110,7 +110,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import echo.music.iad1tya.applecanvas.AppleMusicCanvasProvider
-import echo.music.iad1tya.echomusiccanvas.echomusicCanvasProvider
+import echo.music.iad1tya.notunecanvas.notuneCanvasProvider
 import java.util.Locale
 
 
@@ -758,7 +758,7 @@ private fun ThumbnailItem(
                                     )?.takeIf { !it.preferredAnimationUrl.isNullOrBlank() }?.let { return@firstNotNullOfOrNull it }
                                 }
 
-                                echomusicCanvasProvider.getBySongArtist(
+                                notuneCanvasProvider.getBySongArtist(
                                     song = s,
                                     artist = a
                                 )?.takeIf { !it.preferredAnimationUrl.isNullOrBlank() }

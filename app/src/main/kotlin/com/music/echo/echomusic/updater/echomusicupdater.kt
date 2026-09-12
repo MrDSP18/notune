@@ -1,6 +1,6 @@
 
 
-package echo.music.iad1tya.echomusic.updater
+package echo.music.iad1tya.notune.updater
 
 
 import android.content.Context
@@ -64,8 +64,8 @@ import echo.music.iad1tya.R
 import coil3.compose.AsyncImage
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import echo.music.iad1tya.echomusic.updater.downloadmanager.UpdateDownloadWorker
-import echo.music.iad1tya.echomusic.updater.downloadmanager.DownloadNotificationManager
+import echo.music.iad1tya.notune.updater.downloadmanager.UpdateDownloadWorker
+import echo.music.iad1tya.notune.updater.downloadmanager.DownloadNotificationManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -341,7 +341,7 @@ fun UpdateScreen(navController: NavHostController) {
                                                 ContextCompat.startActivity(context, installIntent, null)
                                             }
                                         } else {
-                                            val urlToDownload = currentStatus.apkUrl ?: "https://github.com/EchoMusicApp/Echo-Music/releases/download/${currentStatus.version}/echomusic.apk"
+                                            val urlToDownload = currentStatus.apkUrl ?: "https://github.com/EchoMusicApp/notune/releases/download/${currentStatus.version}/notune.apk"
                                             
                                             val constraints = Constraints.Builder()
                                                 .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -668,7 +668,7 @@ suspend fun checkForUpdate(
 ) {
     withContext(Dispatchers.IO) {
         try {
-            val url = URL("https://api.github.com/repos/EchoMusicApp/Echo-Music/releases/latest")
+            val url = URL("https://api.github.com/repos/EchoMusicApp/notune/releases/latest")
             val json = url.openStream().bufferedReader().use { it.readText() }
             val targetRelease = JSONObject(json)
             
@@ -688,7 +688,7 @@ suspend fun checkForUpdate(
                 var imageUrl: String? = null
                 try {
                     val changelogUrl =
-                        URL("https://github.com/EchoMusicApp/Echo-Music/releases/download/$tagWithPrefix/changelog.json")
+                        URL("https://github.com/EchoMusicApp/notune/releases/download/$tagWithPrefix/changelog.json")
                     val changelogJson = changelogUrl.openStream().bufferedReader().use { it.readText() }
                     val changelogData = JSONObject(changelogJson)
 
@@ -790,7 +790,7 @@ private fun openTimedStream(url: String): java.io.InputStream =
 suspend fun fetchChangelogForVersion(currentVersion: String): WhatsNewInfo? = withContext(Dispatchers.IO) {
     try {
         val cleanCurrent = currentVersion.removePrefix("b").removePrefix("v").trim()
-        val releasesJson = openTimedStream("https://api.github.com/repos/EchoMusicApp/Echo-Music/releases")
+        val releasesJson = openTimedStream("https://api.github.com/repos/EchoMusicApp/notune/releases")
             .bufferedReader().use { it.readText() }
         val releases = JSONArray(releasesJson)
 
@@ -809,7 +809,7 @@ suspend fun fetchChangelogForVersion(currentVersion: String): WhatsNewInfo? = wi
         val changelogList = mutableListOf<ChangelogSection>()
         var description: String? = null
         try {
-            val changelogJson = openTimedStream("https://github.com/EchoMusicApp/Echo-Music/releases/download/$tag/changelog.json")
+            val changelogJson = openTimedStream("https://github.com/EchoMusicApp/notune/releases/download/$tag/changelog.json")
                 .bufferedReader().use { it.readText() }
             val changelogData = JSONObject(changelogJson)
             description = changelogData.optString("description").takeIf { it.isNotEmpty() }

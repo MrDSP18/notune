@@ -148,8 +148,8 @@ import android.bluetooth.BluetoothDevice
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import echo.music.iad1tya.echomusic.isBluetoothHeadphoneConnected
-import echo.music.iad1tya.echomusic.AudioDeviceBottomSheet
+import echo.music.iad1tya.notune.isBluetoothHeadphoneConnected
+import echo.music.iad1tya.notune.AudioDeviceBottomSheet
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive

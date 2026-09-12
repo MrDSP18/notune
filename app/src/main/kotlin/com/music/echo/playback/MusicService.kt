@@ -157,7 +157,7 @@ import echo.music.iad1tya.extensions.toEnum
 import echo.music.iad1tya.extensions.toMediaItem
 import echo.music.iad1tya.playback.toPersistQueue
 import echo.music.iad1tya.playback.toQueue
-import echo.music.iad1tya.echomusic.updater.downloadmanager.EchoNotificationProvider
+import echo.music.iad1tya.notune.updater.downloadmanager.EchoNotificationProvider
 import echo.music.iad1tya.lyrics.LyricsHelper
 import echo.music.iad1tya.models.PersistPlayerState
 import echo.music.iad1tya.models.PersistQueue
@@ -3500,7 +3500,7 @@ class MusicService :
 
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, "https://share.echomusic.fun/watch?v=$songId")
+            putExtra(Intent.EXTRA_TEXT, "https://share.notune.fun/watch?v=$songId")
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         startActivity(Intent.createChooser(shareIntent, null).apply {

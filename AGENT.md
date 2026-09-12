@@ -7,7 +7,7 @@ Keep this file up to date — it's the fastest way to give the agent full contex
 ## 🚀 Development Rules & Guidelines
 
 ### Identity Rule: NØTUNE Platform
-All branding, strings, and UI elements **must** use the **NØTUNE** identity. Never refer to "Echo Music" or "Nothing Music" in user-facing content. The aesthetic is strictly minimalist, technical, and industrial.
+All branding, strings, and UI elements **must** use the **NØTUNE** identity. Never refer to "NØTUNE" or "NØTUNE" in user-facing content. The aesthetic is strictly minimalist, technical, and industrial.
 
 ### UI Rule: Custom Industrial Aesthetic
 All UI work **must** match the **NØTUNE** design language:

@@ -63,11 +63,11 @@ import echo.music.iad1tya.ui.screens.settings.integrations.ListenTogetherSetting
 import echo.music.iad1tya.ui.screens.recognition.RecognitionScreen
 import echo.music.iad1tya.ui.screens.recognition.RecognitionHistoryScreen
 import echo.music.iad1tya.ui.screens.settings.UpdateSettings
-import echo.music.iad1tya.echomusic.updater.UpdateScreen
+import echo.music.iad1tya.notune.updater.UpdateScreen
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.utils.rememberPreference
-import echo.music.iad1tya.echomusic.changelog.ChangelogScreen
-import echo.music.iad1tya.echomusic.commitscreen.CommitScreen
+import echo.music.iad1tya.notune.changelog.ChangelogScreen
+import echo.music.iad1tya.notune.commitscreen.CommitScreen
 import echo.music.iad1tya.ui.screens.equalizer.axion.AxionEqScreen
 import echo.music.iad1tya.ui.screens.ambient.AmbientModeScreen
 

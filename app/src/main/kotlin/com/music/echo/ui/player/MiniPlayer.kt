@@ -131,12 +131,12 @@ import echo.music.iad1tya.ui.component.liquidGlass
 import echo.music.iad1tya.ui.theme.PlayerColorExtractor
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.utils.rememberPreference
-import echo.music.iad1tya.echomusic.AudioDeviceBottomSheet
+import echo.music.iad1tya.notune.AudioDeviceBottomSheet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
-import echo.music.iad1tya.echomusic.isBluetoothHeadphoneConnected
+import echo.music.iad1tya.notune.isBluetoothHeadphoneConnected
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Speaker

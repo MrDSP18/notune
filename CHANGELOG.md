@@ -5,7 +5,7 @@ All notable changes to **NØTUNE** will be documented in this file.
 
 ## [1.2.6] - 2026-02-18
 ### Added
-- **NØTUNE Identity**: Complete rebranding from Echo Music to NØTUNE.
+- **NØTUNE Identity**: Complete rebranding from NØTUNE to NØTUNE.
 - **NØTUNE AI Engine**: Multi-provider AI support (Gemini, Groq, OpenRouter, Ollama).
 - **AI DJ**: Intelligent, futuristic song introductions based on Music DNA.
 - **Ask NØTUNE**: Natural language music assistant with tool-calling capabilities.

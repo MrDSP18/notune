@@ -1,6 +1,6 @@
 
 
-package echo.music.iad1tya.echomusic.component
+package echo.music.iad1tya.notune.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

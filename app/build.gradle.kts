@@ -337,7 +337,7 @@ dependencies {
     implementation(project(":shazamkit"))
     implementation(project(":artistvideo"))
     implementation(project(":applecanvas"))
-    implementation(project(":echomusiccanvas"))
+    implementation(project(":notunecanvas"))
     implementation(project(":paxsenixlyrics"))
     implementation(project(":unison"))
 

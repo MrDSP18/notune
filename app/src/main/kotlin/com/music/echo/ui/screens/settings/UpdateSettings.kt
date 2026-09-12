@@ -37,22 +37,22 @@ import echo.music.iad1tya.R
 import echo.music.iad1tya.ui.component.IconButton
 import echo.music.iad1tya.ui.component.Material3SettingsGroup
 import echo.music.iad1tya.ui.component.Material3SettingsItem
-import echo.music.iad1tya.echomusic.component.UpdateInfoDialog
+import echo.music.iad1tya.notune.component.UpdateInfoDialog
 import echo.music.iad1tya.ui.utils.backToMain
-import echo.music.iad1tya.echomusic.updater.getAutoUpdateCheckSetting
-import echo.music.iad1tya.echomusic.updater.saveAutoUpdateCheckSetting
-import echo.music.iad1tya.echomusic.updater.getUpdateAvailableState
-import echo.music.iad1tya.echomusic.updater.saveUpdateAvailableState
-import echo.music.iad1tya.echomusic.updater.getUpdateNotificationsSetting
-import echo.music.iad1tya.echomusic.updater.saveUpdateNotificationsSetting
+import echo.music.iad1tya.notune.updater.getAutoUpdateCheckSetting
+import echo.music.iad1tya.notune.updater.saveAutoUpdateCheckSetting
+import echo.music.iad1tya.notune.updater.getUpdateAvailableState
+import echo.music.iad1tya.notune.updater.saveUpdateAvailableState
+import echo.music.iad1tya.notune.updater.getUpdateNotificationsSetting
+import echo.music.iad1tya.notune.updater.saveUpdateNotificationsSetting
 import android.widget.Toast
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.layout.fillMaxWidth
-import echo.music.iad1tya.echomusic.updater.getDownloadedApkCount
-import echo.music.iad1tya.echomusic.updater.clearDownloadedApks
-import echo.music.iad1tya.echomusic.updater.getBetaUpdatesSetting
-import echo.music.iad1tya.echomusic.updater.saveBetaUpdatesSetting
-import echo.music.iad1tya.echomusic.updater.autoClearOldApks
+import echo.music.iad1tya.notune.updater.getDownloadedApkCount
+import echo.music.iad1tya.notune.updater.clearDownloadedApks
+import echo.music.iad1tya.notune.updater.getBetaUpdatesSetting
+import echo.music.iad1tya.notune.updater.saveBetaUpdatesSetting
+import echo.music.iad1tya.notune.updater.autoClearOldApks
 import androidx.compose.material3.MaterialTheme
 import echo.music.iad1tya.BuildConfig
 import org.json.JSONObject
@@ -80,7 +80,7 @@ fun UpdateSettings(
 
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             try {
-                val url = java.net.URL("https://api.github.com/repos/EchoMusicApp/Echo-Music/releases/latest")
+                val url = java.net.URL("https://api.github.com/repos/EchoMusicApp/notune/releases/latest")
                 val json = url.openStream().bufferedReader().use { it.readText() }
                 val targetRelease = JSONObject(json)
                 releaseNotes = targetRelease.getString("body")
@@ -122,7 +122,7 @@ fun UpdateSettings(
                         }
                     },
                     onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://echomusic.fun"))
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://notune.fun"))
                         context.startActivity(intent)
                     }
                 ),

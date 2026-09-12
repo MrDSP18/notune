@@ -1,4 +1,4 @@
-package echo.music.iad1tya.echomusic.updater.downloadmanager
+package echo.music.iad1tya.notune.updater.downloadmanager
 
 import android.content.Context
 import android.os.Environment
@@ -51,7 +51,7 @@ class CustomDownloadManager {
                     downloadDir.mkdirs()
                 }
 
-                val outputFile = File(downloadDir, "echomusic.apk")
+                val outputFile = File(downloadDir, "notune.apk")
                 val outputStream = FileOutputStream(outputFile)
 
                 val buffer = ByteArray(8192)

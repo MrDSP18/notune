@@ -1,4 +1,4 @@
-package echo.music.iad1tya.echomusic.changelog
+package echo.music.iad1tya.notune.changelog
 
 
 
@@ -83,7 +83,7 @@ import coil3.compose.AsyncImage
 import echo.music.iad1tya.BuildConfig
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.R
-import echo.music.iad1tya.echomusic.updater.extractUrls
+import echo.music.iad1tya.notune.updater.extractUrls
 import echo.music.iad1tya.ui.component.parseMarkdown
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -144,9 +144,9 @@ fun ChangelogScreen(
                         showingCached = true
                     }
                 } else {
-                    val changelogUrl = URL("https://github.com/EchoMusicApp/Echo-Music/releases/download/$tag/changelog.json")
+                    val changelogUrl = URL("https://github.com/EchoMusicApp/notune/releases/download/$tag/changelog.json")
                     val connection = changelogUrl.openConnection() as HttpURLConnection
-                    connection.setRequestProperty("User-Agent", "echomusic-Changelog-App")
+                    connection.setRequestProperty("User-Agent", "notune-Changelog-App")
                     connection.setRequestProperty("Accept", "application/json")
                     
                     if (connection.responseCode == 200) {
@@ -217,9 +217,9 @@ fun ChangelogScreen(
         isFetchingOldReleases = true
         coroutineScope.launch(Dispatchers.IO) {
             try {
-                val releasesUrl = URL("https://api.github.com/repos/EchoMusicApp/Echo-Music/releases")
+                val releasesUrl = URL("https://api.github.com/repos/EchoMusicApp/notune/releases")
                 val connection = releasesUrl.openConnection() as HttpURLConnection
-                connection.setRequestProperty("User-Agent", "echomusic-Changelog-App")
+                connection.setRequestProperty("User-Agent", "notune-Changelog-App")
                 connection.setRequestProperty("Accept", "application/vnd.github+json")
                 
                 if (connection.responseCode == 200) {

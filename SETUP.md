@@ -14,8 +14,8 @@ This document provides instructions for setting up the NØTUNE project for devel
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/iad1tya/Echo-Music.git
-cd Echo-Music
+git clone https://github.com/iad1tya/notune.git
+cd notune
 ```
 
 ### 2. Configure Local Properties

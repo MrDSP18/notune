@@ -1,4 +1,4 @@
-package echo.music.iad1tya.echomusic.component
+package echo.music.iad1tya.notune.component
 
 import android.content.Intent
 import androidx.compose.foundation.layout.*
@@ -15,7 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import echo.music.iad1tya.R
-import echo.music.iad1tya.echomusic.updater.ChangelogSection
+import echo.music.iad1tya.notune.updater.ChangelogSection
 import echo.music.iad1tya.ui.utils.parseMarkdownToSections
 import echo.music.iad1tya.ui.utils.parseSimpleMarkdown
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
@@ -201,7 +201,7 @@ fun UpdateAvailableDialog(
                     Button(
                         onClick = {
                             onDismiss()
-                            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://echomusic.fun"))
+                            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://notune.fun"))
                             context.startActivity(intent)
                         },
                         shape = actionShape,

@@ -1,4 +1,4 @@
-package echo.music.iad1tya.echomusic.commitscreen
+package echo.music.iad1tya.notune.commitscreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

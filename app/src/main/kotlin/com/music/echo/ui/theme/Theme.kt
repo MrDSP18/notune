@@ -33,7 +33,7 @@ val DefaultThemeColor = Color(0xFFFFFFFF)
 val NothingRed = Color(0xFFFF0031)
 
 @Composable
-fun echomusicTheme(
+fun notuneTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     pureBlack: Boolean = false,
     content: @Composable () -> Unit,
