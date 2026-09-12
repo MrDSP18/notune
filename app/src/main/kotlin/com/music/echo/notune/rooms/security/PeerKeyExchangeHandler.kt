@@ -1,6 +1,6 @@
 package echo.music.iad1tya.notune.rooms.security
 
-import android.util.Base64
+import java.util.Base64
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.KeyPairGenerator
@@ -77,11 +77,11 @@ class PeerKeyExchangeHandler @Inject constructor() {
     }
 
     fun encodePublicKey(publicKey: PublicKey): String {
-        return Base64.encodeToString(publicKey.encoded, Base64.NO_WRAP)
+        return Base64.getEncoder().encodeToString(publicKey.encoded)
     }
 
     fun decodePublicKey(base64PublicKey: String): PublicKey {
-        val keyBytes = Base64.decode(base64PublicKey, Base64.NO_WRAP)
+        val keyBytes = Base64.getDecoder().decode(base64PublicKey)
         val keySpec = X509EncodedKeySpec(keyBytes)
         val keyFactory = KeyFactory.getInstance(ALGORITHM_EC)
         return keyFactory.generatePublic(keySpec)
@@ -94,7 +94,7 @@ class PeerKeyExchangeHandler @Inject constructor() {
         val signature = Signature.getInstance(SIGNATURE_ALGORITHM)
         signature.initSign(identityPrivateKey)
         signature.update(publicKeyToSign.encoded)
-        return Base64.encodeToString(signature.sign(), Base64.NO_WRAP)
+        return Base64.getEncoder().encodeToString(signature.sign())
     }
 
     /**
@@ -106,7 +106,7 @@ class PeerKeyExchangeHandler @Inject constructor() {
         peerIdentityPublicKey: PublicKey
     ): Boolean {
         return try {
-            val signatureBytes = Base64.decode(signatureBase64, Base64.NO_WRAP)
+            val signatureBytes = Base64.getDecoder().decode(signatureBase64)
             val signature = Signature.getInstance(SIGNATURE_ALGORITHM)
             signature.initVerify(peerIdentityPublicKey)
             signature.update(publicKeyToVerify.encoded)
@@ -191,7 +191,7 @@ class PeerKeyExchangeHandler @Inject constructor() {
         System.arraycopy(iv, 0, combined, 0, iv.size)
         System.arraycopy(cipherText, 0, combined, iv.size, cipherText.size)
 
-        return Base64.encodeToString(combined, Base64.NO_WRAP)
+        return Base64.getEncoder().encodeToString(combined)
     }
 
     /**
@@ -211,7 +211,7 @@ class PeerKeyExchangeHandler @Inject constructor() {
             }
         }
 
-        val combined = Base64.decode(cipherTextBase64, Base64.NO_WRAP)
+        val combined = Base64.getDecoder().decode(cipherTextBase64)
         if (combined.size <= IV_SIZE_BYTES) {
             throw IllegalArgumentException("Ciphertext payload too short")
         }
