@@ -8,6 +8,15 @@ import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
 
+data class MusicDnaProfile(
+    val energy: Float = 0.82f,
+    val discovery: Float = 0.91f,
+    val nostalgia: Float = 0.71f,
+    val diversity: Float = 0.88f,
+    val replay: Float = 0.63f,
+    val moodRange: Float = 0.97f
+)
+
 /**
  * Computes a real Music DNA profile from the user's listening history stored in Room.
  *

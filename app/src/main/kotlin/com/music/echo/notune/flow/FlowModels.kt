@@ -25,6 +25,14 @@ enum class FlowContextMode {
     DISCOVERY
 }
 
+data class FlowIntent(
+    val mood: String = "balanced",
+    val targetEnergy: Float = 0.5f,
+    val discoveryRatio: Float = 0.3f,
+    val contextMode: FlowContextMode = FlowContextMode.NORMAL,
+    val rawPrompt: String = ""
+)
+
 enum class ItemSource {
     MANUAL,
     FLOW,
