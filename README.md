@@ -68,3 +68,8 @@ cd notune
 
 ---
 **NØTUNE — Music Understood.**
+
+## 👥 Contributors
+
+<!-- readme-contributors-start -->
+<!-- readme-contributors-end -->
