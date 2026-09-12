@@ -17,6 +17,12 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Run Secret Scan
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: false
+
     - name: Set up JDK 21
       uses: actions/setup-java@v5
       with:
@@ -39,10 +45,9 @@ jobs:
         echo "$KEYSTORE_BASE64" | base64 -d > keystore.jks
 
     - name: Run Lint
-      continue-on-error: true
       run: |
         chmod +x gradlew
-        ./gradlew lintUniversalFossDebug || true
+        ./gradlew lintUniversalFossDebug
 
     - name: Run Unit Tests
       run: |
@@ -54,6 +59,7 @@ jobs:
       with:
         name: lint-results
         path: "**/build/reports/lint-results-*.html"
+        if-no-files-found: ignore
 
     - name: Upload Test Results
       if: always()
@@ -61,8 +67,9 @@ jobs:
       with:
         name: test-results
         path: "**/build/reports/tests/"
+        if-no-files-found: ignore
 
-    - name: Build Release APK
+    - name: Build Release APK & AAB
       if: ${{ env.KEYSTORE_BASE64 != '' }}
       env:
         KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
@@ -72,9 +79,9 @@ jobs:
         LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
         LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
       run: |
-        ./gradlew assembleUniversalGmsRelease
+        ./gradlew assembleUniversalGmsRelease bundleUniversalGmsRelease
 
-    - name: Build Debug APK (fork PR fallback without signing)
+    - name: Build Debug APK & AAB (fork PR fallback without signing)
       if: ${{ env.KEYSTORE_BASE64 == '' }}
       env:
         KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
@@ -90,10 +97,17 @@ jobs:
           -dname "CN=Android Debug,O=Android,C=US" \
           -keyalg RSA \
           -validity 10000
-        ./gradlew assembleUniversalFossDebug
+        ./gradlew assembleUniversalFossDebug bundleUniversalFossDebug
 
     - name: Upload Universal APK
       uses: actions/upload-artifact@v4
       with:
         name: NOTUNE-Universal-APK
         path: app/build/outputs/apk/**/*.apk
+
+    - name: Upload Universal AAB
+      uses: actions/upload-artifact@v4
+      with:
+        name: NOTUNE-Universal-AAB
+        path: app/build/outputs/bundle/**/*.aab
+        if-no-files-found: ignore
