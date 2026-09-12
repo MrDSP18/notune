@@ -45,6 +45,7 @@ app/google-services.json
 !persistent-debug.keystore
 
 # Temporary test homes & scratch
+.android/
 .android_home/
 .gradle_home/
 .user_home/
