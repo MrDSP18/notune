@@ -236,6 +236,8 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import echo.music.iad1tya.ui.component.NoTuneSpectrum
+import echo.music.iad1tya.ui.theme.NothingFont
 import echo.music.iad1tya.applecanvas.AppleMusicCanvasProvider
 import echo.music.iad1tya.canvas.CanvasArtwork
 import echo.music.iad1tya.canvas.TidalCanvasProvider
@@ -255,38 +257,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.geometry.Size
-
-private data class WavyShape(
-    val sides: Int,
-    val indent: Float,
-    val rotationDegrees: Float
-) : Shape {
-    override fun createOutline(
-        size: Size,
-        layoutDirection: LayoutDirection,
-        density: Density
-    ): Outline {
-        val path = Path()
-        val maxRadiusX = size.width / 2f
-        val maxRadiusY = size.height / 2f
-        val cx = size.width / 2f
-        val cy = size.height / 2f
-
-        val steps = 120
-        val rotationRad = rotationDegrees * Math.PI / 180.0
-        for (i in 0..steps) {
-            val angle = i * Math.PI * 2 / steps
-            val bumpAngle = angle - rotationRad
-            val r = 1f - indent + indent * cos(sides * bumpAngle)
-            val x = cx + maxRadiusX * r * cos(angle)
-            val y = cy + maxRadiusY * r * sin(angle)
-            if (i == 0) path.moveTo(x.toFloat(), y.toFloat())
-            else path.lineTo(x.toFloat(), y.toFloat())
-        }
-        path.close()
-        return Outline.Generic(path)
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -1425,7 +1395,7 @@ fun BottomSheetPlayer(
     ) {
         val controlsContent: @Composable ColumnScope.(MediaMetadata) -> Unit = { mediaMetadata ->
             val playPauseRoundness by animateDpAsState(
-                targetValue = if (isPlaying) 24.dp else 36.dp,
+                targetValue = if (isPlaying) 2.dp else 4.dp, // Sharper for Nothing
                 animationSpec = tween(durationMillis = 90, easing = LinearEasing),
                 label = "playPauseRoundness",
             )
@@ -1438,76 +1408,6 @@ fun BottomSheetPlayer(
                         .fillMaxWidth()
                         .padding(horizontal = PlayerHorizontalPadding),
             ) {
-                AnimatedContent(
-                    targetState = showInlineLyrics,
-                    label = "ThumbnailAnimation"
-                ) { showLyrics ->
-                    if (showLyrics) {
-                        Row {
-                            if (hidePlayerThumbnail) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(56.dp)
-                                        .clip(RoundedCornerShape(ThumbnailCornerRadius))
-                                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_launcher_nobg),
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .size(32.dp),
-                                        tint = textButtonColor.copy(alpha = 0.7f)
-                                    )
-                                }
-                            } else {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .size(56.dp)
-                                        .clip(RoundedCornerShape(ThumbnailCornerRadius))
-                                        .clickable(enabled = isFullScreen && enableLyricsThumbnailPlayPause) {
-                                            playerConnection.togglePlayPause()
-                                        }
-                                ) {
-                                    AsyncImage(
-                                        model = mediaMetadata.thumbnailUrl,
-                                        contentDescription = null,
-                                        contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-
-                                    if (isFullScreen && enableLyricsThumbnailPlayPause) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .background(Color.Black.copy(alpha = if (isPlaying) 0f else 0.4f))
-                                        )
-
-                                        androidx.compose.animation.AnimatedVisibility(
-                                            visible = !isPlaying,
-                                            enter = fadeIn(),
-                                            exit = fadeOut()
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(
-                                                    if (playbackState == Player.STATE_ENDED) R.drawable.replay
-                                                    else R.drawable.play
-                                                ),
-                                                contentDescription = null,
-                                                tint = Color.White,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                        }
-                    } else {
-                        Spacer(modifier = Modifier.width(0.dp))
-                    }
-                }
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -1517,18 +1417,36 @@ fun BottomSheetPlayer(
                             onSwipeLeft = { playerConnection.seekToNext() }
                         )
                 ) {
+                    val aiDjCommentary by playerConnection.service.aiDjCommentary.collectAsState()
+                    
+                    AnimatedVisibility(visible = !aiDjCommentary.isNullOrBlank()) {
+                        Text(
+                            text = aiDjCommentary?.uppercase() ?: "",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontFamily = NothingFont,
+                                color = NothingRed,
+                                fontSize = 10.sp,
+                                letterSpacing = 1.sp
+                            ),
+                            modifier = Modifier.padding(bottom = 4.dp).basicMarquee()
+                        )
+                    }
+
                     AnimatedContent(
                         targetState = mediaMetadata.title,
                         transitionSpec = { fadeIn() togetherWith fadeOut() },
                         label = "",
                     ) { title ->
                         Text(
-                            text = title,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
+                            text = title.uppercase(),
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontFamily = NothingFont,
+                                letterSpacing = 2.sp,
+                                fontWeight = FontWeight.Normal
+                            ),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            color = TextBackgroundColor,
+                            color = Color.White,
                             modifier =
                                 Modifier
                                     .basicMarquee(iterations = 1, initialDelayMillis = 3000, velocity = 30.dp)
@@ -1556,27 +1474,6 @@ fun BottomSheetPlayer(
 
                     Spacer(Modifier.height(4.dp))
 
-                    if (isCasting && castDeviceName != null) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(vertical = 2.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.cast_connected),
-                                contentDescription = null,
-                                tint = TextBackgroundColor.copy(alpha = 0.7f),
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Text(
-                                text = "Casting to $castDeviceName",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = TextBackgroundColor.copy(alpha = 0.7f)
-                            )
-                        }
-                        Spacer(Modifier.height(2.dp))
-                    }
-
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
@@ -1588,8 +1485,8 @@ fun BottomSheetPlayer(
                                 mediaMetadata.artists.forEachIndexed { index, artist ->
                                     val tag = "artist_${artist.id.orEmpty()}"
                                     pushStringAnnotation(tag = tag, annotation = artist.id.orEmpty())
-                                    withStyle(SpanStyle(color = TextBackgroundColor, fontSize = 16.sp)) {
-                                        append(artist.name)
+                                    withStyle(SpanStyle(color = Color.White.copy(alpha = 0.7f), fontSize = 14.sp, fontFamily = NothingFont, letterSpacing = 1.sp)) {
+                                        append(artist.name.uppercase())
                                     }
                                     pop()
                                     if (index != mediaMetadata.artists.lastIndex) append(", ")
@@ -1606,7 +1503,7 @@ fun BottomSheetPlayer(
                                 var clickOffset by remember { mutableStateOf<Offset?>(null) }
                                 Text(
                                     text = annotatedString,
-                                    style = MaterialTheme.typography.titleMedium.copy(color = TextBackgroundColor),
+                                    style = MaterialTheme.typography.titleMedium.copy(color = Color.White.copy(alpha = 0.7f)),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     onTextLayout = { layoutResult = it },
@@ -1664,8 +1561,8 @@ fun BottomSheetPlayer(
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.width(12.dp))
+            }
+  Spacer(modifier = Modifier.width(12.dp))
 
                 if (useNewPlayerDesign) {
                     val shareShape = RoundedCornerShape(
@@ -2304,6 +2201,14 @@ fun BottomSheetPlayer(
 
             automixDebugOverlay()
 
+            val (showVisualizer) = rememberPreference(echo.music.iad1tya.constants.ExperimentalVisualizersKey, defaultValue = false)
+            if (showVisualizer) {
+                NoTuneSpectrum(
+                    isPlaying = effectiveIsPlaying,
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
+            }
+
             Spacer(Modifier.height(if (useNewPlayerDesign) 24.dp else 12.dp))
 
             AnimatedVisibility(
@@ -2349,14 +2254,15 @@ fun BottomSheetPlayer(
                             FilledIconButton(
                                 onClick = playerConnection::seekToPrevious,
                                 enabled = canSkipPrevious && !isListenTogetherGuest,
-                                shape = CircleShape,
+                                shape = RoundedCornerShape(2.dp), // Sharper Nothing Style
                                 interactionSource = backInteractionSource,
                                 colors = IconButtonDefaults.filledIconButtonColors(
-                                    containerColor = sideButtonContainerColor,
-                                    contentColor = sideButtonContentColor,
+                                    containerColor = Color.White.copy(alpha = 0.05f),
+                                    contentColor = Color.White,
                                 ),
                                 modifier = Modifier
                                     .size(68.dp)
+                                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(2.dp))
                                     .graphicsLayer { scaleX = backButtonScale; scaleY = backButtonScale }
                             ) {
                                 Icon(
@@ -2404,11 +2310,11 @@ fun BottomSheetPlayer(
                                         playerConnection.togglePlayPause()
                                     }
                                 },
-                                shape = if (cookieIndent > 0f) WavyShape(9, cookieIndent, rotation) else CircleShape,
+                                shape = if (cookieIndent > 0f) echo.music.iad1tya.ui.theme.WavyShape(9, cookieIndent, rotation) else RoundedCornerShape(2.dp),
                                 interactionSource = playPauseInteractionSource,
                                 colors = IconButtonDefaults.filledIconButtonColors(
-                                    containerColor = textButtonColor,
-                                    contentColor = iconButtonColor,
+                                    containerColor = Color(0xFFFF0031), // Nothing Red
+                                    contentColor = Color.White,
                                 ),
                                 modifier = Modifier
                                     .size(84.dp)
@@ -2441,14 +2347,15 @@ fun BottomSheetPlayer(
                             FilledIconButton(
                                 onClick = playerConnection::seekToNext,
                                 enabled = canSkipNext && !isListenTogetherGuest,
-                                shape = CircleShape,
+                                shape = RoundedCornerShape(2.dp), // Sharper Nothing Style
                                 interactionSource = nextInteractionSource,
                                 colors = IconButtonDefaults.filledIconButtonColors(
-                                    containerColor = sideButtonContainerColor,
-                                    contentColor = sideButtonContentColor,
+                                    containerColor = Color.White.copy(alpha = 0.05f),
+                                    contentColor = Color.White,
                                 ),
                                 modifier = Modifier
                                     .size(68.dp)
+                                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(2.dp))
                                     .graphicsLayer { scaleX = nextButtonScale; scaleY = nextButtonScale }
                             ) {
                                 Icon(
@@ -2809,6 +2716,7 @@ fun BottomSheetPlayer(
                             PlayerSyncedLyricsView(
                                 mediaMetadata = mediaMetadata,
                                 positionProvider = { effectivePosition },
+                                navController = navController,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 12.dp)
@@ -2837,6 +2745,18 @@ fun BottomSheetPlayer(
                             .padding(bottom = bottomPadding)
                             .animateContentSize(),
                 ) {
+                    val appName = echo.music.iad1tya.notune.rememberAppName()
+                    Text(
+                        text = appName.uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = NothingFont,
+                            letterSpacing = 4.sp,
+                            fontSize = 12.sp
+                        ),
+                        color = Color.White.copy(alpha = 0.4f),
+                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                    )
+
                     Box(
                         contentAlignment = Alignment.TopCenter,
                         modifier = Modifier
@@ -2871,6 +2791,7 @@ fun BottomSheetPlayer(
                         PlayerSyncedLyricsView(
                             mediaMetadata = mediaMetadata,
                             positionProvider = { effectivePosition },
+                            navController = navController,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 12.dp)

@@ -18,7 +18,9 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
-class CreateAiPlaylistViewModel @Inject constructor() : ViewModel() {
+class CreateAiPlaylistViewModel @Inject constructor(
+    private val aiPlaylistGenerator: AiPlaylistGenerator
+) : ViewModel() {
 
     private val _prompt = MutableStateFlow("")
     val prompt: StateFlow<String> = _prompt.asStateFlow()
@@ -144,7 +146,7 @@ class CreateAiPlaylistViewModel @Inject constructor() : ViewModel() {
         val activeWeatherInfo = if (isWeatherActive) (weatherState as WeatherUiState.Success).data else null
 
         viewModelScope.launch {
-            val playlistId = AiPlaylistGenerator.generatePlaylist(
+            val playlistId = aiPlaylistGenerator.generatePlaylist(
                 context = context,
                 userPrompt = currentPrompt,
                 numberOfSongs = _numSongs.value.toInt(),

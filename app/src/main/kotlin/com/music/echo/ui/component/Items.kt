@@ -148,20 +148,25 @@ inline fun ListItem(
     shape: Shape = RectangleShape,
     drawHighlight: Boolean = true,
     horizontalPadding: Dp = 16.dp,
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    color: Color = Color.Transparent, // Glassmorphism: transparent background
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .padding(vertical = 2.dp)
+            .padding(vertical = 4.dp) // More spacing for premium feel
             .padding(horizontal = horizontalPadding)
             .clip(shape)
             .background(
                 color = when {
-                    isActive -> MaterialTheme.colorScheme.secondaryContainer
-                    isSelected == true && drawHighlight -> MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                    isActive -> Color.White.copy(alpha = 0.1f)
+                    isSelected == true && drawHighlight -> Color.White.copy(alpha = 0.2f)
                     else -> color
                 }
+            )
+            .border(
+                width = 1.dp,
+                color = if (isActive) Color.White.copy(alpha = 0.1f) else Color.Transparent,
+                shape = shape
             )
             .then(modifier)
             .height(ListItemHeight)

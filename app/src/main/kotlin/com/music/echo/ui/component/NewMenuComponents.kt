@@ -2,6 +2,7 @@
 
 package echo.music.iad1tya.ui.component
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.basicMarquee
@@ -54,8 +55,8 @@ fun NewActionButton(
     onClick: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
-    contentColor: Color = MaterialTheme.colorScheme.onSurfaceVariant
+    backgroundColor: Color = Color.White.copy(alpha = 0.05f), // Glassmorphism
+    contentColor: Color = Color.White
 ) {
     val animatedBackground by animateColorAsState(
         targetValue = if (enabled) backgroundColor else backgroundColor.copy(alpha = 0.5f),
@@ -84,9 +85,9 @@ fun NewActionButton(
         colors = CardDefaults.cardColors(
             containerColor = animatedBackground
         ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(
-        )
+        shape = RoundedCornerShape(4.dp), // Sharper Nothing corners
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(
             modifier = Modifier
@@ -147,12 +148,13 @@ fun NewMenuSectionHeader(
     modifier: Modifier = Modifier
 ) {
     Text(
-        text = text,
+        text = text.uppercase(), // Dot matrix style
         style = MaterialTheme.typography.titleMedium.copy(
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.sp
+            fontWeight = FontWeight.Normal, // Bartle font is thick
+            fontSize = 14.sp,
+            letterSpacing = 1.sp
         ),
-        color = MaterialTheme.colorScheme.primary,
+        color = MaterialTheme.colorScheme.primary, // Nothing Red
         modifier = modifier.padding(horizontal = 20.dp, vertical = 12.dp)
     )
 }
@@ -194,17 +196,18 @@ fun NewActionGrid(
                         onCheckedChange = { performAction = true },
                         enabled = action.enabled,
                         shapes = when {
-                            actions.size == 1 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                            index == 0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                            index == actions.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                            actions.size == 1 -> RoundedCornerShape(4.dp)
+                            index == 0 -> RoundedCornerShape(4.dp)
+                            index == actions.lastIndex -> RoundedCornerShape(4.dp)
+                            else -> RoundedCornerShape(4.dp)
                         },
                         colors = ToggleButtonDefaults.toggleButtonColors(
-                            containerColor = bgColor,
-                            contentColor = contentCol,
-                            disabledContainerColor = bgColor.copy(alpha = 0.5f),
-                            disabledContentColor = contentCol.copy(alpha = 0.5f)
+                            containerColor = Color.White.copy(alpha = 0.05f),
+                            contentColor = Color.White,
+                            disabledContainerColor = Color.White.copy(alpha = 0.02f),
+                            disabledContentColor = Color.White.copy(alpha = 0.3f)
                         ),
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
                         modifier = Modifier
                             .weight(1f)
                             .semantics { role = Role.Button }

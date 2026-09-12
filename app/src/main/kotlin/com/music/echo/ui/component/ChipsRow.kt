@@ -81,19 +81,22 @@ fun <E> ChipsRow(
 
             
             val cornerRadius by animateDpAsState(
-                targetValue = if (isSelected) 20.dp else 8.dp,
+                targetValue = if (isSelected) 0.dp else 4.dp, // Sharper corners
                 animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    dampingRatio = Spring.DampingRatioNoBouncy, // No bounce for premium feel
                     stiffness = Spring.StiffnessMedium
                 ),
                 label = "corner_radius"
             )
 
             FilterChip(
-                label = { Text(label) },
+                label = { Text(label.uppercase()) }, // Uppercase for dot matrix feel
                 selected = isSelected,
                 colors = FilterChipDefaults.filterChipColors(
-                    containerColor = containerColor,
+                    containerColor = Color.White.copy(alpha = 0.05f),
+                    selectedContainerColor = Color.White,
+                    labelColor = Color.White,
+                    selectedLabelColor = Color.Black
                 ),
                 onClick = { onValueUpdate(value) },
                 leadingIcon = if (isSelected) {

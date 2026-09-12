@@ -117,6 +117,7 @@ import echo.music.iad1tya.constants.SwipeSensitivityKey
 import echo.music.iad1tya.constants.SwipeThumbnailKey
 import echo.music.iad1tya.constants.ThumbnailCornerRadius
 import echo.music.iad1tya.constants.UseNewMiniPlayerDesignKey
+import echo.music.iad1tya.ui.theme.NothingFont
 import echo.music.iad1tya.db.entities.ArtistEntity
 import echo.music.iad1tya.listentogether.ListenTogetherManager
 import echo.music.iad1tya.models.MediaMetadata
@@ -431,9 +432,9 @@ private fun NewMiniPlayer(
                 .then(if (isTabletLandscape) Modifier.width(480.dp).align(Alignment.Center) else Modifier.fillMaxWidth())
                 .height(MiniPlayerHeight)
                 .offset { IntOffset(offsetXAnimatable.value.roundToInt(), 0) }
-                .clip(RoundedCornerShape(32.dp))
+                .clip(RoundedCornerShape(4.dp)) // Sharper Nothing OS Style
                 .background(color = backgroundColor)
-                .border(1.dp, outlineColor.copy(alpha = 0.3f), RoundedCornerShape(32.dp))
+                .border(1.dp, outlineColor.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
         ) {
             
             MiniPlayerBackgroundLayer(
@@ -526,7 +527,7 @@ private fun NewMiniPlayerThumbnail(
                 drawContent()
                 
                 val progress = progressState.progress
-                val stroke = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
+                val stroke = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Butt)
                 val startAngle = -90f
                 val sweepAngle = 360f * progress
                 val diameter = size.minDimension
@@ -544,7 +545,7 @@ private fun NewMiniPlayerThumbnail(
                 )
                 
                 drawArc(
-                    color = primaryColor,
+                    color = primaryColor, // This is Nothing Red or White
                     startAngle = startAngle,
                     sweepAngle = sweepAngle,
                     useCenter = false,
@@ -558,9 +559,9 @@ private fun NewMiniPlayerThumbnail(
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .border(1.dp, outlineColor.copy(alpha = 0.3f), CircleShape)
+                .size(38.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .border(1.dp, outlineColor.copy(alpha = 0.1f), RoundedCornerShape(2.dp))
         ) {
             mediaMetadata?.let { metadata ->
                 AsyncImage(
@@ -569,7 +570,7 @@ private fun NewMiniPlayerThumbnail(
                         .build(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize().clip(CircleShape)
+                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(2.dp))
                 )
             }
         }
@@ -592,10 +593,13 @@ private fun NewMiniPlayerSongInfo(
     ) {
         mediaMetadata?.let { metadata ->
             Text(
-                text = metadata.title,
+                text = metadata.title.uppercase(),
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontFamily = NothingFont,
+                    letterSpacing = 1.sp,
+                    fontSize = 13.sp
+                ),
                 color = onSurfaceColor,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.basicMarquee(iterations = 1, initialDelayMillis = 3000, velocity = 30.dp),
@@ -607,9 +611,13 @@ private fun NewMiniPlayerSongInfo(
                 if (metadata.explicit) MIcon.Explicit()
                 if (metadata.artists.any { it.name.isNotBlank() }) {
                     Text(
-                        text = metadata.artists.joinToString { it.name },
-                        color = onSurfaceColor.copy(alpha = 0.7f),
-                        fontSize = 12.sp,
+                        text = metadata.artists.joinToString { it.name }.uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = NothingFont,
+                            letterSpacing = 0.5.sp,
+                            fontSize = 10.sp
+                        ),
+                        color = onSurfaceColor.copy(alpha = 0.6f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.basicMarquee(iterations = 1, initialDelayMillis = 3000, velocity = 30.dp),
@@ -619,9 +627,9 @@ private fun NewMiniPlayerSongInfo(
 
             AnimatedVisibility(visible = error != null, enter = fadeIn(), exit = fadeOut()) {
                 Text(
-                    text = stringResource(R.string.error_playing),
+                    text = stringResource(R.string.error_playing).uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont),
                     color = errorColor,
-                    fontSize = 10.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1260,8 +1268,9 @@ private fun MiniPlayerControls(
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
+                .size(44.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(2.dp))
                 .clickable {
                     if (isListenTogetherGuest) {
                         playerConnection.toggleMute()
@@ -1276,18 +1285,8 @@ private fun MiniPlayerControls(
                         playerConnection.togglePlayPause()
                     }
                 }
+                .background(Color(0xFFFF0031)) // Nothing Red
         ) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .graphicsLayer {
-                        rotationZ = rotation
-                        clip = true
-                        shape = PolygonCookieShape(sides = 9, indent = cookieIndent)
-                    }
-                    .background(primaryColor)
-            )
-
             Icon(
                 painter = painterResource(
                     when {
@@ -1298,7 +1297,7 @@ private fun MiniPlayerControls(
                     }
                 ),
                 contentDescription = null,
-                tint = onPrimaryColor,
+                tint = Color.White,
                 modifier = Modifier.size(24.dp)
             )
         }

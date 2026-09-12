@@ -250,6 +250,12 @@ class MusicService :
     @Inject
     lateinit var listenTogetherManager: echo.music.iad1tya.listentogether.ListenTogetherManager
     
+    @Inject
+    lateinit var aiEngine: echo.music.iad1tya.notune.ai.AiEngine
+
+    @Inject
+    lateinit var musicDnaRepository: echo.music.iad1tya.notune.MusicDnaRepository
+    
 
     private lateinit var audioManager: AudioManager
     // Wi-Fi Lock: Prevents modern Wi-Fi 6/7 routers from putting the Wi-Fi chip into
@@ -340,6 +346,7 @@ class MusicService :
     )
 
     val automixDebugInfo = MutableStateFlow<AutomixDebugInfo?>(null)
+    val aiDjCommentary = MutableStateFlow<String?>(null)
 
     private val secondaryPlayerListener = object : Player.Listener {
         override fun onPlayerError(error: PlaybackException) {
@@ -1584,19 +1591,35 @@ class MusicService :
     }
 
     fun startRadioSeamlessly() {
-        
-        if (!playerInitialized.value) {
-            Timber.tag(TAG).w("startRadioSeamlessly called before player initialization")
-            return
-        }
-
+        if (!playerInitialized.value) return
         val currentMediaMetadata = player.currentMetadata ?: return
 
-        val currentIndex = player.currentMediaItemIndex
-        val currentMediaId = currentMediaMetadata.id
-
         scope.launch(SilentHandler) {
+            val aiRadioEnabled = dataStore.get(echo.music.iad1tya.constants.AiDjEnabledKey, false)
+            if (aiRadioEnabled) {
+                val result = aiEngine.generateResponse(
+                    "I am listening to ${currentMediaMetadata.title}. Suggest 10 futuristic songs. Respond ONLY in JSON: [{\"title\": \"Song\", \"artist\": \"Artist\"}]"
+                )
+                result.onSuccess { response ->
+                    val cleanJson = response.text.replace("```json", "").replace("```", "").trim()
+                    val resolvedSongs = mutableListOf<com.music.innertube.models.SongItem>()
+                    try {
+                        val jsonArray = kotlinx.serialization.json.Json.decodeFromString<List<echo.music.iad1tya.notune.GeminiSongSuggestion>>(cleanJson)
+                        for (suggestion in jsonArray) {
+                            com.music.innertube.YouTube.search("${suggestion.title} ${suggestion.artist}", com.music.innertube.YouTube.SearchFilter.FILTER_SONG).getOrNull()?.items?.filterIsInstance<com.music.innertube.models.SongItem>()?.firstOrNull()?.let {
+                                resolvedSongs.add(it)
+                            }
+                        }
+                    } catch (e: Exception) { }
+                    
+                    if (resolvedSongs.isNotEmpty()) {
+                        playQueue(echo.music.iad1tya.playback.queues.ListQueue("NØTUNE AI RADIO", resolvedSongs.map { it.toMediaItem() }, 0))
+                        return@launch
+                    }
+                }
+            }
             
+            val currentMediaId = currentMediaMetadata.id
             val radioQueue = YouTubeQueue(
                 endpoint = WatchEndpoint(
                     videoId = currentMediaId
@@ -2105,6 +2128,28 @@ class MusicService :
 
         scrobbleManager?.onSongStop()
         checkAndSubmitListenBrainzFinished()
+        
+        // NØTUNE AI DJ
+        aiDjCommentary.value = null
+        if (dataStore.get(echo.music.iad1tya.constants.AiDjEnabledKey, false)) {
+            mediaItem?.let { item ->
+                scope.launch {
+                    val dna = musicDnaRepository.getMusicDnaPrompt()
+                    val prompt = """
+                        You are NØTUNE AI DJ. 
+                        Context:
+                        $dna
+                        Time: ${java.time.LocalTime.now()}
+                        
+                        Introduce the song "${item.mediaMetadata.title}" by "${item.mediaMetadata.artist}". 
+                        Explain briefly why it fits the user's taste and current time. 
+                        Keep it under 15 words and very futuristic.
+                    """.trimIndent()
+                    val result = aiEngine.generateResponse(prompt)
+                    aiDjCommentary.value = result.getOrNull()?.text
+                }
+            }
+        }
 
         if (player.playWhenReady && player.playbackState == Player.STATE_READY) {
             scrobbleManager?.onSongStart(player.currentMetadata, duration = player.duration)

@@ -67,10 +67,10 @@ fun NavigationTitle(
             }
 
             Text(
-                text = title,
+                text = title.uppercase(), // Dot matrix style often uses uppercase
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Normal, // The Nothing font is already "bold" enough
+                color = MaterialTheme.colorScheme.onSurface,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
             )
@@ -79,17 +79,17 @@ fun NavigationTitle(
         onPlayAllClick?.let { playAllClick ->
             OutlinedButton(
                 onClick = playAllClick,
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
+                shape = RoundedCornerShape(0.dp), // Sharper corners for Nothing OS
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
+                    contentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
                 modifier = Modifier
                     .height(24.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.play_all),
+                    text = stringResource(R.string.play_all).uppercase(),
                     style = MaterialTheme.typography.labelSmall
                 )
             }

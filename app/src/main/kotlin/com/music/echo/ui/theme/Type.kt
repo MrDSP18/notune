@@ -7,6 +7,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+=
 
 
 
@@ -14,52 +15,59 @@ import androidx.compose.ui.unit.sp
 
 
 
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import echo.music.iad1tya.R
+
+val NothingFont = FontFamily(
+    Font(resId = R.font.bbh_bartle_regular, weight = FontWeight.Normal)
+)
 
 val AppTypography = Typography(
     displayLarge = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = NothingFont,
         fontWeight = FontWeight.Normal,
         fontSize = 57.sp,
         lineHeight = 64.sp,
         letterSpacing = (-0.25).sp
     ),
     displayMedium = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = NothingFont,
         fontWeight = FontWeight.Normal,
         fontSize = 45.sp,
         lineHeight = 52.sp,
         letterSpacing = 0.sp
     ),
     displaySmall = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = NothingFont,
         fontWeight = FontWeight.Normal,
         fontSize = 36.sp,
         lineHeight = 44.sp,
         letterSpacing = 0.sp
     ),
     headlineLarge = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = NothingFont,
         fontWeight = FontWeight.Normal,
         fontSize = 32.sp,
         lineHeight = 40.sp,
         letterSpacing = 0.sp
     ),
     headlineMedium = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = NothingFont,
         fontWeight = FontWeight.Normal,
         fontSize = 28.sp,
         lineHeight = 36.sp,
         letterSpacing = 0.sp
     ),
     headlineSmall = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = NothingFont,
         fontWeight = FontWeight.Normal,
         fontSize = 24.sp,
         lineHeight = 32.sp,
         letterSpacing = 0.sp
     ),
     titleLarge = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = NothingFont,
         fontWeight = FontWeight.Normal, 
         fontSize = 22.sp,
         lineHeight = 28.sp,
@@ -115,10 +123,26 @@ val AppTypography = Typography(
         letterSpacing = 0.5.sp
     ),
     labelSmall = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = NothingFont,
         fontWeight = FontWeight.Medium,
         fontSize = 11.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp
     )
+)
+
+val TypographyMonospace = Typography(
+    displayLarge = TextStyle(fontFamily = FontFamily.Monospace),
+    headlineLarge = TextStyle(fontFamily = FontFamily.Monospace),
+    titleLarge = TextStyle(fontFamily = FontFamily.Monospace),
+    bodyLarge = TextStyle(fontFamily = FontFamily.Monospace),
+    labelLarge = TextStyle(fontFamily = FontFamily.Monospace)
+)
+
+val TypographyGeometric = Typography(
+    displayLarge = TextStyle(fontFamily = FontFamily.SansSerif),
+    headlineLarge = TextStyle(fontFamily = FontFamily.SansSerif),
+    titleLarge = TextStyle(fontFamily = FontFamily.SansSerif),
+    bodyLarge = TextStyle(fontFamily = FontFamily.SansSerif),
+    labelLarge = TextStyle(fontFamily = FontFamily.SansSerif)
 )

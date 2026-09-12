@@ -1,156 +1,74 @@
+
 package echo.music.iad1tya.ui.screens
 
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Image
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import coil3.compose.AsyncImage
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import echo.music.iad1tya.BuildConfig
 import echo.music.iad1tya.R
+import echo.music.iad1tya.ui.theme.NothingFont
 
 @Composable
 fun WelcomeDialog(
     onDismissRequest: () -> Unit
 ) {
-    val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
+    var stage by remember { mutableIntStateOf(0) }
+    
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        stage++
+    }
 
     Dialog(
-        onDismissRequest = onDismissRequest,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        onDismissRequest = { /* Force onboarding */ },
+        properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = false, dismissOnClickOutside = false)
     ) {
-        Card(
+        Box(
             modifier = Modifier
-                .padding(24.dp)
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                .fillMaxSize()
+                .background(Color.Black)
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(vertical = 20.dp, horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                // Main Header
-                WelcomeAppCard()
-
-                WelcomeSectionCard(title = "Follow Developer") {
-                    WelcomeActionRow(
-                        icon = painterResource(R.drawable.ic_instagram_new),
-                        title = "Instagram",
-                        subtitle = "@iad1tya",
-                        onClick = { uriHandler.openUri("https://instagram.com/iad1tya") }
-                    )
-                    WelcomeDivider()
-                    WelcomeActionRow(
-                        icon = painterResource(R.drawable.ic_x_new),
-                        title = "X (Twitter)",
-                        subtitle = "@xad1tya",
-                        onClick = { uriHandler.openUri("https://x.com/xad1tya") }
-                    )
-                    WelcomeDivider()
-                    WelcomeActionRow(
-                        icon = painterResource(R.drawable.github),
-                        title = "GitHub",
-                        subtitle = "iad1tya",
-                        onClick = { uriHandler.openUri("https://github.com/iad1tya") }
-                    )
-                }
-
-                WelcomeSectionCard(title = "Support Echo") {
-                    WelcomeActionRow(
-                        icon = painterResource(R.drawable.coffee),
-                        title = "Buy Me a Coffee",
-                        subtitle = "buymeacoffee.com/iad1tya",
-                        onClick = { uriHandler.openUri("https://buymeacoffee.com/iad1tya") }
-                    )
-                    WelcomeDivider()
-                    WelcomeActionRow(
-                        icon = painterResource(R.drawable.ic_patreon_new),
-                        title = "Patreon",
-                        subtitle = "patreon.com/cw/iad1tya",
-                        onClick = { uriHandler.openUri("https://www.patreon.com/cw/iad1tya") }
-                    )
-                    WelcomeDivider()
-                    WelcomeActionRow(
-                        icon = painterResource(R.drawable.upi_new),
-                        title = "UPI",
-                        subtitle = "iad1tya@upi",
-                        onClick = { uriHandler.openUri("https://intradeus.github.io/http-protocol-redirector/?r=upi://pay?pa=iad1tya@upi&pn=Aditya%20Yadav&am=&tn=Thank%20You%20so%20much%20for%20this%20support") }
-                    )
-                }
-
-                WelcomeSectionCard(title = "Community") {
-                    WelcomeActionRow(
-                        icon = painterResource(R.drawable.ic_discord_new),
-                        title = "Discord",
-                        subtitle = "discord.gg/Xt5hgsJJuA",
-                        onClick = { uriHandler.openUri("https://discord.gg/Xt5hgsJJuA") }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Button(
-                    onClick = { uriHandler.openUri("https://github.com/EchoMusicApp/Echo-Music") },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.star),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Star the Repo", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                }
-
-                Button(
-                    onClick = onDismissRequest,
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Text("Continue", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                when (stage) {
+                    0 -> OnboardingIntro { stage++ }
+                    1 -> OnboardingPermissions {
+                        val perms = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            arrayOf(Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+                        }
+                        permissionLauncher.launch(perms)
+                    }
+                    2 -> OnboardingAiFeatures { stage++ }
+                    3 -> OnboardingFinal { onDismissRequest() }
                 }
             }
         }
@@ -158,172 +76,174 @@ fun WelcomeDialog(
 }
 
 @Composable
-private fun WelcomeAppCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-    ) {
-        Column(
+private fun OnboardingIntro(onNext: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 20.dp, horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .size(80.dp)
+                .background(Color(0xFFFF0031), RoundedCornerShape(2.dp))
         ) {
-            val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-            AsyncImage(
-                model = R.mipmap.ic_launcher,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceContainer),
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = "Echo Music",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-                ) {
-                    Text(
-                        text = BuildConfig.VERSION_NAME,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                    )
-                }
-            }
+            Box(modifier = Modifier.size(24.dp).background(Color.White, RoundedCornerShape(1.dp)))
         }
-    }
-}
-
-@Composable
-private fun WelcomeSectionCard(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        
+        Spacer(Modifier.height(32.dp))
+        
         Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 6.dp),
+            text = "WELCOME TO NØTUNE",
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontFamily = NothingFont,
+                letterSpacing = 2.sp,
+                color = Color.White
+            ),
+            textAlign = TextAlign.Center
         )
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        
+        Spacer(Modifier.height(16.dp))
+        
+        Text(
+            text = "The futuristic music ecosystem. Minimalist design. Intelligent core. Fully customizable.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White.copy(alpha = 0.6f),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        
+        Spacer(Modifier.height(48.dp))
+        
+        Button(
+            onClick = onNext,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(2.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
         ) {
-            Column(
-                modifier = Modifier.padding(vertical = 4.dp),
-                content = content,
-            )
+            Text("INITIALIZE", style = MaterialTheme.typography.labelLarge.copy(fontFamily = NothingFont))
         }
     }
 }
 
 @Composable
-private fun WelcomeActionRow(
-    icon: Painter,
-    title: String,
-    subtitle: String? = null,
-    onClick: () -> Unit,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.98f else 1f,
-        animationSpec = spring(stiffness = Spring.StiffnessHigh),
-        label = "rowScale",
-    )
-    val tint = MaterialTheme.colorScheme.primary
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 6.dp, vertical = 2.dp)
-            .graphicsLayer { scaleX = scale; scaleY = scale }
-            .clip(RoundedCornerShape(22.dp))
-            .clickable(
-                interactionSource = interactionSource,
-                indication = ripple(),
-                onClick = onClick,
-            ),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Surface(
-                modifier = Modifier.size(36.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = tint.copy(alpha = 0.10f),
-            ) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                    Icon(
-                        painter = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = tint,
-                    )
-                }
-            }
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                subtitle?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-            Icon(
-                painter = painterResource(R.drawable.arrow_forward),
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+private fun OnboardingPermissions(onGrant: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(
+            painter = painterResource(R.drawable.library_music),
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(64.dp)
+        )
+        
+        Spacer(Modifier.height(32.dp))
+        
+        Text(
+            text = "ACCESS YOUR MUSIC",
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontFamily = NothingFont,
+                color = Color.White
             )
+        )
+        
+        Spacer(Modifier.height(16.dp))
+        
+        Text(
+            text = "NØTUNE needs permission to scan your device for local audio files and show notifications.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White.copy(alpha = 0.6f),
+            textAlign = TextAlign.Center
+        )
+        
+        Spacer(Modifier.height(48.dp))
+        
+        Button(
+            onClick = onGrant,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(2.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+        ) {
+            Text("GRANT ACCESS", style = MaterialTheme.typography.labelLarge.copy(fontFamily = NothingFont))
         }
     }
 }
 
 @Composable
-private fun WelcomeDivider() {
-    HorizontalDivider(
-        modifier = Modifier.padding(start = 78.dp, end = 20.dp),
-        thickness = 0.5.dp,
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-    )
+private fun OnboardingAiFeatures(onNext: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(
+            painter = painterResource(R.drawable.sparks),
+            contentDescription = null,
+            tint = Color(0xFFFF0031),
+            modifier = Modifier.size(64.dp)
+        )
+        
+        Spacer(Modifier.height(32.dp))
+        
+        Text(
+            text = "AI-POWERED EXPERIENCE",
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontFamily = NothingFont,
+                color = Color.White
+            )
+        )
+        
+        Spacer(Modifier.height(16.dp))
+        
+        Text(
+            text = "Discover music like never before with AI DJ, personalized recommendations, and natural language search. Connect your Gemini or Groq keys in settings later.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White.copy(alpha = 0.6f),
+            textAlign = TextAlign.Center
+        )
+        
+        Spacer(Modifier.height(48.dp))
+        
+        Button(
+            onClick = onNext,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(2.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+        ) {
+            Text("UNDERSTOOD", style = MaterialTheme.typography.labelLarge.copy(fontFamily = NothingFont))
+        }
+    }
+}
+
+@Composable
+private fun OnboardingFinal(onFinish: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(
+            painter = painterResource(R.drawable.check_circle),
+            contentDescription = null,
+            tint = Color(0xFF00FF41),
+            modifier = Modifier.size(64.dp)
+        )
+        
+        Spacer(Modifier.height(32.dp))
+        
+        Text(
+            text = "SYSTEM READY",
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontFamily = NothingFont,
+                color = Color.White
+            )
+        )
+        
+        Spacer(Modifier.height(16.dp))
+        
+        Text(
+            text = "NØTUNE is now configured and ready for your first track.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White.copy(alpha = 0.6f),
+            textAlign = TextAlign.Center
+        )
+        
+        Spacer(Modifier.height(48.dp))
+        
+        Button(
+            onClick = onFinish,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(2.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF0031), contentColor = Color.White)
+        ) {
+            Text("START LISTENING", style = MaterialTheme.typography.labelLarge.copy(fontFamily = NothingFont))
+        }
+    }
 }

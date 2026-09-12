@@ -527,7 +527,7 @@ private fun FloatingNavigationToolbarItem(
 @Composable
 private fun floatingToolbarContainerColor(pureBlack: Boolean): Color {
     return if (pureBlack) {
-        Color.Black
+        Color.White.copy(alpha = 0.05f)
     } else {
         MaterialTheme.colorScheme.surfaceContainer
     }
@@ -535,28 +535,28 @@ private fun floatingToolbarContainerColor(pureBlack: Boolean): Color {
 
 @Composable
 private fun floatingToolbarFabContainerColor(pureBlack: Boolean): Color {
-    return MaterialTheme.colorScheme.primaryContainer
+    return if (pureBlack) Color.White else MaterialTheme.colorScheme.primaryContainer
 }
 
 @Composable
 private fun floatingToolbarFabContentColor(pureBlack: Boolean): Color {
-    return MaterialTheme.colorScheme.onPrimaryContainer
+    return if (pureBlack) Color.Black else MaterialTheme.colorScheme.onPrimaryContainer
 }
 
 @Composable
 private fun floatingToolbarSelectedItemContainerColor(pureBlack: Boolean): Color {
-    return MaterialTheme.colorScheme.secondaryContainer
+    return if (pureBlack) Color.White.copy(alpha = 0.1f) else MaterialTheme.colorScheme.secondaryContainer
 }
 
 @Composable
 private fun floatingToolbarSelectedItemContentColor(pureBlack: Boolean): Color {
-    return MaterialTheme.colorScheme.onSecondaryContainer
+    return if (pureBlack) Color.White else MaterialTheme.colorScheme.onSecondaryContainer
 }
 
 
 @Composable
 private fun floatingToolbarItemContentColor(pureBlack: Boolean): Color {
-    return MaterialTheme.colorScheme.onSurfaceVariant
+    return if (pureBlack) Color.White.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurfaceVariant
 }
 
 @Composable

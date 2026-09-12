@@ -117,7 +117,7 @@ fun AnimatedBottomSheet(
 fun BottomSheetMenu(
     modifier: Modifier = Modifier,
     state: MenuState,
-    background: Color = BottomSheetDefaults.ContainerColor,
+    background: Color = Color.Black, // Monochrome/Glass feel
 ) {
     val focusManager = LocalFocusManager.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
@@ -130,14 +130,14 @@ fun BottomSheetMenu(
         },
         sheetState = sheetState,
         containerColor = background,
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        contentColor = Color.White,
+        shape = RoundedCornerShape(0.dp), // Sharp Nothing corners
         dragHandle = {
             Box(
                 modifier = Modifier
-                    .padding(vertical = 12.dp)
-                    .size(width = 40.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                    .padding(vertical = 16.dp)
+                    .size(width = 32.dp, height = 2.dp) // Minimalist bar
+                    .background(Color.White.copy(alpha = 0.2f))
             )
         },
         modifier = modifier.fillMaxHeight()

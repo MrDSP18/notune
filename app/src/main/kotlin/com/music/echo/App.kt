@@ -49,10 +49,20 @@ import java.net.Authenticator
 import java.net.PasswordAuthentication
 import java.net.Proxy
 import java.util.Locale
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import javax.inject.Inject
 
 @HiltAndroidApp
-class App : Application(), SingletonImageLoader.Factory {
+class App : Application(), SingletonImageLoader.Factory, Configuration.Provider {
+
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
 
     @Inject
     @ApplicationScope

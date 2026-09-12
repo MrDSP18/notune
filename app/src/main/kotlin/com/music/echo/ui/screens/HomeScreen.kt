@@ -137,6 +137,8 @@ import echo.music.iad1tya.playback.queues.YouTubeQueue
 import echo.music.iad1tya.R
 import echo.music.iad1tya.ui.component.AlbumGridItem
 import echo.music.iad1tya.ui.component.ArtistGridItem
+import echo.music.iad1tya.ui.component.NoTuneLogo
+import echo.music.iad1tya.ui.component.NoTuneAIPromptCard
 import echo.music.iad1tya.ui.component.ChipsRow
 import echo.music.iad1tya.ui.component.HideOnScrollFAB
 import echo.music.iad1tya.ui.component.LocalBottomSheetPageState
@@ -953,6 +955,14 @@ fun HomeScreen(
                 state = lazylistState,
                 contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
             ) {
+                item {
+                    NoTuneAIPromptCard(
+                        onAskClick = { navController.navigate("notune/ask") },
+                        onLabClick = { navController.navigate("notune/lab") },
+                        onReplayClick = { navController.navigate("notune/replay") }
+                    )
+                }
+
                 item {
                     ChipsRow(
                         chips = homePage?.chips?.filter { 

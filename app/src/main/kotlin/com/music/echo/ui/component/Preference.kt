@@ -339,7 +339,7 @@ fun PreferenceGroupTitle(
     Text(
         text = title.uppercase(),
         style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(16.dp),
+        color = MaterialTheme.colorScheme.primary, // This is Nothing Red now
+        modifier = modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp),
     )
 }

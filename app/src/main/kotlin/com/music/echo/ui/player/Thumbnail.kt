@@ -1,6 +1,8 @@
 
 
 package echo.music.iad1tya.ui.player
+import echo.music.iad1tya.ui.theme.NothingFont
+import echo.music.iad1tya.ui.theme.rememberArtworkShape
 import echo.music.iad1tya.utils.isLocalMediaId
 
 import androidx.compose.animation.AnimatedVisibility
@@ -131,7 +133,7 @@ private fun calculateThumbnailDimensions(
     containerWidth: Dp,
     containerHeight: Dp = containerWidth,
     horizontalPadding: Dp = PlayerHorizontalPadding,
-    cornerRadius: Dp = ThumbnailCornerRadius,
+    cornerRadius: Dp = 2.dp, // Sharper for Nothing
     isLandscape: Boolean = false
 ): ThumbnailDimensions {
     
@@ -424,12 +426,13 @@ fun Thumbnail(
                         Modifier.fillMaxSize()
                     }
                 ) {
+                    val artworkShape = rememberArtworkShape()
                     
-                    val dimensions = remember(maxWidth, maxHeight, isLandscape, thumbnailCornerRadius) {
+                    val dimensions = remember(maxWidth, maxHeight, isLandscape) {
                         calculateThumbnailDimensions(
                             containerWidth = maxWidth,
                             containerHeight = maxHeight,
-                            cornerRadius = thumbnailCornerRadius.dp,
+                            cornerRadius = 2.dp, // Base radius
                             isLandscape = isLandscape
                         )
                     }
@@ -479,7 +482,8 @@ fun Thumbnail(
                                 isListenTogetherGuest = isListenTogetherGuest,
                                 currentMediaId = mediaMetadata?.id,
                                 currentMediaThumbnail = mediaMetadata?.thumbnailUrl,
-                                playerBackground = playerBackground
+                                playerBackground = playerBackground,
+                                artworkShape = artworkShape
                             )
                         }
                     }
@@ -531,14 +535,14 @@ private fun ThumbnailHeader(
             
             if (listenTogetherRoleState?.value != RoomRole.NONE) {
                 Text(
-                    text = if (listenTogetherRoleState?.value == RoomRole.HOST) "Hosting Listen Together" else "Listening Together",
-                    style = MaterialTheme.typography.titleMedium,
+                    text = (if (listenTogetherRoleState?.value == RoomRole.HOST) "Hosting Listen Together" else "Listening Together").uppercase(),
+                    style = MaterialTheme.typography.titleMedium.copy(fontFamily = NothingFont, letterSpacing = 1.sp),
                     color = textColor
                 )
             } else {
                 Text(
-                    text = stringResource(R.string.now_playing),
-                    style = MaterialTheme.typography.titleMedium,
+                    text = stringResource(R.string.now_playing).uppercase(),
+                    style = MaterialTheme.typography.titleMedium.copy(fontFamily = NothingFont, letterSpacing = 1.sp),
                     color = textColor
                 )
             }
@@ -551,9 +555,9 @@ private fun ThumbnailHeader(
                 if (!text.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = text,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = textColor.copy(alpha = 0.8f),
+                        text = text.uppercase(),
+                        style = MaterialTheme.typography.titleMedium.copy(fontFamily = NothingFont, letterSpacing = 1.sp),
+                        color = textColor.copy(alpha = 0.6f),
                         maxLines = 1,
                         modifier = Modifier.basicMarquee()
                     )
@@ -584,6 +588,7 @@ private fun ThumbnailItem(
     currentMediaId: String? = null,
     currentMediaThumbnail: String? = null,
     playerBackground: PlayerBackgroundStyle = PlayerBackgroundStyle.DEFAULT,
+    artworkShape: Shape = RoundedCornerShape(2.dp),
     modifier: Modifier = Modifier,
 ) {
     val rotatingThumbnail by rememberPreference(RotatingThumbnailKey, defaultValue = false)
@@ -685,13 +690,8 @@ private fun ThumbnailItem(
                 .graphicsLayer {
                     rotationZ = rotation
                 }
-                .clip(
-                    if (rotatingThumbnail) {
-                        MaterialShapes.Clover8Leaf.toShape()
-                    } else {
-                        RoundedCornerShape(dimensions.cornerRadius)
-                    }
-                )
+                .clip(artworkShape)
+                .border(1.dp, Color.White.copy(alpha = 0.1f), artworkShape)
                 .graphicsLayer {
                     rotationZ = -rotation
                 }
@@ -925,14 +925,14 @@ private fun SeekEffectOverlay(
     modifier: Modifier = Modifier
 ) {
     Text(
-        text = seekDirection,
+        text = seekDirection.uppercase(),
         color = Color.White,
-        fontSize = 16.sp,
-        fontWeight = FontWeight.Bold,
+        style = MaterialTheme.typography.labelLarge.copy(fontFamily = NothingFont, letterSpacing = 2.sp),
         textAlign = TextAlign.Center,
         modifier = modifier
-            .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
-            .padding(8.dp)
+            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(2.dp))
+            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(2.dp))
+            .padding(12.dp)
     )
 }
 

@@ -1010,6 +1010,14 @@ highlightKey: String? = null) {
         Material3SettingsGroup(scrollState = scrollState, 
             title = stringResource(R.string.theme),
             items = buildList {
+                add(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.palette),
+                        title = { Text("NØTUNE Theme Builder") },
+                        description = { Text("Extreme customization and premium themes") },
+                        onClick = { navController.navigate("notune/theme_builder") }
+                    )
+                )
 
 
 

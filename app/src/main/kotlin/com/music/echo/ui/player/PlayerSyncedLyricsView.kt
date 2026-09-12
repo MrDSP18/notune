@@ -39,10 +39,18 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.ui.res.painterResource
+import androidx.navigation.NavController
+import echo.music.iad1tya.R
+
 @Composable
 fun PlayerSyncedLyricsView(
     mediaMetadata: MediaMetadata?,
     positionProvider: () -> Long,
+    navController: NavController? = null,
     modifier: Modifier = Modifier
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
@@ -112,7 +120,8 @@ fun PlayerSyncedLyricsView(
                         fadeOut() + slideOutVertically { height -> -height }
                     ).using(SizeTransform(clip = false))
                 },
-                label = "SyncedLyrics"
+                label = "SyncedLyrics",
+                modifier = Modifier.weight(1f)
             ) { lineText ->
                 Text(
                     text = lineText,
@@ -120,7 +129,22 @@ fun PlayerSyncedLyricsView(
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Left,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        navController?.navigate("notune/ask")
+                        // AI prompt logic could be added here to AskNoTuneViewModel
+                    }
+                )
+            }
+
+            IconButton(
+                onClick = { navController?.navigate("notune/ask") },
+                modifier = Modifier.size(24.dp).padding(start = 8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.sparks),
+                    contentDescription = "Explain Lyrics",
+                    tint = Color(0xFFFF0031),
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }

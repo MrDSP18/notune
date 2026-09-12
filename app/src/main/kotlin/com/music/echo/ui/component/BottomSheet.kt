@@ -100,7 +100,7 @@ fun BottomSheet(
                 )
             }
             .graphicsLayer {
-                val cornerRadius = if (!state.isExpanded) 16.dp.toPx() else 0f
+                val cornerRadius = if (!state.isExpanded) 0.dp.toPx() else 0f // No rounded corners for Nothing OS
                 shape = RoundedCornerShape(topStart = cornerRadius, topEnd = cornerRadius)
                 clip = true
             }

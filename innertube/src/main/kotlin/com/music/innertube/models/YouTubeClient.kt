@@ -288,5 +288,25 @@ data class YouTubeClient(
             useSignatureTimestamp = false,
             packageName = "com.google.ios.youtube"
         )
+
+        val ANDROID_TESTSUITE = YouTubeClient(
+            clientName = "ANDROID_TESTSUITE",
+            clientVersion = "1.9",
+            clientId = "30",
+            userAgent = "com.google.android.youtube.testsuite/1.9 (Linux; U; Android 14; en_US; Pixel 8; Build/AP1A.240405.002; Cronet/123.0.6312.4)",
+            friendlyName = "Android TestSuite",
+            loginSupported = false,
+            useSignatureTimestamp = false
+        )
+
+        val MWEB = YouTubeClient(
+            clientName = "MWEB",
+            clientVersion = "2.20240412.00.00",
+            clientId = "2",
+            userAgent = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.6312.40 Mobile Safari/537.36",
+            friendlyName = "Mobile Web",
+            loginSupported = true,
+            useSignatureTimestamp = true
+        )
     }
 }

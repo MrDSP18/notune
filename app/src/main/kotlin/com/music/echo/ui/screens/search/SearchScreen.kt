@@ -2,6 +2,8 @@
 
 package echo.music.iad1tya.ui.screens.search
 
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +28,8 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -112,7 +116,10 @@ import echo.music.iad1tya.ui.component.YouTubeGridItem
 import echo.music.iad1tya.ui.menu.YouTubeAlbumMenu
 import echo.music.iad1tya.constants.GridThumbnailHeight
 import echo.music.iad1tya.constants.GridItemsSizeKey
+import echo.music.iad1tya.ui.theme.NothingFont
+import echo.music.iad1tya.notune.GeminiRepository
 import echo.music.iad1tya.constants.GridItemSize
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,6 +128,8 @@ fun SearchScreen(
     pureBlack: Boolean
 ) {
     val database = LocalDatabase.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val activity = context as android.app.Activity
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
@@ -179,6 +188,10 @@ fun SearchScreen(
                         navController.navigate("artist/${parsedUrl.id}")
                     }
 
+                    is YouTubeUrlParser.ParsedUrl.Playlist -> {
+                        navController.navigate("playlist/${parsedUrl.id}")
+                    }
+
                     null -> {
                         navController.navigate("search/${URLEncoder.encode(searchQuery, "UTF-8")}")
                     }
@@ -210,6 +223,10 @@ fun SearchScreen(
 
                     is YouTubeUrlParser.ParsedUrl.Artist -> {
                         navController.navigate("artist/${parsedUrl.id}")
+                    }
+
+                    is YouTubeUrlParser.ParsedUrl.Playlist -> {
+                        navController.navigate("playlist/${parsedUrl.id}")
                     }
 
                     null -> {
@@ -297,6 +314,38 @@ fun SearchScreen(
                                         innerTextField()
                                     }
                                     Row(verticalAlignment = Alignment.CenterVertically) {
+                                        IconButton(
+                                            onClick = {
+                                                navController.navigate("notune/ask")
+                                            }
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.sparks),
+                                                contentDescription = "AI Assistant",
+                                                tint = Color(0xFFFF0031)
+                                            )
+                                        }
+
+                                        IconButton(
+                                            onClick = {
+                                                try {
+                                                    val intent = Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                                        putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                                        putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "NØTUNE: Speak your command...")
+                                                    }
+                                                    activity.startActivityForResult(intent, 1001)
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Voice search not available", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.mic),
+                                                contentDescription = "Voice Search",
+                                                tint = Color.White
+                                            )
+                                        }
+
                                         if (query.text.isNotEmpty()) {
                                             IconButton(onClick = { query = TextFieldValue("") }) {
                                                 Icon(

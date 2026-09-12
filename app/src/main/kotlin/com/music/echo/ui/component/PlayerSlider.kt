@@ -77,7 +77,7 @@ private fun DrawScope.drawTrack(
         sliderStart,
         sliderEnd,
         trackStrokeWidth,
-        StrokeCap.Round
+        StrokeCap.Butt // Sharp ends for Nothing OS
     )
     val sliderValueEnd = Offset(
         sliderStart.x +
@@ -94,7 +94,7 @@ private fun DrawScope.drawTrack(
         sliderValueStart,
         sliderValueEnd,
         trackStrokeWidth,
-        StrokeCap.Round
+        StrokeCap.Butt // Sharp ends for Nothing OS
     )
     for (tick in tickFractions) {
         val outsideFraction = tick > activeRangeEnd || tick < activeRangeStart

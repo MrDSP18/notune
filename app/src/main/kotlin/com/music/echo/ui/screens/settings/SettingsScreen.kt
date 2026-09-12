@@ -144,6 +144,32 @@ highlightKey: String? = null) {
         )
 
         val itemsList = buildList {
+            // NØTUNE AI & Platform
+            add(
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.sparks),
+                    title = { Text("Ask NØTUNE") },
+                    description = { Text("Your intelligent AI music assistant") },
+                    onClick = { navController.navigate("notune/ask") }
+                )
+            )
+            add(
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.palette),
+                    title = { Text("Theme Builder") },
+                    description = { Text("Extreme customization and theme engine") },
+                    onClick = { navController.navigate("notune/theme_builder") }
+                )
+            )
+            add(
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.account),
+                    title = { Text("NØTUNE Lab") },
+                    description = { Text("Experimental features and AI engine") },
+                    onClick = { navController.navigate("notune/lab") }
+                )
+            )
+
             if (accountText.lowercase().contains(searchLower) || accountDesc.lowercase().contains(searchLower)) {
                 add(
                     Material3SettingsItem(

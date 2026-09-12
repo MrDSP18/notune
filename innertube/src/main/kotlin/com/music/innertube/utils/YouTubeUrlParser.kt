@@ -20,6 +20,10 @@ object YouTubeUrlParser {
         data class Artist(
             override val id: String,
         ) : ParsedUrl()
+
+        data class Playlist(
+            override val id: String,
+        ) : ParsedUrl()
     }
 
     /**
@@ -31,6 +35,15 @@ object YouTubeUrlParser {
             Regex("""(?:https?://)?(?:www\.)?(?:music\.)?youtube\.com/watch\?v=([a-zA-Z0-9_-]{11})"""),
             Regex("""(?:https?://)?youtu\.be/([a-zA-Z0-9_-]{11})"""),
             Regex("""(?:https?://)?(?:www\.)?youtube\.com/shorts/([a-zA-Z0-9_-]{11})"""),
+        )
+
+    /**
+     * Pattern for matching YouTube playlist URLs.
+     */
+    private val PLAYLIST_URL_PATTERNS =
+        listOf(
+            Regex("""(?:https?://)?(?:www\.)?(?:music\.)?youtube\.com/playlist\?list=([a-zA-Z0-9_-]+)"""),
+            Regex("""(?:https?://)?(?:www\.)?(?:music\.)?youtube\.com/watch\?.*list=([a-zA-Z0-9_-]+)"""),
         )
 
     /**
@@ -63,6 +76,16 @@ object YouTubeUrlParser {
                 matchResult.groupValues.getOrNull(1)?.let { videoId ->
                     println("[LINK_PARSE_DEBUG] Detected Video ID: $videoId")
                     return ParsedUrl.Video(videoId)
+                }
+            }
+        }
+
+        // Check for playlist URLs
+        for (pattern in PLAYLIST_URL_PATTERNS) {
+            pattern.find(trimmedUrl)?.let { matchResult ->
+                matchResult.groupValues.getOrNull(1)?.let { playlistId ->
+                    println("[LINK_PARSE_DEBUG] Detected Playlist ID: $playlistId")
+                    return ParsedUrl.Playlist(playlistId)
                 }
             }
         }

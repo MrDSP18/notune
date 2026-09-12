@@ -365,6 +365,36 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @Inject
+    lateinit var aiEngine: echo.music.iad1tya.notune.ai.AiEngine
+
+    @Inject
+    lateinit var aiToolManager: echo.music.iad1tya.notune.ai.tools.AiToolManager
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 1001 && resultCode == RESULT_OK) {
+            val results = data?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)
+            val spokenText = results?.firstOrNull()
+            if (!spokenText.isNullOrBlank()) {
+                lifecycleScope.launch {
+                    val result = aiEngine.generateResponse(
+                        prompt = spokenText,
+                        tools = aiEngine.getMusicTools(),
+                        systemInstruction = "You are NØTUNE, handling a voice command. Execute the most relevant tool. Spoken command: $spokenText"
+                    )
+                    result.onSuccess { response ->
+                        response.toolCalls?.forEach { aiToolManager.executeTool(it) }
+                        if (response.text.isNotBlank()) {
+                            Toast.makeText(this@MainActivity, response.text, Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -440,7 +470,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            echomusicApp(
+            notuneApp(
                 playerConnection = playerConnection,
                 database = database,
                 downloadUtil = downloadUtil,
@@ -449,10 +479,40 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @Inject
+    lateinit var aiEngine: echo.music.iad1tya.notune.ai.AiEngine
+
+    @Inject
+    lateinit var aiToolManager: echo.music.iad1tya.notune.ai.tools.AiToolManager
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 1001 && resultCode == RESULT_OK) {
+            val results = data?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)
+            val spokenText = results?.firstOrNull()
+            if (!spokenText.isNullOrBlank()) {
+                lifecycleScope.launch {
+                    val result = aiEngine.generateResponse(
+                        prompt = spokenText,
+                        tools = aiEngine.getMusicTools(),
+                        systemInstruction = "You are NØTUNE, handling a voice command. Execute the most relevant tool. Spoken command: $spokenText"
+                    )
+                    result.onSuccess { response ->
+                        response.toolCalls?.forEach { aiToolManager.executeTool(it) }
+                        if (response.text.isNotBlank()) {
+                            Toast.makeText(this@MainActivity, response.text, Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
     @Composable
-    private fun echomusicApp(
+    private fun notuneApp(
         playerConnection: PlayerConnection?,
         database: MusicDatabase,
         downloadUtil: DownloadUtil,
@@ -962,7 +1022,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val currentTitle = when (navBackStackEntry?.destination?.route) {
-                    Screens.Home.route -> "Echo Music"
+                    Screens.Home.route -> "NØTUNE"
                     Screens.Search.route -> stringResource(R.string.search)
                     Screens.Library.route -> stringResource(R.string.filter_library)
                     Screens.ListenTogether.route -> stringResource(R.string.together)
@@ -997,21 +1057,25 @@ class MainActivity : ComponentActivity() {
                     liquidGlassSurfaceOpacity, liquidGlassTextColorInt, liquidGlassPlayerEnabled,
                     liquidGlassMiniPlayerEnabled, liquidGlassNavBarEnabled,
                 ) {
+                val (themePreset) = rememberEnumPreference(ThemePresetKey, ThemePreset.NOTHING)
+                val (liquidGlassBlurRadius) = rememberPreference(BlurIntensityKey, defaultValue = 12f)
+                val (liquidGlassSurfaceOpacity) = rememberPreference(GlassIntensityKey, defaultValue = 0.05f)
+                
+                val glassEffectConfig = remember(
+                    liquidGlassGlobalEnabled, useFloatingNavBar, liquidGlassVibrancy, liquidGlassBlurRadius,
+                    liquidGlassSurfaceOpacity, themePreset
+                ) {
                     GlassEffectConfig(
-                        globalEnabled = liquidGlassGlobalEnabled && useFloatingNavBar,
+                        globalEnabled = liquidGlassGlobalEnabled || themePreset == ThemePreset.NOTHING,
                         vibrancy = liquidGlassVibrancy,
                         blurRadius = liquidGlassBlurRadius,
-                        lensHeight = liquidGlassLensHeight,
-                        lensAmount = liquidGlassLensAmount,
-                        chromaticAberration = liquidGlassChromaticAberration,
-                        depthEffect = liquidGlassDepthEffect,
-                        surfaceTintColor = if (liquidGlassSurfaceTintColorInt == 0) Color.Unspecified else Color(liquidGlassSurfaceTintColorInt),
                         surfaceOpacity = liquidGlassSurfaceOpacity,
-                        textColor = if (liquidGlassTextColorInt == 0) Color.Unspecified else Color(liquidGlassTextColorInt),
-                        playerEnabled = liquidGlassPlayerEnabled,
-                        miniPlayerEnabled = liquidGlassMiniPlayerEnabled,
-                        navBarEnabled = liquidGlassNavBarEnabled,
+                        surfaceTintColor = Color.White,
+                        playerEnabled = true,
+                        miniPlayerEnabled = true,
+                        navBarEnabled = true,
                     )
+                }
                 }
                 
                 val baseBg = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer

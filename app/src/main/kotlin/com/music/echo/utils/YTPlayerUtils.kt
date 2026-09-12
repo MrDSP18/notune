@@ -178,10 +178,16 @@ object YTPlayerUtils {
     private val STREAM_FALLBACK_CLIENTS: Array<YouTubeClient> = arrayOf(
         VISIONOS,                        // only client measured to serve a complete file
         ANDROID_VR_1_65_10,              // current yt-dlp/YouTube.js pin; whole-file capable
+        ANDROID_CREATOR,                 // can play videos with music and "for children"
+        MOBILE,                          // official Android client fallback
+        WEB,                             // official Web client fallback
+        MWEB,                            // Mobile Web fallback
+        ANDROID_TESTSUITE,               // low-security test client
         TVHTML5,
         ANDROID_VR_1_43_32,              // version-gated; kept as the control against 1.65.10
         IPADOS,                          // ~1 MiB preview only — last resort
         IOS,                             // ~1 MiB preview only — last resort
+        ANDROID_NO_SDK,                  // login-free fallback for restricted content
         // The only client that answers OK for age-restricted / explicit tracks, because it is the
         // only authenticated one left in the chain. Its formats are always behind the signature
         // cipher, so it only works while PlayerConfigStore has a config for the live player.

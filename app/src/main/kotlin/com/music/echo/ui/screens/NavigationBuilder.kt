@@ -51,6 +51,13 @@ import echo.music.iad1tya.ui.screens.settings.AccountSettingsScreen
 import echo.music.iad1tya.ui.screens.settings.StorageSettings
 import echo.music.iad1tya.ui.screens.settings.ThemeScreen
 import echo.music.iad1tya.ui.screens.settings.AiSettings
+import echo.music.iad1tya.ui.screens.settings.LabSettingsScreen
+import echo.music.iad1tya.ui.screens.settings.ThemeBuilderScreen
+import echo.music.iad1tya.notune.AskNoTuneScreen
+import echo.music.iad1tya.notune.NeuralMapScreen
+import echo.music.iad1tya.notune.ReplayScreen
+import echo.music.iad1tya.notune.ai.AiPlaygroundScreen
+import echo.music.iad1tya.notune.ai.AiEngine
 
 import echo.music.iad1tya.ui.screens.settings.integrations.ListenTogetherSettings
 import echo.music.iad1tya.ui.screens.recognition.RecognitionScreen
@@ -474,5 +481,29 @@ fun NavGraphBuilder.navigationBuilder(
     }
     composable("settings/commits") {
         CommitScreen(navController, scrollBehavior)
+    }
+
+    composable("notune/lab") {
+        LabSettingsScreen(navController, scrollBehavior)
+    }
+
+    composable("notune/theme_builder") {
+        ThemeBuilderScreen(navController, scrollBehavior)
+    }
+
+    composable("notune/ask") {
+        AskNoTuneScreen(navController)
+    }
+
+    composable("notune/neural_map") {
+        NeuralMapScreen(navController)
+    }
+
+    composable("notune/replay") {
+        ReplayScreen(navController)
+    }
+
+    composable("notune/lab/playground") {
+        AiPlaygroundScreen(navController)
     }
 }

@@ -820,3 +820,76 @@ val LiquidGlassMiniPlayerEnabledKey = booleanPreferencesKey("liquidGlassMiniPlay
 val LiquidGlassNavBarEnabledKey = booleanPreferencesKey("liquidGlassNavBarEnabled")
 val UseFloatingNavBarKey = booleanPreferencesKey("useFloatingNavBar")
 val SavedAccountsKey = stringPreferencesKey("savedAccounts")
+
+// NØTUNE Extreme Customization
+val CustomAppNameKey = stringPreferencesKey("customAppName")
+val AppIconStyleKey = stringPreferencesKey("appIconStyle")
+val AccentColorKey = intPreferencesKey("accentColor")
+val PlayerLayoutKey = stringPreferencesKey("playerLayout")
+val AlbumArtworkShapeKey = stringPreferencesKey("albumArtworkShape")
+val SeekbarStyleExtraKey = stringPreferencesKey("seekbarStyleExtra")
+val TypographyStyleKey = stringPreferencesKey("typographyStyle")
+val BlurIntensityKey = floatPreferencesKey("blurIntensity")
+val GlassIntensityKey = floatPreferencesKey("glassIntensity")
+val ThemePresetKey = stringPreferencesKey("themePreset")
+val ImmersivePlayerKey = booleanPreferencesKey("immersivePlayer")
+val AnimatedWaveformKey = booleanPreferencesKey("animatedWaveform")
+val RealTimeSpectrumKey = booleanPreferencesKey("realTimeSpectrum")
+
+// NØTUNE AI Integration
+val GeminiApiKey = stringPreferencesKey("geminiApiKey")
+val GroqApiKey = stringPreferencesKey("groqApiKey")
+val OpenRouterApiKeyExtra = stringPreferencesKey("openRouterApiKeyExtra")
+val OllamaBaseUrlKey = stringPreferencesKey("ollamaBaseUrl")
+val PreferredAiProviderKey = stringPreferencesKey("preferredAiProvider")
+val AiProviderPriorityKey = stringPreferencesKey("aiProviderPriority") // JSON string of priority list
+
+val GoogleAccountLinkedKey = booleanPreferencesKey("googleAccountLinked")
+val AiMusicFinderEnabledKey = booleanPreferencesKey("aiMusicFinderEnabled")
+val AiMusicSuggesterEnabledKey = booleanPreferencesKey("aiMusicSuggesterEnabled")
+val AiDjEnabledKey = booleanPreferencesKey("aiDjEnabled")
+val AiVoiceControlEnabledKey = booleanPreferencesKey("aiVoiceControlEnabled")
+val AskNoTuneHistoryKey = stringPreferencesKey("askNoTuneHistory")
+
+// NØTUNE Lab (Experimental)
+val ExperimentalAiFeaturesKey = booleanPreferencesKey("experimentalAiFeatures")
+val ExperimentalVisualizersKey = booleanPreferencesKey("experimentalVisualizers")
+val ExperimentalAnimationsKey = booleanPreferencesKey("experimentalAnimations")
+
+enum class ThemePreset {
+    NOTHING,
+    CYBERPUNK,
+    AMOLED_BLACK,
+    GLASS,
+    NEON,
+    MINIMAL_WHITE,
+    RETRO,
+    MATRIX,
+    SYNTHWAVE,
+    MATERIAL,
+    CUSTOM
+}
+
+enum class AppIconStyle {
+    DEFAULT,
+    DOT_MATRIX,
+    MINIMAL,
+    NEON,
+    RETRO
+}
+
+enum class ArtworkShape {
+    SQUARE,
+    ROUNDED,
+    CIRCLE,
+    WAVY,
+    NOTHING_INDUSTRIAL
+}
+
+enum class TypographyStyle {
+    DEFAULT,
+    NOTHING_DOT_MATRIX,
+    GEOMETRIC,
+    MONOSPACE,
+    SERIF
+}
