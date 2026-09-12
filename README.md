@@ -29,7 +29,7 @@ NØTUNE is a premium, minimalist music streaming client that blends industrial d
 
 ## 📥 Installation
 
-1. Go to the [Releases](https://github.com/notune-music/notune/releases) section.
+1. Go to the [Releases](https://github.com/MrDSP18/notune/releases) section.
 2. Download the latest `notune-v1.x.x-universal-gms-release.apk`.
 3. Open the APK on your Android device and install.
 4. Follow the **NØTUNE Initialization** onboarding process.
