@@ -79,7 +79,7 @@ object DeepLService {
 
                 onLog?.invoke("Calling DeepL API (Attempt ${currentAttempt + 1})...")
                 val response = client.newCall(request).execute()
-                val responseBody = response.body?.string() ?: ""
+                val responseBody = response.body.string()
                 if (!response.isSuccessful) {
                     
                     if (response.code >= 500) {
@@ -89,17 +89,12 @@ object DeepLService {
                     }
                     
                     val errorMsg = try {
-                        JSONObject(responseBody ?: "").optString("message") 
-                            ?: "HTTP ${response.code}: ${response.message}"
+                        JSONObject(responseBody).optString("message") 
+                            .ifEmpty { "HTTP ${response.code}: ${response.message}" }
                     } catch (e: Exception) {
                         "HTTP ${response.code}: ${response.message}"
                     }
                     return@withContext Result.failure(Exception("Translation failed: $errorMsg"))
-                }
-
-                if (responseBody == null) {
-                    currentAttempt++
-                    continue
                 }
 
                 val jsonResponse = JSONObject(responseBody)

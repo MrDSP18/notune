@@ -31,7 +31,7 @@ import javax.inject.Inject
 class LyricsHelper
 @Inject
 constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val networkConnectivity: NetworkConnectivityObserver,
 ) {
     
