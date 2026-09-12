@@ -30,7 +30,7 @@ class RoomsViewModel @Inject constructor(
     private val encryptionManager: RoomEncryptionManager
 ) : ViewModel() {
 
-    private val roomDao = database.roomDao()
+    private val roomDao = database.roomDao
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()

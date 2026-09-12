@@ -59,7 +59,7 @@ fun ReplayScreen(
             items(topSongs) { song ->
                 SongListItem(
                     song = song,
-                    onClick = {
+                    modifier = Modifier.clickable {
                         playerConnection?.playQueue(ListQueue("Replay", topSongs.map { it.toMediaItem() }, topSongs.indexOf(song)))
                     }
                 )

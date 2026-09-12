@@ -28,7 +28,7 @@ class CoupleViewModel @Inject constructor(
     private val database: MusicDatabase
 ) : ViewModel() {
 
-    private val coupleDao = database.coupleDao()
+    private val coupleDao = database.coupleDao
 
     val activeSession: StateFlow<CoupleSessionEntity?> = coupleDao.activeSession()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
@@ -50,9 +50,10 @@ class CoupleViewModel @Inject constructor(
         viewModelScope.launch {
             val session = CoupleSessionEntity(
                 id = UUID.randomUUID().toString(),
-                partnerName = partnerName,
-                pairCode = pairCode,
-                createdAt = LocalDateTime.now(),
+                localAlias = "You",
+                partnerAlias = partnerName,
+                pairingCode = pairCode,
+                pairedAt = LocalDateTime.now(),
                 isActive = true
             )
             coupleDao.insertSession(session)
@@ -72,8 +73,8 @@ class CoupleViewModel @Inject constructor(
                 id = UUID.randomUUID().toString(),
                 sessionId = sessionId,
                 songId = songId,
-                title = title,
-                artist = artist,
+                songTitle = title,
+                artistName = artist,
                 note = note,
                 addedAt = LocalDateTime.now(),
                 isPrimary = true
@@ -87,9 +88,8 @@ class CoupleViewModel @Inject constructor(
             val capsule = MemoryCapsuleEntity(
                 id = UUID.randomUUID().toString(),
                 sessionId = sessionId,
-                title = title,
-                note = note,
                 songId = songId,
+                message = if (note.isNotBlank()) "$title\n$note" else title,
                 unlockAt = unlockAt,
                 createdAt = LocalDateTime.now(),
                 isOpened = false

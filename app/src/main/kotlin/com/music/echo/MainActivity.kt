@@ -1020,8 +1020,6 @@ class MainActivity : ComponentActivity() {
                 val (liquidGlassPlayerEnabled) = rememberPreference(LiquidGlassPlayerEnabledKey, defaultValue = true)
                 val (liquidGlassMiniPlayerEnabled) = rememberPreference(LiquidGlassMiniPlayerEnabledKey, defaultValue = true)
                 val (themePreset) = rememberEnumPreference(ThemePresetKey, ThemePreset.NOTHING)
-                val (liquidGlassBlurRadius) = rememberPreference(BlurIntensityKey, defaultValue = 12f)
-                val (liquidGlassSurfaceOpacity) = rememberPreference(GlassIntensityKey, defaultValue = 0.05f)
                 
                 val glassEffectConfig = remember(
                     liquidGlassGlobalEnabled, useFloatingNavBar, liquidGlassVibrancy, liquidGlassBlurRadius,

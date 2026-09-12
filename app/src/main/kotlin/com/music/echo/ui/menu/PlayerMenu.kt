@@ -295,47 +295,9 @@ fun PlayerMenu(
     val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
     LazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(bottom = 32.dp)
-    ) {
-        item {
-            NewMenuContent(
-                actionGrid = {
-                    NewActionGrid(
-                        actions = listOf(
-                            NewAction(
-                                icon = { Icon(painter = painterResource(R.drawable.sparks), contentDescription = null) },
-                                text = "EXPLAIN",
-                                onClick = {
-                                    onDismiss()
-                                    navController.navigate("notune/ask")
-                                    // In a real app, I'd pass a prompt to AskNoTune Screen
-                                }
-                            ),
-                            NewAction(
-                                icon = { Icon(painter = painterResource(R.drawable.radio), contentDescription = null) },
-                                text = "RADIO",
-                                onClick = {
-                                    playerConnection.startRadioSeamlessly()
-                                    onDismiss()
-                                }
-                            ),
-                            NewAction(
-                                icon = { Icon(painter = painterResource(R.drawable.share), contentDescription = null) },
-                                text = "SHARE",
-                                onClick = {
-                                    // Share logic
-                                }
-                            )
-                        )
-                    )
-                }
-            )
-        }
-
-        item {
-            NewMenuSectionHeader(text = "STANDARD OPTIONS")
-        }
+        contentPadding = PaddingValues(
+            start = 0.dp,
+            top = 0.dp,
             end = 0.dp,
             bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
         ),
@@ -841,9 +803,6 @@ fun PlayerMenu(
                     )
                 )
             }
-        }
-                }
-            )
         }
     }
 }

@@ -725,14 +725,16 @@ fun OldPlayerMenu(
                 items = buildList {
                     add(
                         Material3MenuItemData(
-                        title = { Text(text = "SET AS RINGTONE") },
-                        icon = { Icon(painter = painterResource(R.drawable.edit), contentDescription = null) },
-                        onClick = {
-                            onDismiss()
-                            echo.music.iad1tya.utils.RingtoneUtils.setAsRingtone(context, mediaMetadata)
-                        }
-                    ),
-                    Material3MenuItemData(
+                            title = { Text(text = "SET AS RINGTONE") },
+                            icon = { Icon(painter = painterResource(R.drawable.edit), contentDescription = null) },
+                            onClick = {
+                                onDismiss()
+                                echo.music.iad1tya.utils.RingtoneUtils.setAsRingtone(context, mediaMetadata)
+                            }
+                        )
+                    )
+                    add(
+                        Material3MenuItemData(
                             title = { Text(text = stringResource(R.string.details)) },
                             description = { Text(text = stringResource(R.string.details_desc)) },
                             icon = {

@@ -96,7 +96,7 @@ fun CoupleHomeScreen(
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "${activeSession?.partnerName ?: "Partner"} + You",
+                                text = "${activeSession?.partnerAlias ?: "Partner"} + You",
                                 color = Color.White,
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold
@@ -114,14 +114,14 @@ fun CoupleHomeScreen(
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Button(
-                                onClick = { callController.startCall(activeSession?.partnerName ?: "Partner", CallType.AUDIO) },
+                                onClick = { callController.startCall(activeSession?.partnerAlias ?: "Partner", CallType.AUDIO) },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color(0xFFE91E63)),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
                                 Text("📞 Audio")
                             }
                             Button(
-                                onClick = { callController.startCall(activeSession?.partnerName ?: "Partner", CallType.VIDEO) },
+                                onClick = { callController.startCall(activeSession?.partnerAlias ?: "Partner", CallType.VIDEO) },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color(0xFF8E24AA)),
                                 shape = RoundedCornerShape(12.dp)
                             ) {

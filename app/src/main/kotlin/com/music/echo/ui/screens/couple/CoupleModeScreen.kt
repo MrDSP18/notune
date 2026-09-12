@@ -113,13 +113,13 @@ fun CoupleModeScreen(
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Connected with ${session?.partnerName}",
+                                text = "Connected with ${session?.partnerAlias}",
                                 color = Color.White,
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Pair Code: ${session?.pairCode}",
+                                text = "Pair Code: ${session?.pairingCode}",
                                 color = Color.White.copy(alpha = 0.8f),
                                 fontSize = 14.sp
                             )
