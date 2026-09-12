@@ -75,7 +75,7 @@ class ChunkingDataSource(
                 }
                 throw e
             } catch (e: androidx.media3.datasource.DataSourceException) {
-                if (e.reason == androidx.media3.datasource.DataSourceException.POSITION_OUT_OF_RANGE) {
+                if (androidx.media3.datasource.DataSourceException.isPositionOutOfRange(e)) {
                     return C.RESULT_END_OF_INPUT
                 }
                 throw e
