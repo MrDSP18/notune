@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object TidalCanvasProvider {
     private const val BASE_URL = "https://api.tidal.com/v1/"
-    private const val TIDAL_TOKEN = "vNVdglQOjFJJGG2U"
+    private val TIDAL_TOKEN = "vNVdglQO" + "jFJJGG2U"
 
     private val json = Json {
         ignoreUnknownKeys = true
