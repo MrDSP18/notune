@@ -120,6 +120,15 @@
     <string name="view_album">View album</string>
     <string name="refetch">Refetch</string>
     <string name="share">Share</string>
+    <string name="snap_share_title">Snap &amp; Social Share</string>
+    <string name="snap_send">Snap Send</string>
+    <string name="whatsapp_share">WhatsApp</string>
+    <string name="instagram_stories">Instagram</string>
+    <string name="save_card">Save Card</string>
+    <string name="more_apps">More Apps</string>
+    <string name="listening_on_notune">Listening on NØTUNE</string>
+    <string name="link_copied_to_clipboard">Link copied to clipboard!</string>
+    <string name="card_saved_to_gallery">Snap Card saved to gallery!</string>
     <string name="more_options">More options</string>
     <string name="more_label">More</string>
     <string name="enter_fullscreen">Enter full screen</string>

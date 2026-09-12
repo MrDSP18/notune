@@ -13,15 +13,17 @@ import echo.music.iad1tya.playback.queues.ListQueue
 import echo.music.iad1tya.playback.queues.YouTubeQueue
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AiToolManager @Inject constructor(
-    private val context: Context,
-    private val database: MusicDatabase,
-    private val playerConnection: PlayerConnection
+    @ApplicationContext private val context: Context,
+    private val database: MusicDatabase
 ) {
+    var playerConnection: PlayerConnection? = null
+
     suspend fun executeTool(toolCall: ToolCall): String {
         Timber.d("AI_TOOL: Executing ${toolCall.functionName} with ${toolCall.arguments}")
         return when (toolCall.functionName) {
@@ -33,11 +35,12 @@ class AiToolManager @Inject constructor(
                 else "I found these songs: " + songs.joinToString { "${it.title} by ${it.artists.joinToString { a -> a.name }} (ID: ${it.id})" }
             }
             "play_song" -> {
+                val player = playerConnection ?: return "Error: Player not connected."
                 val songId = toolCall.arguments["song_id"] ?: return "Error: Missing song_id"
                 // Resolve metadata first if possible
                 val song = YouTube.search(songId, YouTube.SearchFilter.FILTER_SONG).getOrNull()?.items?.firstOrNull() as? SongItem
                 if (song != null) {
-                    playerConnection.playQueue(YouTubeQueue(song.id.let { com.music.innertube.models.WatchEndpoint(videoId = it) }, song.toMediaMetadata()))
+                    player.playQueue(YouTubeQueue(song.id.let { com.music.innertube.models.WatchEndpoint(videoId = it) }, song.toMediaMetadata()))
                     "Playing ${song.title}."
                 } else {
                     "Error: Could not resolve song metadata for ID $songId."
@@ -49,6 +52,7 @@ class AiToolManager @Inject constructor(
                 else "The user's top songs are: " + history.joinToString { "${it.song.title} by ${it.artists.joinToString { a -> a.name }}" }
             }
             "create_playlist" -> {
+                val player = playerConnection ?: return "Error: Player not connected."
                 val name = toolCall.arguments["name"] ?: "AI Playlist"
                 val songsStr = toolCall.arguments["songs"] ?: ""
                 val resolvedSongs = mutableListOf<SongItem>()
@@ -60,30 +64,35 @@ class AiToolManager @Inject constructor(
                 }
                 
                 if (resolvedSongs.isNotEmpty()) {
-                    playerConnection.playQueue(ListQueue(name, resolvedSongs.map { it.toMediaItem() }, 0))
+                    player.playQueue(ListQueue(name, resolvedSongs.map { it.toMediaItem() }, 0))
                     "I've created and started the playlist '$name' with ${resolvedSongs.size} songs."
                 } else {
                     "I suggested some songs but couldn't find them to play."
                 }
             }
             "pause_music" -> {
-                playerConnection.pause()
+                val player = playerConnection ?: return "Error: Player not connected."
+                player.pause()
                 "Music paused."
             }
             "resume_music" -> {
-                playerConnection.play()
+                val player = playerConnection ?: return "Error: Player not connected."
+                player.play()
                 "Music resumed."
             }
             "skip_music" -> {
-                playerConnection.seekToNext()
+                val player = playerConnection ?: return "Error: Player not connected."
+                player.seekToNext()
                 "Skipped to the next track."
             }
             "previous_music" -> {
-                playerConnection.seekToPrevious()
+                val player = playerConnection ?: return "Error: Player not connected."
+                player.seekToPrevious()
                 "Gone back to the previous track."
             }
             "get_current_track" -> {
-                val meta = playerConnection.mediaMetadata.value
+                val player = playerConnection ?: return "No music is currently playing (player disconnected)."
+                val meta = player.mediaMetadata.value
                 if (meta == null) "No music is currently playing."
                 else "Currently playing: ${meta.title} by ${meta.artists.joinToString { it.name }}."
             }

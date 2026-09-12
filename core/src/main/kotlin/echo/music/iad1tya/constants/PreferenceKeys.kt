@@ -34,6 +34,16 @@ val MiniPlayerOutlineKey = booleanPreferencesKey("miniPlayerOutline")
 val DensityScaleKey = floatPreferencesKey("density_scale_factor")
 val CustomDensityScaleKey = floatPreferencesKey("custom_density_scale_value")
 
+// NØTUNE Privacy Architecture Keys
+val PrivateSessionEnabledKey = booleanPreferencesKey("private_session_enabled")
+val CloudPersonalizationKey = booleanPreferencesKey("cloud_personalization_enabled")
+val AiPersonalizationKey = booleanPreferencesKey("ai_personalization_enabled")
+val AnalyticsEnabledKey = booleanPreferencesKey("analytics_enabled")
+val AppLockEnabledKey = booleanPreferencesKey("app_lock_enabled")
+val BiometricLockKey = booleanPreferencesKey("biometric_lock_enabled")
+val PrivateAiChatKey = booleanPreferencesKey("private_ai_chat_enabled")
+val DataRetentionPeriodKey = stringPreferencesKey("data_retention_period")
+
 enum class DensityScale(val value: Float, val label: String) {
     NATIVE(1.0f, "Native (100%)"),
     SLIGHTLY_COMPACT(0.85f, "Slightly Compact (85%)"),
@@ -172,6 +182,12 @@ val EnableExportAsMp3Key = booleanPreferencesKey("enableExportAsMp3")
 val PauseListenHistoryKey = booleanPreferencesKey("pauseListenHistory")
 val PauseSearchHistoryKey = booleanPreferencesKey("pauseSearchHistory")
 val DisableScreenshotKey = booleanPreferencesKey("disableScreenshot")
+
+// NØTUNE FLOW Preference Keys
+val FlowEnabledKey = booleanPreferencesKey("flowEnabled")
+val FlowModeKey = stringPreferencesKey("flowMode")
+val FlowContextModeKey = stringPreferencesKey("flowContextMode")
+val FlowDiscoveryRatioKey = floatPreferencesKey("flowDiscoveryRatio")
 
 
 

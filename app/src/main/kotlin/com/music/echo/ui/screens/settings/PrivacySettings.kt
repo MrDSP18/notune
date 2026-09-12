@@ -155,6 +155,21 @@ highlightKey: String? = null) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        Material3SettingsGroup(
+            scrollState = scrollState,
+            title = "NØTUNE Privacy Center",
+            items = listOf(
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.security),
+                    title = { Text("Open NØTUNE Privacy Center") },
+                    description = { Text("Manage data ownership, local AI privacy, data export & deletion") },
+                    onClick = { navController.navigate("privacy_center") }
+                )
+            )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Material3SettingsGroup(scrollState = scrollState, 
             title = stringResource(R.string.listen_history),
             items = listOf(

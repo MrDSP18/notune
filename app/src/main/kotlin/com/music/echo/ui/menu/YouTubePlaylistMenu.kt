@@ -151,6 +151,10 @@ val isPinned by database.speedDialDao.isPinned(playlist.id).collectAsState(initi
         onDismiss = { showChoosePlaylistDialog = false },
     )
 
+    var showSnapShareDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+
     YouTubeListItem(
         item = playlist,
         shape = MaterialTheme.shapes.large,
@@ -665,13 +669,7 @@ val isPinned by database.speedDialDao.isPinned(playlist.id).collectAsState(initi
                                 )
                             },
                             onClick = {
-                                val intent = Intent().apply {
-                                    action = Intent.ACTION_SEND
-                                    type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, playlist.shareLink)
-                                }
-                                context.startActivity(Intent.createChooser(intent, null))
-                                onDismiss()
+                                showSnapShareDialog = true
                             }
                         )
                     )
@@ -695,5 +693,22 @@ val isPinned by database.speedDialDao.isPinned(playlist.id).collectAsState(initi
                 }
             )
         }
+    }
+
+    if (showSnapShareDialog) {
+        echo.music.iad1tya.ui.component.SnapCardShareDialog(
+            item = echo.music.iad1tya.ui.component.ShareItem.Playlist(
+                id = playlist.id,
+                title = playlist.title,
+                author = playlist.author?.name,
+                songCount = songs.size,
+                coverUrl = playlist.thumbnail,
+                shareUrl = playlist.shareLink
+            ),
+            onDismiss = {
+                showSnapShareDialog = false
+                onDismiss()
+            }
+        )
     }
 }

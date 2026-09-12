@@ -262,6 +262,9 @@ class MusicService :
 
     @Inject
     lateinit var musicDnaRepository: echo.music.iad1tya.notune.MusicDnaRepository
+
+    @Inject
+    lateinit var flowEngine: echo.music.iad1tya.notune.flow.FlowEngine
     
 
     private lateinit var audioManager: AudioManager
@@ -2132,6 +2135,23 @@ class MusicService :
 
         preloadUpcomingItems()
         setupLoudnessEnhancer()
+
+        // NØTUNE FLOW Queue Refill
+        val upcomingMediaIds = if (player.mediaItemCount > 0) {
+            (player.currentMediaItemIndex + 1 until player.mediaItemCount).mapNotNull { idx ->
+                player.getMediaItemAt(idx).mediaId.takeIf { it.isNotBlank() }
+            }
+        } else emptyList()
+
+        flowEngine.onTrackTransition(
+            currentTrack = mediaItem?.metadata,
+            upcomingQueueTrackIds = upcomingMediaIds
+        ) { newQueueItems ->
+            if (newQueueItems.isNotEmpty()) {
+                val mediaItemsToAdd = newQueueItems.map { it.mediaMetadata.toMediaItem() }
+                player.addMediaItems(mediaItemsToAdd)
+            }
+        }
 
         discordUpdateJob?.cancel()
 

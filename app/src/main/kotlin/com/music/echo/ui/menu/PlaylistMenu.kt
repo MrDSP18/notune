@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -158,6 +159,10 @@ val editable: Boolean = playlist.playlist.isEditable == true
     }
 
     var showEditDialog by remember {
+        mutableStateOf(false)
+    }
+
+    var showSnapShareDialog by rememberSaveable {
         mutableStateOf(false)
     }
 
@@ -379,13 +384,7 @@ val editable: Boolean = playlist.playlist.isEditable == true
                         },
                         text = stringResource(R.string.share),
                         onClick = {
-                            onDismiss()
-                            val intent = Intent().apply {
-                                action = Intent.ACTION_SEND
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, "https://share.notune.fun/playlist?list=${dbPlaylist?.playlist?.browseId}")
-                            }
-                            context.startActivity(Intent.createChooser(intent, null))
+                            showSnapShareDialog = true
                         }
                     )
                 ),
@@ -863,5 +862,22 @@ val editable: Boolean = playlist.playlist.isEditable == true
                 }
             }
         }
+    }
+
+    if (showSnapShareDialog) {
+        val currentDbPlaylist = dbPlaylist
+        val targetEntity = currentDbPlaylist?.playlist ?: playlist.playlist
+        echo.music.iad1tya.ui.component.SnapCardShareDialog(
+            item = echo.music.iad1tya.ui.component.ShareItem.Playlist(
+                id = targetEntity.browseId ?: targetEntity.id,
+                title = targetEntity.name,
+                songCount = songs.size,
+                coverUrl = songs.firstOrNull()?.song?.thumbnailUrl
+            ),
+            onDismiss = {
+                showSnapShareDialog = false
+                onDismiss()
+            }
+        )
     }
 }

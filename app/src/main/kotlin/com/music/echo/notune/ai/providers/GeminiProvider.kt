@@ -13,10 +13,11 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 class GeminiProvider @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val client: HttpClient
 ) : AiProvider {
     override val type: AiProviderType = AiProviderType.GEMINI

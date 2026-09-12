@@ -110,6 +110,10 @@ fun PlayerMenu(
     onShowDetailsDialog: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    var showSnapShareDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+
     mediaMetadata ?: return
     val context = LocalContext.current
     val database = LocalDatabase.current
@@ -347,16 +351,7 @@ fun PlayerMenu(
                         },
                         text = stringResource(R.string.share),
                         onClick = {
-                            val intent = android.content.Intent().apply {
-                                action = android.content.Intent.ACTION_SEND
-                                type = "text/plain"
-                                putExtra(
-                                    android.content.Intent.EXTRA_TEXT,
-                                    "https://share.notune.fun/watch?v=${mediaMetadata.id}"
-                                )
-                            }
-                            context.startActivity(android.content.Intent.createChooser(intent, null))
-                            onDismiss()
+                            showSnapShareDialog = true
                         }
                     )
                 ),
@@ -804,6 +799,22 @@ fun PlayerMenu(
                 )
             }
         }
+    }
+
+    if (showSnapShareDialog) {
+        val currentMeta = mediaMetadata
+        echo.music.iad1tya.ui.component.SnapCardShareDialog(
+            item = echo.music.iad1tya.ui.component.ShareItem.Song(
+                id = currentMeta.id,
+                title = currentMeta.title,
+                artist = currentMeta.artists.joinToString(", ") { it.name },
+                coverUrl = currentMeta.thumbnailUrl
+            ),
+            onDismiss = {
+                showSnapShareDialog = false
+                onDismiss()
+            }
+        )
     }
 }
 
@@ -2057,3 +2068,4 @@ fun ListenTogetherDialog(
             }
         }
     }
+}

@@ -63,6 +63,13 @@ sealed class Screens(
         route = "couple_home"
     )
 
+    object PrivacyCenter : Screens(
+        titleId = R.string.privacy,
+        iconIdInactive = R.drawable.security,
+        iconIdActive = R.drawable.security,
+        route = "privacy_center"
+    )
+
     companion object {
         val MainScreens = listOf(Home, Search, ListenTogether, Library)
     }

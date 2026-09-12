@@ -1,6 +1,6 @@
 package echo.music.iad1tya.notune
 
-import echo.music.iad1tya.notune.dna.MusicDnaRepository
+import echo.music.iad1tya.notune.MusicDnaRepository
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test

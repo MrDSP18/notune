@@ -161,6 +161,10 @@ fun SongMenu(
         mutableStateOf(false)
     }
 
+    var showSnapShareDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+
     val TextFieldValueSaver: Saver<TextFieldValue, *> = Saver(
         save = { it.text },
         restore = { text -> TextFieldValue(text, TextRange(text.length)) }
@@ -399,13 +403,7 @@ fun SongMenu(
                         },
                         text = stringResource(R.string.share),
                         onClick = {
-                            onDismiss()
-                            val intent = Intent().apply {
-                                action = Intent.ACTION_SEND
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, "https://share.notune.fun/watch?v=${song.id}")
-                            }
-                            context.startActivity(Intent.createChooser(intent, null))
+                            showSnapShareDialog = true
                         }
                     )
                 ),
@@ -941,5 +939,20 @@ fun SongMenu(
                 }
             )
         }
+    }
+
+    if (showSnapShareDialog) {
+        echo.music.iad1tya.ui.component.SnapCardShareDialog(
+            item = echo.music.iad1tya.ui.component.ShareItem.Song(
+                id = song.id,
+                title = song.song.title,
+                artist = song.artists.joinToString(", ") { it.name },
+                coverUrl = song.song.thumbnailUrl
+            ),
+            onDismiss = {
+                showSnapShareDialog = false
+                onDismiss()
+            }
+        )
     }
 }

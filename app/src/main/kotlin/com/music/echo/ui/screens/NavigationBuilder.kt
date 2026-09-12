@@ -439,6 +439,10 @@ fun NavGraphBuilder.navigationBuilder(
         PrivacySettings(navController, scrollBehavior, highlightKey = backStackEntry.arguments?.getString("highlightKey"))
     }
 
+    composable("privacy_center") {
+        com.music.echo.notune.privacy.ui.PrivacyCenterScreen(navController, scrollBehavior)
+    }
+
     composable(
         route = "settings/backup_restore?highlightKey={highlightKey}",
         arguments = listOf(navArgument("highlightKey") { type = NavType.StringType; nullable = true })

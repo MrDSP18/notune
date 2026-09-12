@@ -10,6 +10,7 @@ import echo.music.iad1tya.utils.get
 import io.ktor.client.*
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,7 +19,7 @@ import echo.music.iad1tya.notune.ai.providers.OllamaProvider
 
 @Singleton
 class AiEngine @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val geminiProvider: GeminiProvider,
     private val groqProvider: GroqProvider,
     private val openRouterProvider: OpenRouterProvider,

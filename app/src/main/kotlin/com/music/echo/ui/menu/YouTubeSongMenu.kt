@@ -151,6 +151,10 @@ fun YouTubeSongMenu(
         mutableStateOf(false)  
     }  
 
+    var showSnapShareDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+
     if (showSelectArtistDialog) {  
         ListDialog(  
             onDismiss = { showSelectArtistDialog = false },  
@@ -315,13 +319,7 @@ fun YouTubeSongMenu(
                         },
                         text = stringResource(R.string.share),
                         onClick = {
-                            val intent = Intent().apply {
-                                action = Intent.ACTION_SEND
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, song.shareLink)
-                            }
-                            context.startActivity(Intent.createChooser(intent, null))
-                            onDismiss()
+                            showSnapShareDialog = true
                         }
                     )
                 ),
@@ -719,5 +717,20 @@ fun YouTubeSongMenu(
                 }
             )
         }
+    }
+
+    if (showSnapShareDialog) {
+        echo.music.iad1tya.ui.component.SnapCardShareDialog(
+            item = echo.music.iad1tya.ui.component.ShareItem.Song(
+                id = song.id,
+                title = song.title,
+                artist = song.artists.joinToString(", ") { it.name },
+                coverUrl = song.thumbnail
+            ),
+            onDismiss = {
+                showSnapShareDialog = false
+                onDismiss()
+            }
+        )
     }
 }

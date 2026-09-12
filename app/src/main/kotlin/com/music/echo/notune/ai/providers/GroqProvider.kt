@@ -12,10 +12,11 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.json.*
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 class GroqProvider @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val client: HttpClient
 ) : AiProvider {
     override val type: AiProviderType = AiProviderType.GROQ
