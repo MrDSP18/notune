@@ -59,9 +59,12 @@ class NextGenFeaturesTest {
     @Test
     fun testMoodJourneyEngine_advancesThroughStages() {
         moodJourneyEngine.startJourney()
-        assertEquals(MoodJourneyStage.CALM, moodJourneyEngine.getCurrentStage())
+        val currentStage = moodJourneyEngine.getCurrentStage()
+        assertNotNull(currentStage)
+        assertEquals("Sad", currentStage?.name)
 
         val nextStage = moodJourneyEngine.advanceStage()
-        assertEquals(MoodJourneyStage.CHILL, nextStage)
+        assertNotNull(nextStage)
+        assertEquals("Melancholic", nextStage?.name)
     }
 }

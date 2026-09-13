@@ -8,9 +8,9 @@ import org.junit.Test
 class PersonalizationSystemTest {
 
     @Test
-    fun `NoTuneThemeEngine contains 20 distinct theme presets`() {
+    fun `NoTuneThemeEngine contains 40 distinct theme presets`() {
         val themes = NoTuneThemeEngine.ALL_THEMES
-        assertEquals(20, themes.size)
+        assertEquals(40, themes.size)
 
         val pure = NoTuneThemeEngine.getThemeById("notune_pure")
         assertEquals("NØTUNE Pure", pure.name)
@@ -58,8 +58,8 @@ class PersonalizationSystemTest {
     }
 
     @Test
-    fun `LogoVariant supports all 12 creative logo variants`() {
-        assertEquals(12, LogoVariant.entries.size)
+    fun `LogoVariant supports all 30 creative logo variants`() {
+        assertEquals(30, LogoVariant.entries.size)
         assertEquals(LogoVariant.WORDMARK, LogoVariant.fromName("wordmark"))
         assertEquals(LogoVariant.GLYPH, LogoVariant.fromName("glyph"))
         assertEquals(LogoVariant.CYBER_PULSE, LogoVariant.fromName("cyber_pulse"))

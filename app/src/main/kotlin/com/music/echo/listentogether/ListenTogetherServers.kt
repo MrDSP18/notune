@@ -1,12 +1,11 @@
-
-
 package echo.music.iad1tya.listentogether
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.jsonObject
@@ -22,6 +21,8 @@ data class ListenTogetherServer(
 
 object ListenTogetherServers {
     private const val SERVER_JSON_URL = "https://raw.githubusercontent.com/EchoMusicApp/notune/refs/heads/main/app/server.json"
+
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private val _servers = MutableStateFlow(
         listOf(
@@ -40,7 +41,7 @@ object ListenTogetherServers {
         get() = _servers.value
 
     init {
-        GlobalScope.launch(Dispatchers.IO) {
+        scope.launch {
             try {
                 val client = okhttp3.OkHttpClient()
                 val request = okhttp3.Request.Builder().url(SERVER_JSON_URL).build()

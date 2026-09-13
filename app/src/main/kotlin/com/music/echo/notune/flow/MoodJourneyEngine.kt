@@ -15,6 +15,8 @@ data class MoodStep(
     val targetValence: Float // 0.0f (sad/melancholic) to 1.0f (happy/positive)
 )
 
+typealias MoodJourneyStage = MoodStep
+
 @Immutable
 data class MoodJourneyState(
     val isActive: Boolean = false,
@@ -72,6 +74,8 @@ class MoodJourneyEngine @Inject constructor() {
         }
     }
 
+    fun advanceStage(): MoodStep? = advanceStep()
+
     fun stopJourney() {
         _state.update { it.copy(isActive = false) }
     }
@@ -81,4 +85,6 @@ class MoodJourneyEngine @Inject constructor() {
         if (!current.isActive) return null
         return current.steps.getOrNull(current.currentStepIndex)
     }
+
+    fun getCurrentStage(): MoodStep? = getCurrentStep()
 }

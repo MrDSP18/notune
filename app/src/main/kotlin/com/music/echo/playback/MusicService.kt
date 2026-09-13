@@ -388,11 +388,14 @@ class MusicService :
     var queueTitle: String? = null
 
     val currentMediaMetadata = MutableStateFlow<echo.music.iad1tya.models.MediaMetadata?>(null)
+    @OptIn(ExperimentalCoroutinesApi::class)
     private val currentSong =
         currentMediaMetadata
             .flatMapLatest { mediaMetadata ->
                 database.song(mediaMetadata?.id)
             }.stateIn(scope, SharingStarted.Lazily, null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     private val currentFormat =
         currentMediaMetadata.flatMapLatest { mediaMetadata ->
             database.format(mediaMetadata?.id)
@@ -571,6 +574,7 @@ class MusicService :
         }
     }
 
+    @OptIn(FlowPreview::class)
     override fun onCreate() {
         super.onCreate()
         isRunning = true
