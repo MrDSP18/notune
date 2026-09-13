@@ -1631,8 +1631,8 @@ fun LocalPlaylistHeader(
         Spacer(modifier = Modifier.height(12.dp))
 
         
-        val songCount = if (playlist.songCount == 0 && (playlist.playlist.remoteSongCount ?: 0) != null) {
-            (playlist.playlist.remoteSongCount ?: 0)
+        val songCount = if (playlist.songCount == 0 && playlist.playlist.remoteSongCount != null) {
+            playlist.playlist.remoteSongCount
         } else {
             playlist.songCount
         }

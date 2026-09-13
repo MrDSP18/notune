@@ -541,7 +541,7 @@ object YTPlayerUtils {
                         "bitrate" to format.bitrate,
                         "urlSource" to urlSource,
                         "resolved" to (streamUrl != null),
-                    ) + if (streamUrl != null) " " + describeStreamUrl(streamUrl!!) else "",
+                    ) + if (streamUrl != null) " " + describeStreamUrl(streamUrl) else "",
                 )
                 if (streamUrl == null) {
                     Timber.tag(logTag).d("Stream URL not found for format")
@@ -588,23 +588,24 @@ object YTPlayerUtils {
                         Timber.tag(TAG).d("  Original URL length: ${streamUrl.length}")
                         Timber.tag(TAG).d("  Original URL preview: ${streamUrl.take(100)}...")
 
-                        val originalUrl = streamUrl!!
+                        val originalUrl = streamUrl
                         // Use CipherDeobfuscator for n-transform (fixed implementation)
-                        streamUrl = CipherDeobfuscator.transformNParamInUrl(streamUrl!!)
+                        streamUrl = CipherDeobfuscator.transformNParamInUrl(streamUrl)
 
                         Timber.tag(TAG).d("  Transformed URL length: ${streamUrl.length}")
                         Timber.tag(TAG).d("  URL changed: ${originalUrl != streamUrl}")
 
                         // Append pot= parameter with streaming data poToken
-                        val needsPoToken = (currentClient.useWebPoTokens || isPrivatelyOwnedTrack) && poToken?.streamingDataPoToken != null
+                        val streamingPoToken = poToken?.streamingDataPoToken
+                        val needsPoToken = (currentClient.useWebPoTokens || isPrivatelyOwnedTrack) && streamingPoToken != null
                         Timber.tag(TAG).d("PoToken decision:")
                         Timber.tag(TAG).d("  needsPoToken: $needsPoToken")
-                        Timber.tag(TAG).d("  hasStreamingDataPoToken: ${poToken?.streamingDataPoToken != null}")
+                        Timber.tag(TAG).d("  hasStreamingDataPoToken: ${streamingPoToken != null}")
 
                         if (needsPoToken) {
                             Timber.tag(TAG).d("Appending pot= parameter to stream URL")
-                            val separator = if ("?" in streamUrl!!) "&" else "?"
-                            streamUrl = "${streamUrl}${separator}pot=${Uri.encode(poToken!!.streamingDataPoToken)}"
+                            val separator = if ("?" in streamUrl) "&" else "?"
+                            streamUrl = "${streamUrl}${separator}pot=${Uri.encode(streamingPoToken)}"
                             Timber.tag(TAG).d("  Final URL length (with pot): ${streamUrl.length}")
                         }
                     } catch (e: Exception) {
@@ -650,7 +651,7 @@ object YTPlayerUtils {
                             "validated" to false,
                             "why" to if (isPrivatelyOwned) "privatelyOwnedTrack" else "lastFallbackClient",
                             "expiresInSeconds" to streamExpiresInSeconds,
-                        ) + " " + describeStreamUrl(streamUrl!!),
+                        ) + " " + describeStreamUrl(streamUrl),
                     )
                     logCascade("resolved")
                     break
@@ -673,7 +674,7 @@ object YTPlayerUtils {
                             "client" to currentClient.clientName,
                             "validated" to true,
                             "expiresInSeconds" to streamExpiresInSeconds,
-                        ) + " " + describeStreamUrl(streamUrl!!),
+                        ) + " " + describeStreamUrl(streamUrl),
                     )
                     logCascade("resolved")
                     break
@@ -755,7 +756,7 @@ object YTPlayerUtils {
         Fix403.i(
             fx, "resolve.success",
             Fix403.kv("videoId" to videoId, "itag" to format.itag, "expiresInSeconds" to streamExpiresInSeconds) +
-                " " + describeStreamUrl(streamUrl!!),
+                " " + describeStreamUrl(streamUrl),
         )
 
         Timber.tag(logTag).d("Successfully obtained playback data with format: ${format.mimeType}, bitrate: ${format.bitrate}")

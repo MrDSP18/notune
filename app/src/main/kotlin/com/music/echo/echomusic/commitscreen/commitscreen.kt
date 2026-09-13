@@ -132,10 +132,10 @@ fun CommitScreen(
 
                     
                     val authorLogin = if (!obj.isNull("author")) {
-                        obj.getJSONObject("author").optString("login", null)
+                        obj.getJSONObject("author").optString("login", null as String?)
                     } else null
                     val authorAvatarUrl = if (!obj.isNull("author")) {
-                        obj.getJSONObject("author").optString("avatar_url", null)
+                        obj.getJSONObject("author").optString("avatar_url", null as String?)
                     } else null
 
                     list.add(CommitData(sha, message, authorName, authorAvatarUrl, authorLogin, formattedDate, htmlUrl))

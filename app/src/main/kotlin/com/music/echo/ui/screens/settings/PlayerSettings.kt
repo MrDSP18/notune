@@ -273,12 +273,7 @@ highlightKey: String? = null) {
             title = stringResource(R.string.audio_quality),
             current = audioQuality,
             values = listOf(AudioQuality.OPUS),
-            valueText = {
-                when (it) {
-                    AudioQuality.OPUS -> "Opus"
-                    else -> ""
-                }
-            },
+            valueText = { "Opus" },
             valueDescription = {
                 ""
             }
@@ -295,12 +290,7 @@ highlightKey: String? = null) {
             title = stringResource(R.string.download_quality_title),
             current = downloadQuality,
             values = listOf(echo.music.iad1tya.constants.DownloadQuality.YOUTUBE),
-            valueText = {
-                when (it) {
-                    echo.music.iad1tya.constants.DownloadQuality.YOUTUBE -> "YouTube Music (AAC/Default)"
-                    else -> ""
-                }
-            }
+            valueText = { "YouTube Music (AAC/Default)" }
         )
     }
 
@@ -447,12 +437,7 @@ highlightKey: String? = null) {
                     icon = painterResource(R.drawable.graphic_eq),
                     title = { Text(stringResource(R.string.audio_quality)) },
                     description = {
-                        Text(
-                            when (audioQuality) {
-                                AudioQuality.OPUS -> "Opus"
-                                else -> "Opus"
-                            }
-                        )
+                        Text("Opus")
                     },
                     onClick = null
                 ))
@@ -462,12 +447,7 @@ highlightKey: String? = null) {
                     icon = painterResource(R.drawable.download),
                     title = { Text(stringResource(R.string.download_quality_title)) },
                     description = {
-                        Text(
-                            when (downloadQuality) {
-                                echo.music.iad1tya.constants.DownloadQuality.YOUTUBE -> "YouTube Music (AAC/Default)"
-                                else -> "YouTube Music (AAC/Default)"
-                            }
-                        )
+                        Text("YouTube Music (AAC/Default)")
                     },
                     onClick = { showDownloadQualityDialog = true }
                 ))

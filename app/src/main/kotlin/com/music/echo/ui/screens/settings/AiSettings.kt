@@ -21,7 +21,7 @@ import echo.music.iad1tya.utils.rememberPreference
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.notune.ai.AiProviderType
 
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import echo.music.iad1tya.notune.ai.AiEngine
 import kotlinx.coroutines.launch
 

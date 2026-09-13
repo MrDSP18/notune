@@ -153,9 +153,9 @@ fun ChangelogScreen(
                         val changelogJson = connection.inputStream.bufferedReader().use { it.readText() }
                         val changelogData = JSONObject(changelogJson)
                         
-                        val desc = changelogData.optString("description", null)
-                        val imageUrl = changelogData.optString("image", null)
-                        val warning = changelogData.optString("warning", null)
+                        val desc = changelogData.optString("description", null as String?)
+                        val imageUrl = changelogData.optString("image", null as String?)
+                        val warning = changelogData.optString("warning", null as String?)
                         val changelogArray = changelogData.optJSONArray("changelog")
                         
                         val sections = mutableListOf<ChangelogSection>()
@@ -429,7 +429,7 @@ fun ChangelogScreen(
                                                     text = annotatedText,
                                                     onClick = { offset ->
                                                         annotatedText.getStringAnnotations("URL", offset, offset).firstOrNull()?.let {
-                                                            ContextCompat.startActivity(context, Intent(Intent.ACTION_VIEW, Uri.parse(it.item)), null)
+                                                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it.item)))
                                                         }
                                                     },
                                                     style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface)
@@ -528,9 +528,9 @@ private fun loadChangelogFromCache(context: Context, versionTag: String): Cached
         
         CachedChangelogData(
             sections = sections,
-            image = cacheData.optString("image", null).takeIf { !it.isNullOrBlank() },
-            description = cacheData.optString("description", null).takeIf { !it.isNullOrBlank() },
-            warning = cacheData.optString("warning", null).takeIf { !it.isNullOrBlank() }
+            image = cacheData.optString("image", null as String?).takeIf { !it.isNullOrBlank() },
+            description = cacheData.optString("description", null as String?).takeIf { !it.isNullOrBlank() },
+            warning = cacheData.optString("warning", null as String?).takeIf { !it.isNullOrBlank() }
         )
     } catch (e: Exception) { null }
 }

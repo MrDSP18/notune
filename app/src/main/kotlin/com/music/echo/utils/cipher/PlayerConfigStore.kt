@@ -308,7 +308,7 @@ object PlayerConfigStore {
                     return false
                 }
 
-                val body = response.body?.string()
+                val body = response.body.string()
                 if (body.isNullOrEmpty()) {
                     Timber.tag(TAG).w("Remote config fetch returned empty body — keeping previous configs")
                     return false

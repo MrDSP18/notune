@@ -31,7 +31,7 @@ fun <T> rememberPreference(
                     if (value != null && defaultValue != null && (defaultValue !is Set<*>) && value::class != defaultValue::class) {
                         defaultValue
                     } else {
-                        (value ?: defaultValue) as T
+                        value ?: defaultValue
                     }
                 }
                 .distinctUntilChanged()
@@ -41,7 +41,7 @@ fun <T> rememberPreference(
                 if (value != null && defaultValue != null && (defaultValue !is Set<*>) && value::class != defaultValue::class) {
                     defaultValue
                 } else {
-                    (value ?: defaultValue) as T
+                    value ?: defaultValue
                 }
             }
         )
@@ -75,7 +75,7 @@ inline fun <reified T : Enum<T>> rememberEnumPreference(
 
     val initialValue = run {
         val value = try { context.dataStore.get(key) } catch (e: Exception) { null }
-        (if (value != null && value !is String) null else value as String?).toEnum(defaultValue = defaultValue)
+        value.toEnum(defaultValue = defaultValue)
     }
     
     val state =
@@ -83,7 +83,7 @@ inline fun <reified T : Enum<T>> rememberEnumPreference(
             context.dataStore.data
                 .map { prefs ->
                     val value = try { prefs[key] } catch (e: Exception) { null }
-                    (if (value != null && value !is String) null else value as String?).toEnum(defaultValue = defaultValue)
+                    value.toEnum(defaultValue = defaultValue)
                 }
                 .distinctUntilChanged()
         }.collectAsState(initialValue)

@@ -70,9 +70,5 @@ fun resetAuthWebViewSession(
 private fun clearWebAuthStorage(context: Context) {
     val appContext = context.applicationContext
     WebStorage.getInstance().deleteAllData()
-    WebViewDatabase.getInstance(appContext).apply {
-        clearFormData()
-        clearHttpAuthUsernamePassword()
-        clearUsernamePassword()
-    }
+    WebViewDatabase.getInstance(appContext).clearHttpAuthUsernamePassword()
 }

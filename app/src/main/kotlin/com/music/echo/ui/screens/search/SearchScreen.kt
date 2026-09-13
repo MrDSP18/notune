@@ -114,7 +114,7 @@ import echo.music.iad1tya.constants.GridThumbnailHeight
 import echo.music.iad1tya.constants.GridItemsSizeKey
 import echo.music.iad1tya.ui.theme.NothingFont
 import echo.music.iad1tya.constants.GridItemSize
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

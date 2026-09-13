@@ -28,8 +28,8 @@ object RingtoneUtils {
             put(MediaStore.Audio.Media.IS_MUSIC, false)
         }
 
-        val uri = MediaStore.Audio.Media.getContentUriForPath(file.absolutePath)
-        val newUri = context.contentResolver.insert(uri!!, values)
+        val uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+        val newUri = context.contentResolver.insert(uri, values)
 
         RingtoneManager.setActualDefaultRingtoneUri(
             context,
