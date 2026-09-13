@@ -31,7 +31,7 @@ data class SavedEQProfile(
 
 @Singleton
 class EQProfileRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) {
     private val prefs: SharedPreferences = context.getSharedPreferences(
         "nanosonic_eq_profiles",
