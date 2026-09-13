@@ -58,4 +58,8 @@ bin/
 *_next.json
 *_dump.json
 
+# Environment and secrets
+.env
+*.env
+notune-backend/.env
 
