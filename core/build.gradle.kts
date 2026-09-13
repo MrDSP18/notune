@@ -1,3 +1,6 @@
+val sqliteTmpDir = layout.buildDirectory.dir("tmp").get().asFile.apply { mkdirs() }
+System.setProperty("org.sqlite.tmpdir", sqliteTmpDir.absolutePath)
+
 plugins {
     id("com.android.library")
     id("com.google.devtools.ksp")
