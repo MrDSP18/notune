@@ -70,6 +70,20 @@ sealed class Screens(
         route = "privacy_center"
     )
 
+    object Personalization : Screens(
+        titleId = R.string.settings,
+        iconIdInactive = R.drawable.tune,
+        iconIdActive = R.drawable.tune,
+        route = "settings/personalization"
+    )
+
+    object TasteProfile : Screens(
+        titleId = R.string.settings,
+        iconIdInactive = R.drawable.sparks,
+        iconIdActive = R.drawable.sparks,
+        route = "taste_profile"
+    )
+
     companion object {
         val MainScreens = listOf(Home, Search, ListenTogether, Library)
     }

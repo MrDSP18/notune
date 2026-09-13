@@ -2,6 +2,7 @@
 package echo.music.iad1tya.notune
 
 import echo.music.iad1tya.db.MusicDatabase
+import com.music.echo.notune.personalization.repository.TasteProfileRepository
 import kotlinx.coroutines.flow.first
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -25,9 +26,11 @@ data class MusicDnaProfile(
  * - Discovery Score: ratio of unique tracks to total play events (higher = more exploratory)
  * - Mood Palette: derived from time-of-day listening patterns
  */
+
 @Singleton
 class MusicDnaRepository @Inject constructor(
-    private val database: MusicDatabase
+    private val database: MusicDatabase,
+    private val tasteProfileRepository: TasteProfileRepository
 ) {
 
     // ---------------------------------------------------------------------------
@@ -156,15 +159,26 @@ class MusicDnaRepository @Inject constructor(
             else                  -> "Deep Repeater (commits deeply to favorites)"
         }
 
+        val tasteProfile = tasteProfileRepository.getTasteProfileOnce()
+
         return buildString {
             append("NØTUNE USER MUSIC DNA PROFILE:\n")
-            append("Primary Influence: ${topArtists.firstOrNull()?.artist?.name ?: "Varied"}\n")
+            if (tasteProfile.musicLanguages.isNotEmpty()) {
+                append("Preferred Music Languages: ${tasteProfile.musicLanguages.joinToString()}\n")
+            }
+            if (tasteProfile.favoriteArtists.isNotEmpty()) {
+                append("Onboarding Favorite Artists: ${tasteProfile.favoriteArtists.take(5).joinToString { it.name }}\n")
+            }
+            if (tasteProfile.favoriteGenres.isNotEmpty()) {
+                append("Onboarding Favorite Genres: ${tasteProfile.favoriteGenres.joinToString()}\n")
+            }
+            append("Primary Influence: ${topArtists.firstOrNull()?.artist?.name ?: tasteProfile.favoriteArtists.firstOrNull()?.name ?: "Varied"}\n")
             append("Key Artists: ${topArtists.take(5).joinToString { it.artist.name }}\n")
             append("Top Songs: ${topSongs.take(5).joinToString { it.song.title }}\n")
             append("Recent Vibes (Last 7 Days): ${recentHistory.take(5).joinToString { it.song.title }}\n")
             append("Top Genres (Inferred): ${topGenres.joinToString()}\n")
             append("Energy Profile: $energyProfile\n")
-            append("Listening Style: $discoveryLabel (Score: ${(discoveryScore * 100).toInt()}%)\n")
+            append("Listening Style: ${tasteProfile.discoveryPreference.label} / $discoveryLabel (Score: ${(discoveryScore * 100).toInt()}%)\n")
             append("Library Size: ${topSongs.size} tracked songs\n")
         }
     }

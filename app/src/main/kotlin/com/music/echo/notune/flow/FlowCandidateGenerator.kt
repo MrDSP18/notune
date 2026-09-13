@@ -12,10 +12,13 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import com.music.echo.notune.personalization.repository.TasteProfileRepository
+
 @Singleton
 class FlowCandidateGenerator @Inject constructor(
     private val database: MusicDatabase,
-    private val musicDnaRepository: MusicDnaRepository
+    private val musicDnaRepository: MusicDnaRepository,
+    private val tasteProfileRepository: TasteProfileRepository
 ) {
 
     suspend fun generateCandidates(
@@ -102,6 +105,30 @@ class FlowCandidateGenerator @Inject constructor(
                             candidateSource = "Favorite Artist",
                             isLocal = true
                         )
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+
+        // 5. Onboarding Taste Profile Signals (for initial discovery & new users)
+        try {
+            val tasteProfile = tasteProfileRepository.getTasteProfileOnce()
+            if (tasteProfile.favoriteArtists.isNotEmpty()) {
+                val allArtists = database.allArtistsByPlayTime().first()
+                for (selectedArtist in tasteProfile.favoriteArtists) {
+                    val matchingArtist = allArtists.find { it.artist.name.equals(selectedArtist.name, ignoreCase = true) }
+                    if (matchingArtist != null) {
+                        val songs = database.artistSongs(matchingArtist.id, ArtistSongSortType.CREATE_DATE, true).first()
+                        for (song in songs.take(5)) {
+                            val metadata = song.toMediaMetadata()
+                            if (!candidateMap.containsKey(metadata.id)) {
+                                candidateMap[metadata.id] = FlowCandidate(
+                                    mediaMetadata = metadata,
+                                    candidateSource = "Onboarding Favorite Artist (${selectedArtist.name})",
+                                    isLocal = true
+                                )
+                            }
+                        }
                     }
                 }
             }

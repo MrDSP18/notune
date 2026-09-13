@@ -162,15 +162,23 @@ android {
         }
         create("release") {
             val keystoreFile = rootProject.file("keystore.jks")
+            val localKeystore = file("keystore/release.keystore")
             if (keystoreFile.exists()) {
                 storeFile = keystoreFile
+                storePassword = System.getenv("STORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            } else if (localKeystore.exists()) {
+                storeFile = localKeystore
+                storePassword = System.getenv("STORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
             } else {
-                val localKeystore = file("keystore/release.keystore")
-                if (localKeystore.exists()) storeFile = localKeystore
+                storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
             }
-            storePassword = System.getenv("STORE_PASSWORD")
-            keyAlias = System.getenv("KEY_ALIAS")
-            keyPassword = System.getenv("KEY_PASSWORD")
         }
         getByName("debug") {
             keyAlias = "androiddebugkey"

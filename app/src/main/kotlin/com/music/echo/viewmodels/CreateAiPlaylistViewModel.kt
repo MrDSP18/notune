@@ -143,7 +143,7 @@ class CreateAiPlaylistViewModel @Inject constructor(
         _isGenerating.value = true
         _errorLog.value = null
 
-        val activeWeatherInfo = if (isWeatherActive) (weatherState as WeatherUiState.Success).data else null
+        val activeWeatherInfo = if (_weatherEnabled.value && weatherState is WeatherUiState.Success) weatherState.data else null
 
         viewModelScope.launch {
             val playlistId = aiPlaylistGenerator.generatePlaylist(

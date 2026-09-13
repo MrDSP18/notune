@@ -443,6 +443,14 @@ fun NavGraphBuilder.navigationBuilder(
         com.music.echo.notune.privacy.ui.PrivacyCenterScreen(navController, scrollBehavior)
     }
 
+    composable("settings/personalization") {
+        com.music.echo.notune.personalization.ui.PersonalizationSettingsScreen(navController, scrollBehavior)
+    }
+
+    composable("taste_profile") {
+        com.music.echo.notune.personalization.ui.TasteProfileScreen(navController, scrollBehavior)
+    }
+
     composable(
         route = "settings/backup_restore?highlightKey={highlightKey}",
         arguments = listOf(navArgument("highlightKey") { type = NavType.StringType; nullable = true })

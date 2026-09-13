@@ -2,6 +2,7 @@ package echo.music.iad1tya.utils.potoken
 
 import android.webkit.CookieManager
 import echo.music.iad1tya.utils.cipher.CipherDeobfuscator
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
@@ -25,6 +26,7 @@ class PoTokenGenerator {
     private var webPoTokenGenerator: PoTokenWebView? = null
 
 
+    @OptIn(DelicateCoroutinesApi::class)
     fun initialize() {
         if (!webViewSupported || webViewBadImpl) return
         kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {

@@ -1,41 +1,48 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  NØTUNE Data Extraction Rules (Android 12+ / API 31+).
+  Isolates cloud-backup and device-to-device transfer.
 -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude
-            domain="file"
-            path="./exoplayer" />
+            domain="sharedpref"
+            path="notune_secure_prefs.xml" />
         <exclude
             domain="file"
-            path="./download" />
+            path="datastore/secure_tokens.preferences_pb" />
+        <exclude
+            domain="file"
+            path="exoplayer" />
+        <exclude
+            domain="file"
+            path="download" />
         <exclude
             domain="database"
             path="exoplayer_internal.db" />
         <exclude
             domain="database"
             path="song.db" />
-        <exclude
-            domain="file"
-            path="datastore" />
     </cloud-backup>
+
     <device-transfer>
         <exclude
-            domain="file"
-            path="./exoplayer" />
+            domain="sharedpref"
+            path="notune_secure_prefs.xml" />
         <exclude
             domain="file"
-            path="./download" />
+            path="datastore/secure_tokens.preferences_pb" />
+        <exclude
+            domain="file"
+            path="exoplayer" />
+        <exclude
+            domain="file"
+            path="download" />
         <exclude
             domain="database"
             path="exoplayer_internal.db" />
         <exclude
             domain="database"
             path="song.db" />
-        <exclude
-            domain="file"
-            path="datastore" />
     </device-transfer>
 </data-extraction-rules>

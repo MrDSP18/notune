@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 enum class AiProviderType {
+    NOTUNE_BASIC,
     GEMINI,
     GROQ,
     OPENROUTER,

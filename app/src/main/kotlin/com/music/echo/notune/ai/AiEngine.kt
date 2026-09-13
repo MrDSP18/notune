@@ -17,15 +17,19 @@ import javax.inject.Singleton
 import echo.music.iad1tya.notune.ai.providers.OpenRouterProvider
 import echo.music.iad1tya.notune.ai.providers.OllamaProvider
 
+import echo.music.iad1tya.notune.ai.providers.NoTuneBasicAiProvider
+
 @Singleton
 class AiEngine @Inject constructor(
     @ApplicationContext private val context: Context,
     private val geminiProvider: GeminiProvider,
     private val groqProvider: GroqProvider,
     private val openRouterProvider: OpenRouterProvider,
-    private val ollamaProvider: OllamaProvider
+    private val ollamaProvider: OllamaProvider,
+    private val noTuneBasicAiProvider: NoTuneBasicAiProvider
 ) {
     private val providers = mapOf(
+        AiProviderType.NOTUNE_BASIC to noTuneBasicAiProvider,
         AiProviderType.GEMINI to geminiProvider,
         AiProviderType.GROQ to groqProvider,
         AiProviderType.OPENROUTER to openRouterProvider,
@@ -45,13 +49,13 @@ class AiEngine @Inject constructor(
         tools: List<AiTool>? = null,
         systemInstruction: String? = null
     ): Result<AiResponse> {
-        val userPreferred = preferredProvider ?: context.dataStore.get(PreferredAiProviderKey, AiProviderType.GEMINI.name).let {
-            runCatching { AiProviderType.valueOf(it) }.getOrDefault(AiProviderType.GEMINI)
+        val userPreferred = preferredProvider ?: context.dataStore.get(PreferredAiProviderKey, AiProviderType.NOTUNE_BASIC.name).let {
+            runCatching { AiProviderType.valueOf(it) }.getOrDefault(AiProviderType.NOTUNE_BASIC)
         }
 
-        // Fallback chain: Preferred -> Gemini -> Groq -> OpenRouter -> Ollama
+        // Fallback chain: Preferred -> Gemini -> Groq -> OpenRouter -> Ollama -> NOTUNE_BASIC
         val chain = mutableListOf(userPreferred)
-        val allTypes = listOf(AiProviderType.GEMINI, AiProviderType.GROQ, AiProviderType.OPENROUTER, AiProviderType.OLLAMA)
+        val allTypes = listOf(AiProviderType.GEMINI, AiProviderType.GROQ, AiProviderType.OPENROUTER, AiProviderType.OLLAMA, AiProviderType.NOTUNE_BASIC)
         allTypes.forEach { if (it != userPreferred) chain.add(it) }
 
         var lastError: Throwable? = null

@@ -133,6 +133,14 @@ class BackupRestoreViewModel @Inject constructor(
                                 
                                 try {
                                     val dbPath = database.openHelper.writableDatabase.path
+                                    if (dbPath == null) {
+                                        Timber.tag("RESTORE").e("Database path is null, cannot restore")
+                                        tempFile.delete()
+                                        withContext(Dispatchers.Main) {
+                                            Toast.makeText(context, context.getString(R.string.restore_failed), Toast.LENGTH_LONG).show()
+                                        }
+                                        return@withContext
+                                    }
                                     database.checkpoint()
                                     database.close()
                                     Timber.tag("RESTORE").i("Overwriting DB at path: $dbPath")

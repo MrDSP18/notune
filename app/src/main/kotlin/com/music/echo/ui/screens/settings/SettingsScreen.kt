@@ -155,6 +155,14 @@ highlightKey: String? = null) {
             )
             add(
                 Material3SettingsItem(
+                    icon = painterResource(R.drawable.tune),
+                    title = { Text("Personalization & Taste Profile") },
+                    description = { Text("Languages, favorite artists, genres, and discovery ratio") },
+                    onClick = { navController.navigate("settings/personalization") }
+                )
+            )
+            add(
+                Material3SettingsItem(
                     icon = painterResource(R.drawable.palette),
                     title = { Text("Theme Builder") },
                     description = { Text("Extreme customization and theme engine") },

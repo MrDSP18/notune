@@ -219,10 +219,10 @@ object PlayerJsFetcher {
                 Timber.tag(TAG).e("iframe_api HTTP ${response.code}")
                 return null
             }
-            response.body?.string()
+            response.body.string()
         }
-        if (body == null) {
-            Timber.tag(TAG).e("iframe_api response body is null")
+        if (body.isEmpty()) {
+            Timber.tag(TAG).e("iframe_api response body is empty")
             return null
         }
 
@@ -256,10 +256,10 @@ object PlayerJsFetcher {
                 Timber.tag(TAG).e("player.js download HTTP ${response.code}")
                 return null
             }
-            response.body?.string()
+            response.body.string()
         }
-        if (body == null) {
-            Timber.tag(TAG).e("player.js response body is null")
+        if (body.isEmpty()) {
+            Timber.tag(TAG).e("player.js response body is empty")
             return null
         }
 

@@ -44,6 +44,180 @@ val BiometricLockKey = booleanPreferencesKey("biometric_lock_enabled")
 val PrivateAiChatKey = booleanPreferencesKey("private_ai_chat_enabled")
 val DataRetentionPeriodKey = stringPreferencesKey("data_retention_period")
 
+// NØTUNE Next-Gen Adaptive UI & Personalization Keys
+val AppearanceModeKey = stringPreferencesKey("notune_appearance_mode")
+val ThemePresetVariantKey = stringPreferencesKey("notune_theme_preset_variant")
+val FontFamilyStyleKey = stringPreferencesKey("notune_font_family_style")
+val LogoVariantKey = stringPreferencesKey("notune_logo_variant")
+val PlayerStyleKey = stringPreferencesKey("notune_player_style")
+val MiniPlayerStyleKey = stringPreferencesKey("notune_mini_player_style")
+val NavigationStyleKey = stringPreferencesKey("notune_navigation_style")
+val CardStyleKey = stringPreferencesKey("notune_card_style")
+val IconStyleKey = stringPreferencesKey("notune_icon_style")
+val UiContextKey = stringPreferencesKey("notune_ui_context")
+val UiDensityKey = stringPreferencesKey("notune_ui_density")
+val AnimationLevelKey = stringPreferencesKey("notune_animation_level")
+val CornerRadiusStyleKey = stringPreferencesKey("notune_corner_radius_style")
+val HomeLayoutOrderKey = stringPreferencesKey("notune_home_layout_order")
+val CustomAccentColorHexKey = stringPreferencesKey("notune_accent_color_hex")
+val LyricsAppearanceStyleKey = stringPreferencesKey("notune_lyrics_appearance_style")
+
+enum class AppearanceMode(val label: String) {
+    LIGHT("Light"),
+    DARK("Dark"),
+    SYSTEM("System");
+
+    companion object {
+        fun fromName(name: String): AppearanceMode = entries.find { it.name.equals(name, ignoreCase = true) } ?: SYSTEM
+    }
+}
+
+enum class FontFamilyStyle(val displayName: String) {
+    SANS("NØTUNE Sans"),
+    ROUNDED("NØTUNE Rounded"),
+    MONO("NØTUNE Mono"),
+    DISPLAY("NØTUNE Display"),
+    EDITORIAL("NØTUNE Editorial"),
+    COMPACT("NØTUNE Compact"),
+    SOFT("NØTUNE Soft"),
+    MODERN("NØTUNE Modern"),
+    CLASSIC("NØTUNE Classic"),
+    TECHNICAL("NØTUNE Technical"),
+    GEOMETRIC("NØTUNE Geometric"),
+    SERIF("NØTUNE Serif"),
+    CONDENSED("NØTUNE Condensed"),
+    BOLD_MINIMAL("NØTUNE Bold Minimal"),
+    EXPRESSIVE("NØTUNE Expressive");
+
+    companion object {
+        fun fromName(name: String): FontFamilyStyle = entries.find { it.name.equals(name, ignoreCase = true) } ?: SANS
+    }
+}
+
+enum class LogoVariant(val title: String) {
+    WORDMARK("Wordmark"),
+    SYMBOL("Symbol"),
+    MINIMAL_SYMBOL("Minimal Symbol"),
+    MONOGRAM("Monogram"),
+    CIRCULAR("Circular"),
+    GEOMETRIC("Geometric"),
+    GLYPH("Glyph");
+
+    companion object {
+        fun fromName(name: String): LogoVariant = entries.find { it.name.equals(name, ignoreCase = true) } ?: WORDMARK
+    }
+}
+
+enum class PlayerStyleVariant(val title: String) {
+    MINIMAL("Minimal"),
+    CLASSIC("Classic"),
+    CINEMATIC("Cinematic"),
+    ARTWORK_FOCUS("Artwork Focus"),
+    COMPACT("Compact"),
+    GLASS("Glass"),
+    TYPOGRAPHY("Typography"),
+    IMMERSIVE("Immersive");
+
+    companion object {
+        fun fromName(name: String): PlayerStyleVariant = entries.find { it.name.equals(name, ignoreCase = true) } ?: MINIMAL
+    }
+}
+
+enum class MiniPlayerStyleVariant(val title: String) {
+    COMPACT("Compact"),
+    ARTWORK("Artwork Focus"),
+    PROGRESS("Progress Bar"),
+    FLOATING("Floating Capsule"),
+    MINIMAL("Minimal");
+
+    companion object {
+        fun fromName(name: String): MiniPlayerStyleVariant = entries.find { it.name.equals(name, ignoreCase = true) } ?: COMPACT
+    }
+}
+
+enum class NavigationStyleVariant(val title: String) {
+    BOTTOM_BAR("Bottom Bar"),
+    NAVIGATION_RAIL("Navigation Rail"),
+    COMPACT_BAR("Compact Bar"),
+    MINIMAL_BAR("Minimal Bar");
+
+    companion object {
+        fun fromName(name: String): NavigationStyleVariant = entries.find { it.name.equals(name, ignoreCase = true) } ?: BOTTOM_BAR
+    }
+}
+
+enum class CardStyleVariant(val title: String) {
+    CLEAN("Clean"),
+    SOFT("Soft Surface"),
+    ELEVATED("Elevated"),
+    BORDERED("Subtle Border"),
+    GLASS("Glassmorphic");
+
+    companion object {
+        fun fromName(name: String): CardStyleVariant = entries.find { it.name.equals(name, ignoreCase = true) } ?: CLEAN
+    }
+}
+
+enum class IconStyleVariant(val title: String) {
+    MINIMAL("Minimal"),
+    ROUNDED("Rounded"),
+    SHARP("Sharp"),
+    OUTLINE("Outline"),
+    FILLED("Filled"),
+    MONO("Monochrome");
+
+    companion object {
+        fun fromName(name: String): IconStyleVariant = entries.find { it.name.equals(name, ignoreCase = true) } ?: MINIMAL
+    }
+}
+
+enum class UiContext(val title: String, val iconDescription: String) {
+    NORMAL("Normal", "Default music experience"),
+    FOCUS("Focus", "Minimalistic low-distraction mode"),
+    WORKOUT("Workout", "High-contrast energetic controls"),
+    RELAX("Relax", "Calm ambient interface"),
+    DRIVING("Driving", "Large touch targets and simplified controls"),
+    PARTY("Party", "Dynamic visualizer and room controls"),
+    SLEEP("Sleep", "Ultra-dark timer-ready mode"),
+    DISCOVERY("Discovery", "Explore and FLOW prioritized");
+
+    companion object {
+        fun fromName(name: String): UiContext = entries.find { it.name.equals(name, ignoreCase = true) } ?: NORMAL
+    }
+}
+
+enum class UiDensity(val title: String, val scale: Float) {
+    COMPACT("Compact", 0.85f),
+    BALANCED("Balanced", 1.0f),
+    COMFORTABLE("Comfortable", 1.15f);
+
+    companion object {
+        fun fromName(name: String): UiDensity = entries.find { it.name.equals(name, ignoreCase = true) } ?: BALANCED
+    }
+}
+
+enum class AnimationLevel(val title: String) {
+    FULL("Full Motion"),
+    REDUCED("Reduced Motion"),
+    MINIMAL("Minimal"),
+    OFF("Animations Disabled");
+
+    companion object {
+        fun fromName(name: String): AnimationLevel = entries.find { it.name.equals(name, ignoreCase = true) } ?: FULL
+    }
+}
+
+enum class CornerRadiusStyle(val title: String, val dpValue: Int) {
+    SHARP("Sharp", 0),
+    SOFT("Soft", 8),
+    ROUNDED("Rounded", 16),
+    EXTRA_ROUNDED("Extra Rounded", 28);
+
+    companion object {
+        fun fromName(name: String): CornerRadiusStyle = entries.find { it.name.equals(name, ignoreCase = true) } ?: ROUNDED
+    }
+}
+
 enum class DensityScale(val value: Float, val label: String) {
     NATIVE(1.0f, "Native (100%)"),
     SLIGHTLY_COMPACT(0.85f, "Slightly Compact (85%)"),

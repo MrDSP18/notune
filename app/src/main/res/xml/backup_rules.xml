@@ -1,18 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  NØTUNE Android Backup Rules.
+  STRICTLY EXCLUDES OAuth tokens, refresh tokens, room keys, private messages,
+  secure storage files, and sensitive database tables.
+-->
 <full-backup-content>
+    <!-- Exclude sensitive Keystore preferences and secure storage -->
+    <exclude
+        domain="sharedpref"
+        path="notune_secure_prefs.xml" />
     <exclude
         domain="file"
-        path="./exoplayer" />
+        path="datastore/secure_tokens.preferences_pb" />
+
+    <!-- Exclude media downloads and cache -->
     <exclude
         domain="file"
-        path="./download" />
+        path="exoplayer" />
+    <exclude
+        domain="file"
+        path="download" />
+
+    <!-- Exclude local databases containing private history and room keys -->
     <exclude
         domain="database"
         path="exoplayer_internal.db" />
     <exclude
         domain="database"
         path="song.db" />
-    <exclude
-        domain="file"
-        path="datastore" />
 </full-backup-content>

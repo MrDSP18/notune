@@ -11,6 +11,7 @@ import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.Artist
 import com.music.innertube.models.PlaylistItem
 import com.music.innertube.models.SongItem
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -96,6 +97,7 @@ class HomeViewModel @Inject constructor(
     val selectedChip = MutableStateFlow<HomePage.Chip?>(null)
     private val previousHomePage = MutableStateFlow<HomePage?>(null)
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val aiRecommendedPlaylist = database.playlistsByNameAsc()
         .map { playlists -> playlists.find { it.playlist.name == "Recommended by AI" } }
         .flatMapLatest { playlist -> 
