@@ -850,6 +850,7 @@ class MusicService :
 
 
 
+        @OptIn(FlowPreview::class)
         currentSong.debounce(1000).collect(scope) { song ->
             updateNotification()
             updateWidgetUI(player.isPlaying)

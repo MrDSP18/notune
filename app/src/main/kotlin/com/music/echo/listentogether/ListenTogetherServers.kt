@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -40,6 +41,7 @@ object ListenTogetherServers {
     val servers: List<ListenTogetherServer>
         get() = _servers.value
 
+    @OptIn(DelicateCoroutinesApi::class)
     init {
         scope.launch {
             try {

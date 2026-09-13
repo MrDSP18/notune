@@ -37,6 +37,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
 import timber.log.Timber
 
 /**
@@ -209,7 +210,7 @@ class CastConnectionHandler(
             Timber.d("Cast queue status updated")
             val status = remoteMediaClient?.mediaStatus
             if (status != null) {
-                _queueItems.value = status.queueItems?.toList() ?: emptyList()
+                _queueItems.value = status.queueItems.toList()
             }
             pendingSyncOperation?.complete(Unit)
         }
@@ -714,13 +715,13 @@ class CastConnectionHandler(
                         execute(client)
                     } catch (e: Exception) {
                         Timber.e(e, "Cast queue op ($opName) threw")
-                        if (cont.isActive) cont.resume(false) { }
+                        if (cont.isActive) cont.resume(false)
                         return@suspendCancellableCoroutine
                     }
                     pending.setResultCallback { result ->
                         val ok = result.status.isSuccess
                         if (!ok) Timber.w("Cast queue op ($opName) rejected by receiver: code=${result.status.statusCode}")
-                        if (cont.isActive) cont.resume(ok) { }
+                        if (cont.isActive) cont.resume(ok)
                     }
                 }
             } ?: false
