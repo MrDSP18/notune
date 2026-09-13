@@ -1091,6 +1091,11 @@ val PreferredAiProviderKey = stringPreferencesKey("preferredAiProvider")
 val AiProviderPriorityKey = stringPreferencesKey("aiProviderPriority") // JSON string of priority list
 
 val GoogleAccountLinkedKey = booleanPreferencesKey("googleAccountLinked")
+val IsGoogleLoggedInKey = booleanPreferencesKey("isGoogleLoggedIn")
+val GoogleUserNameKey = stringPreferencesKey("googleUserName")
+val GoogleUserEmailKey = stringPreferencesKey("googleUserEmail")
+val GoogleUserPhotoUrlKey = stringPreferencesKey("googleUserPhotoUrl")
+val GoogleUserIdKey = stringPreferencesKey("googleUserId")
 val AiMusicFinderEnabledKey = booleanPreferencesKey("aiMusicFinderEnabled")
 val AiMusicSuggesterEnabledKey = booleanPreferencesKey("aiMusicSuggesterEnabled")
 val AiDjEnabledKey = booleanPreferencesKey("aiDjEnabled")

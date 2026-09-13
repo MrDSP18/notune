@@ -25,6 +25,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import echo.music.iad1tya.ui.player.FloatingMiniPlayer
+import androidx.compose.ui.unit.sp
+import echo.music.iad1tya.ui.theme.NothingFont
 import echo.music.iad1tya.ui.screens.Screens
 import echo.music.iad1tya.ui.component.floatingtabbar.FloatingTabBar
 import echo.music.iad1tya.ui.component.floatingtabbar.FloatingTabBarDefaults
@@ -71,16 +73,8 @@ fun AppFloatingNavBar(
         Color.White
     }
 
-    val selectedContentColor = when {
-        useGlass -> adaptiveTextColor
-        pureBlack -> Color.White
-        else -> MaterialTheme.colorScheme.primary
-    }
-    val unselectedContentColor = when {
-        useGlass -> adaptiveTextColor.copy(alpha = 0.65f)
-        pureBlack -> Color.White.copy(alpha = 0.65f)
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
+    val selectedContentColor = Color(0xFFFF0031) // Nothing Crimson Accent
+    val unselectedContentColor = Color.White.copy(alpha = 0.65f)
 
     val tabBarContentModifier = if (useGlass) {
         Modifier.liquidGlass(
@@ -181,8 +175,12 @@ fun AppFloatingNavBar(
                 key = screen.route,
                 title = {
                     Text(
-                        text = stringResource(screen.titleId),
-                        color = if (isSelected) selectedContentColor else unselectedContentColor,
+                        text = stringResource(screen.titleId).uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = NothingFont,
+                            color = if (isSelected) selectedContentColor else unselectedContentColor,
+                            letterSpacing = 1.2.sp
+                        ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )

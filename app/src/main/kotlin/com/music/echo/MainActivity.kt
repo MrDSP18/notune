@@ -7,6 +7,9 @@ import echo.music.iad1tya.ui.screens.settings.RingtoneViewModel
 import echo.music.iad1tya.ui.component.RingtoneTrimmerDialog
 import echo.music.iad1tya.ui.component.RingtoneProgressDialog
 import echo.music.iad1tya.ui.component.AppFloatingNavBar
+import com.music.echo.auth.GoogleAuthManager
+import com.music.echo.auth.GoogleLoginPopupDialog
+import com.music.echo.auth.GoogleUserAccount
 import echo.music.iad1tya.ui.component.floatingtabbar.rememberFloatingTabBarScrollConnection
 import echo.music.iad1tya.constants.UseFloatingNavBarKey
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -961,6 +964,9 @@ class MainActivity : ComponentActivity() {
                 val (lastOpenedVersionCode, setLastOpenedVersionCode) = rememberPreference(echo.music.iad1tya.constants.LastOpenedVersionCodeKey, -1)
                 var showWelcomeDialog by remember { mutableStateOf(false) }
 
+                val googleAuthManager = remember { GoogleAuthManager(applicationContext) }
+                val googleAccount by googleAuthManager.googleAccountFlow.collectAsState(initial = GoogleUserAccount())
+
                 LaunchedEffect(lastOpenedVersionCode) {
                     if (lastOpenedVersionCode < BuildConfig.VERSION_CODE) {
                         showWelcomeDialog = true
@@ -1511,6 +1517,13 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate(route)
                             },
                             homeViewModel = homeViewModel
+                        )
+                    }
+
+                    if (!googleAccount.isLoggedIn) {
+                        GoogleLoginPopupDialog(
+                            authManager = googleAuthManager,
+                            onLoginSuccess = { }
                         )
                     }
 

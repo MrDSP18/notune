@@ -42,6 +42,11 @@ import echo.music.iad1tya.constants.*
 import echo.music.iad1tya.ui.component.*
 import echo.music.iad1tya.ui.utils.backToMain
 import echo.music.iad1tya.utils.rememberPreference
+import echo.music.iad1tya.ui.theme.NothingFont
+import com.music.echo.auth.GoogleAuthManager
+import com.music.echo.auth.GoogleUserAccount
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
@@ -70,6 +75,13 @@ fun AccountSettingsScreen(
     val (visitorData, _) = rememberPreference(VisitorDataKey, "")
     val (dataSyncId, _) = rememberPreference(DataSyncIdKey, "")
     val (savedAccountsJson, onSavedAccountsJsonChange) = rememberPreference(SavedAccountsKey, "[]")
+
+    val (isGoogleLoggedIn, _) = rememberPreference(IsGoogleLoggedInKey, false)
+    val (googleUserName, _) = rememberPreference(GoogleUserNameKey, "")
+    val (googleUserEmail, _) = rememberPreference(GoogleUserEmailKey, "")
+
+    val googleAuthManager = remember { GoogleAuthManager(context.applicationContext) }
+    val scope = rememberCoroutineScope()
 
     val (listenBrainzEnabled, onListenBrainzEnabledChange) = rememberPreference(ListenBrainzEnabledKey, false)
     val (listenBrainzToken, onListenBrainzTokenChange) = rememberPreference(ListenBrainzTokenKey, "")
@@ -121,6 +133,67 @@ fun AccountSettingsScreen(
         ) {
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Nothing OS Google Account Status Card
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFF0F0F0F)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color(0xFFFF0031).copy(alpha = 0.4f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier.size(8.dp).clip(CircleShape).background(androidx.compose.ui.graphics.Color(0xFFFF0031))
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "GOOGLE AUTHENTICATION",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = NothingFont,
+                            color = androidx.compose.ui.graphics.Color(0xFFFF0031),
+                            letterSpacing = 1.5.sp
+                        )
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier.size(42.dp).clip(CircleShape).background(androidx.compose.ui.graphics.Color(0xFFFF0031).copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (googleUserName.isNotBlank()) googleUserName.take(1).uppercase() else "G",
+                            style = MaterialTheme.typography.titleMedium.copy(fontFamily = NothingFont, color = androidx.compose.ui.graphics.Color.White)
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (isGoogleLoggedIn && googleUserName.isNotBlank()) googleUserName else "Google Account Active",
+                            style = MaterialTheme.typography.titleMedium.copy(fontFamily = NothingFont, color = androidx.compose.ui.graphics.Color.White)
+                        )
+                        Text(
+                            text = if (isGoogleLoggedIn && googleUserEmail.isNotBlank()) googleUserEmail else "Authenticated via Google Popup",
+                            style = MaterialTheme.typography.bodySmall.copy(color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f))
+                        )
+                    }
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                googleAuthManager.signOut()
+                            }
+                        },
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = androidx.compose.ui.graphics.Color(0xFFFF0031).copy(alpha = 0.2f), contentColor = androidx.compose.ui.graphics.Color(0xFFFF0031))
+                    ) {
+                        Text("SWITCH", style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont))
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         val savedAccounts = try { Json.decodeFromString<List<AccountData>>(savedAccountsJson) } catch (e: Exception) { emptyList() }
         
