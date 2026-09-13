@@ -708,7 +708,7 @@ val editable: Boolean = playlist.playlist.isEditable == true
                                             while (attempt < maxAttempts) {
                                                 try {
                                                     browseId = YouTube.createPlaylist(playlist.playlist.name)
-                                                    if (browseId != null) break
+                                                    break
                                                 } catch (e: Exception) {
                                                     attempt++
                                                     if (attempt >= maxAttempts) throw e

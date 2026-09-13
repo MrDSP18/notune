@@ -647,7 +647,7 @@ val isPinned by database.speedDialDao.isPinned(playlist.id).collectAsState(initi
                                                         songTitle = song.title,
                                                         songArtist = song.artists.joinToString { it.name },
                                                         songAlbum = song.album?.name ?: "",
-                                                        artworkUrl = song.thumbnail ?: "",
+                                                        artworkUrl = song.thumbnail,
                                                         targetDirectoryUri = exportDirectoryUri,
                                                     )
                                                 }

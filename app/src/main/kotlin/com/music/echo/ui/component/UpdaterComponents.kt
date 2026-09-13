@@ -183,73 +183,81 @@ fun endItemShape(): RoundedCornerShape = RoundedCornerShape(
 
 fun detachedItemShape(): RoundedCornerShape = RoundedCornerShape(EndCornerRadius.dp)
 
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.withLink
+
 @Composable
 fun String.parseMarkdown(): androidx.compose.ui.text.AnnotatedString {
-    val builder = androidx.compose.ui.text.AnnotatedString.Builder()
-    var currentIndex = 0
     val primaryColor = MaterialTheme.colorScheme.primary
-    val codeBgColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+    val codeBgColor = MaterialTheme.colorScheme.surfaceVariant
     
-    val pattern = Regex("(\\*\\*(.*?)\\*\\*)|(\\*([^*]+)\\*)|(`([^`]+)`)|(\\[([^\\]]+)\\]\\(([^)]+)\\))|((?:https?://|www\\.)[\\w-]+(?:\\.[\\w-]+)+(?:[/?][\\w\\-._~:/?#\\[\\]@!$&'()*+,;=%]*)?)")
-
-    val matches = pattern.findAll(this)
-    for (match in matches) {
-        if (match.range.first > currentIndex) {
-            builder.append(this.substring(currentIndex, match.range.first))
+    val regex = Regex(
+        """(\*\*(.*?)\*\*)|(\*(.*?)\*)|(`(.*?)`)|(\[(.*?)\]\((.*?)\))|((https?://|www\.)[^\s()]+)""",
+        RegexOption.DOT_MATCHES_ALL
+    )
+    
+    return buildAnnotatedString {
+        var currentIndex = 0
+        
+        regex.findAll(this@parseMarkdown).forEach { match ->
+            if (match.range.first > currentIndex) {
+                append(this@parseMarkdown.substring(currentIndex, match.range.first))
+            }
+            
+            when {
+                match.groups[1] != null -> { // **bold**
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                        append(match.groups[2]!!.value)
+                    }
+                }
+                match.groups[3] != null -> { // *italic*
+                    withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                        append(match.groups[4]!!.value)
+                    }
+                }
+                match.groups[5] != null -> { // `code`
+                    withStyle(SpanStyle(
+                        background = codeBgColor,
+                        fontFamily = FontFamily.Monospace
+                    )) {
+                        append(match.groups[6]!!.value)
+                    }
+                }
+                match.groups[7] != null -> { // [link](url)
+                    val text = match.groups[8]!!.value
+                    val url = match.groups[9]!!.value
+                    val linkStyle = TextLinkStyles(
+                        style = SpanStyle(
+                            color = primaryColor,
+                            textDecoration = TextDecoration.Underline
+                        )
+                    )
+                    withLink(LinkAnnotation.Url(url, styles = linkStyle)) {
+                        append(text)
+                    }
+                }
+                match.groups[10] != null -> { // bare url
+                    val url = match.groups[10]!!.value
+                    val fullUrl = if (url.startsWith("http")) url else "https://$url"
+                    val linkStyle = TextLinkStyles(
+                        style = SpanStyle(
+                            color = primaryColor,
+                            textDecoration = TextDecoration.Underline
+                        )
+                    )
+                    withLink(LinkAnnotation.Url(fullUrl, styles = linkStyle)) {
+                        append(url)
+                    }
+                }
+            }
+            currentIndex = match.range.last + 1
         }
         
-        when {
-            match.groups[1] != null -> { // **bold**
-                builder.withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append(match.groups[2]!!.value)
-                }
-            }
-            match.groups[3] != null -> { // *italic*
-                builder.withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
-                    append(match.groups[4]!!.value)
-                }
-            }
-            match.groups[5] != null -> { // `code`
-                builder.withStyle(SpanStyle(
-                    background = codeBgColor,
-                    fontFamily = FontFamily.Monospace
-                )) {
-                    append(match.groups[6]!!.value)
-                }
-            }
-            match.groups[7] != null -> { // [link](url)
-                val text = match.groups[8]!!.value
-                val url = match.groups[9]!!.value
-                val startIndex = builder.length
-                builder.withStyle(SpanStyle(
-                    color = primaryColor,
-                    textDecoration = TextDecoration.Underline
-                )) {
-                    append(text)
-                }
-                builder.addStringAnnotation("URL", url, startIndex, builder.length)
-            }
-            match.groups[10] != null -> { // bare url
-                val url = match.groups[10]!!.value
-                val startIndex = builder.length
-                val fullUrl = if (url.startsWith("http")) url else "https://$url"
-                builder.withStyle(SpanStyle(
-                    color = primaryColor,
-                    textDecoration = TextDecoration.Underline
-                )) {
-                    append(url)
-                }
-                builder.addStringAnnotation("URL", fullUrl, startIndex, builder.length)
-            }
+        if (currentIndex < this@parseMarkdown.length) {
+            append(this@parseMarkdown.substring(currentIndex))
         }
-        currentIndex = match.range.last + 1
     }
-    
-    if (currentIndex < this.length) {
-        builder.append(this.substring(currentIndex))
-    }
-    
-    return builder.toAnnotatedString()
 }
 
 /**
@@ -270,7 +278,6 @@ fun ChangelogItem(
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
-        val context = LocalContext.current
         val annotatedText = text.parseMarkdown()
 
         androidx.compose.foundation.layout.Row(
@@ -284,13 +291,8 @@ fun ChangelogItem(
                     .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(50))
             )
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(16.dp))
-            ClickableText(
+            Text(
                 text = annotatedText,
-                onClick = { offset ->
-                    annotatedText.getStringAnnotations("URL", offset, offset).firstOrNull()?.let {
-                        ContextCompat.startActivity(context, Intent(Intent.ACTION_VIEW, Uri.parse(it.item)), null)
-                    }
-                },
                 style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface)
             )
         }

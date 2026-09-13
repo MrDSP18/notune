@@ -557,7 +557,7 @@ suspend fun createSnapCardBitmap(
         isAntiAlias = true
         style = Paint.Style.STROKE
         strokeWidth = 3f
-        color = 0x40FFFFFF.toInt()
+        color = 0x40FFFFFF
     }
     canvas.drawRoundRect(cardRect, 48f, 48f, borderPaint)
 

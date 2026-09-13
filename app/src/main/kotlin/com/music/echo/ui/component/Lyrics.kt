@@ -1238,7 +1238,7 @@ fun Lyrics(
                         val romanizedText = romanizedTextState
                         val isRomanizedAvailable = romanizedText != null
                         
-                        val mainText = if (romanizeAsMain && isRomanizedAvailable) romanizedText!! else item.text
+                        val mainText = if (romanizeAsMain && isRomanizedAvailable) romanizedText else item.text
                         val subText = if (romanizeAsMain && isRomanizedAvailable) item.text else romanizedText
                         
                         val hasWordTimings = if (romanizeAsMain && isRomanizedAvailable) false else item.words?.isNotEmpty() == true
