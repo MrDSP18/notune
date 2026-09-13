@@ -48,6 +48,9 @@ import androidx.core.content.ContextCompat
 import echo.music.iad1tya.notune.updater.extractUrls
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.withLink
 @Composable
 fun AnimatedActionButton(
     text: String,
@@ -183,9 +186,7 @@ fun endItemShape(): RoundedCornerShape = RoundedCornerShape(
 
 fun detachedItemShape(): RoundedCornerShape = RoundedCornerShape(EndCornerRadius.dp)
 
-import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.TextLinkStyles
-import androidx.compose.ui.text.withLink
+
 
 @Composable
 fun String.parseMarkdown(): androidx.compose.ui.text.AnnotatedString {

@@ -153,9 +153,9 @@ fun ChangelogScreen(
                         val changelogJson = connection.inputStream.bufferedReader().use { it.readText() }
                         val changelogData = JSONObject(changelogJson)
                         
-                        val desc = changelogData.optString("description", null as String?)
-                        val imageUrl = changelogData.optString("image", null as String?)
-                        val warning = changelogData.optString("warning", null as String?)
+                        val desc = changelogData.optString("description", "").takeIf { it.isNotBlank() }
+                        val imageUrl = changelogData.optString("image", "").takeIf { it.isNotBlank() }
+                        val warning = changelogData.optString("warning", "").takeIf { it.isNotBlank() }
                         val changelogArray = changelogData.optJSONArray("changelog")
                         
                         val sections = mutableListOf<ChangelogSection>()
@@ -523,9 +523,9 @@ private fun loadChangelogFromCache(context: Context, versionTag: String): Cached
         
         CachedChangelogData(
             sections = sections,
-            image = cacheData.optString("image", null as String?).takeIf { !it.isNullOrBlank() },
-            description = cacheData.optString("description", null as String?).takeIf { !it.isNullOrBlank() },
-            warning = cacheData.optString("warning", null as String?).takeIf { !it.isNullOrBlank() }
+            image = cacheData.optString("image", "").takeIf { it.isNotBlank() },
+            description = cacheData.optString("description", "").takeIf { it.isNotBlank() },
+            warning = cacheData.optString("warning", "").takeIf { it.isNotBlank() }
         )
     } catch (e: Exception) { null }
 }

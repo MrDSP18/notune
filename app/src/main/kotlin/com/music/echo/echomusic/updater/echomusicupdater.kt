@@ -270,7 +270,7 @@ fun UpdateScreen(navController: NavHostController) {
                     }
                 },
                 scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     scrolledContainerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onBackground
@@ -338,7 +338,7 @@ fun UpdateScreen(navController: NavHostController) {
                                                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                                 }
-                                                ContextCompat.startActivity(context, installIntent, null)
+                                                context.startActivity(installIntent)
                                             }
                                         } else {
                                             val urlToDownload = currentStatus.apkUrl ?: "https://github.com/EchoMusicApp/notune/releases/download/${currentStatus.version}/notune.apk"
@@ -486,13 +486,8 @@ fun UpdateScreen(navController: NavHostController) {
                                     if (!currentStatus.description.isNullOrBlank()) {
                                         val annotatedText = currentStatus.description.parseMarkdown()
 
-                                        ClickableText(
+                                        Text(
                                             text = annotatedText,
-                                            onClick = { offset ->
-                                                annotatedText.getStringAnnotations("URL", offset, offset).firstOrNull()?.let {
-                                                    ContextCompat.startActivity(context, Intent(Intent.ACTION_VIEW, Uri.parse(it.item)), null)
-                                                }
-                                            },
                                             style = MaterialTheme.typography.bodyMedium.copy(
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 lineHeight = 20.sp
@@ -530,7 +525,7 @@ fun UpdateScreen(navController: NavHostController) {
                                     if (isDownloading) {
                                         if (downloadProgress > 0f) {
                                             androidx.compose.material3.LinearProgressIndicator(
-                                                progress = downloadProgress,
+                                                progress = { downloadProgress },
                                                 modifier = Modifier
                                                     .fillMaxWidth()
                                                     .height(8.dp)

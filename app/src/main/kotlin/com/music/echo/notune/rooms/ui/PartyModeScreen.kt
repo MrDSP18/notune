@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import echo.music.iad1tya.notune.rooms.RoomsViewModel
 import echo.music.iad1tya.notune.rooms.models.QueueVoteItem
@@ -105,7 +105,7 @@ fun PartyModeScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Tab Selector
-            TabRow(
+            PrimaryTabRow(
                 selectedTabIndex = selectedTab,
                 containerColor = Color.Transparent
             ) {
