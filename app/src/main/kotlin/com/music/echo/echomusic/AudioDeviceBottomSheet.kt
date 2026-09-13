@@ -78,6 +78,8 @@ import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.Usb
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.outlined.Error
