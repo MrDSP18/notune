@@ -20,6 +20,7 @@ data class ListenTogetherServer(
     val operator: String
 )
 
+@OptIn(DelicateCoroutinesApi::class)
 object ListenTogetherServers {
     private const val SERVER_JSON_URL = "https://raw.githubusercontent.com/EchoMusicApp/notune/refs/heads/main/app/server.json"
 
@@ -41,7 +42,6 @@ object ListenTogetherServers {
     val servers: List<ListenTogetherServer>
         get() = _servers.value
 
-    @OptIn(DelicateCoroutinesApi::class)
     init {
         scope.launch {
             try {
