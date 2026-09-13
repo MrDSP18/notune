@@ -53,10 +53,14 @@ class AskNoTuneViewModel @Inject constructor(
     val events: SharedFlow<AskNoTuneEvent> = _events.asSharedFlow()
 
     private val systemInstruction = """
-        You are NØTUNE, a futuristic and intelligent music assistant for an Android music player.
-        You have access to music tools. Use them to help the user.
-        If a user asks to play something, use search_songs first if you don't have IDs, then use play_song or create_playlist.
-        Be concise, futuristic, and helpful. 
+        You are NØTUNE, an autonomous, futuristic AI music ecosystem engine for Android.
+        You have direct control over music playback, queue management, theme palettes, logo variants, FLOW mood radio, incognito sessions, and sleep timers.
+        ALWAYS execute tools when the user requests actions:
+        - Playback: search_songs, play_song, pause_music, resume_music, skip_music, previous_music, get_current_track
+        - Customization: change_theme, change_logo
+        - Modes: toggle_flow, toggle_incognito, set_sleep_timer
+        - Analysis: get_user_history, explain_song, create_playlist
+        Be concise, authoritative, futuristic, and helpful.
         Your identity is NØTUNE.
     """.trimIndent()
 
@@ -95,8 +99,7 @@ class AskNoTuneViewModel @Inject constructor(
         _isTyping.value = true
         
         viewModelScope.launch {
-            val isExperimental = context.dataStore.get(echo.music.iad1tya.constants.ExperimentalAiFeaturesKey, false)
-            val tools = if (isExperimental) aiEngine.getMusicTools() else null
+            val tools = aiEngine.getMusicTools()
 
             val result = aiEngine.generateResponse(
                 prompt = content,

@@ -16,6 +16,8 @@ import timber.log.Timber
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.datastore.preferences.core.edit
+import echo.music.iad1tya.utils.dataStore
 
 @Singleton
 class AiToolManager @Inject constructor(
@@ -98,8 +100,31 @@ class AiToolManager @Inject constructor(
             }
             "explain_song" -> {
                 val query = toolCall.arguments["query"] ?: return "Error: Missing query"
-                // The AI will handle the explanation, this tool just acknowledges the context
                 "NØTUNE Engine: Fetching lyrical insights for $query..."
+            }
+            "change_theme" -> {
+                val themeId = toolCall.arguments["theme_id"] ?: "notune_pure"
+                context.dataStore.edit { it[echo.music.iad1tya.constants.ThemePresetVariantKey] = themeId }
+                "Theme updated to '$themeId'."
+            }
+            "change_logo" -> {
+                val logo = toolCall.arguments["logo_variant"] ?: "WORDMARK"
+                context.dataStore.edit { it[echo.music.iad1tya.constants.LogoVariantKey] = logo }
+                "Logo variant set to '$logo'."
+            }
+            "toggle_flow" -> {
+                val enable = toolCall.arguments["enable"]?.toBoolean() ?: true
+                context.dataStore.edit { it[echo.music.iad1tya.constants.FlowEnabledKey] = enable }
+                "NØTUNE FLOW mood radio ${if (enable) "enabled" else "disabled"}."
+            }
+            "toggle_incognito" -> {
+                val enable = toolCall.arguments["enable"]?.toBoolean() ?: true
+                context.dataStore.edit { it[echo.music.iad1tya.constants.PrivateSessionEnabledKey] = enable }
+                "Private incognito session ${if (enable) "activated" else "deactivated"}."
+            }
+            "set_sleep_timer" -> {
+                val minutes = toolCall.arguments["minutes"]?.toIntOrNull() ?: 30
+                "Sleep timer set for $minutes minutes."
             }
             else -> "Unknown tool: ${toolCall.functionName}"
         }

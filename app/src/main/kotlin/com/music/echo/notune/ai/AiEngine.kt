@@ -103,6 +103,11 @@ class AiEngine @Inject constructor(
         AiTool("skip_music", "Skip to the next song in the queue.", emptyMap()),
         AiTool("previous_music", "Go back to the previous song in the queue.", emptyMap()),
         AiTool("get_current_track", "Get information about the currently playing song.", emptyMap()),
-        AiTool("explain_song", "Explain the meaning and background of a song.", mapOf("query" to ToolParameter("string", "The song title and artist to explain")))
+        AiTool("explain_song", "Explain the meaning and background of a song.", mapOf("query" to ToolParameter("string", "The song title and artist to explain"))),
+        AiTool("change_theme", "Change active experience theme palette.", mapOf("theme_id" to ToolParameter("string", "Theme ID or name e.g. tokyo_neon, midnight, aurora, synthwave"))),
+        AiTool("change_logo", "Change dynamic app logo variant.", mapOf("logo_variant" to ToolParameter("string", "Logo variant title e.g. CYBERPUNK, HYPER_CUBE, NEON_ORBIT"))),
+        AiTool("toggle_flow", "Enable or disable NØTUNE FLOW mood radio mode.", mapOf("enable" to ToolParameter("string", "true or false"))),
+        AiTool("toggle_incognito", "Enable or disable private session mode.", mapOf("enable" to ToolParameter("string", "true or false"))),
+        AiTool("set_sleep_timer", "Set a sleep timer for music playback.", mapOf("minutes" to ToolParameter("string", "Duration in minutes e.g. 15, 30, 60")))
     )
 }

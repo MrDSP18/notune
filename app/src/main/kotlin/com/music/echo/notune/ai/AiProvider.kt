@@ -49,9 +49,9 @@ data class AiResponse(
 )
 
 data class ToolCall(
-    val id: String,
+    val id: String = java.util.UUID.randomUUID().toString(),
     val functionName: String,
-    val arguments: Map<String, String>
+    val arguments: Map<String, String> = emptyMap()
 )
 
 data class TokenUsage(

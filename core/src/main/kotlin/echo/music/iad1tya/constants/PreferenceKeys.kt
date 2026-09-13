@@ -106,7 +106,25 @@ enum class LogoVariant(val title: String) {
     HARMONIC_WAVE("Harmonic Wave"),
     VINYL_GROOVES("Vinyl Grooves"),
     INFINITE_LOOP("Infinite Loop"),
-    ACOUSTIC_MESH("Acoustic Mesh");
+    ACOUSTIC_MESH("Acoustic Mesh"),
+    NEON_ORBIT("Neon Orbit"),
+    QUANTUM_WAVE("Quantum Wave"),
+    SPECTRUM_RING("Spectrum Ring"),
+    PRISM_BEAM("Prism Beam"),
+    FLUID_ORB("Fluid Orb"),
+    HYPER_CUBE("Hyper Cube"),
+    SYNTH_GRID("Synth Grid"),
+    AURORA_PULSE("Aurora Pulse"),
+    CYBER_HEX("Cyber Hexagon"),
+    NEBULA_CORE("Nebula Core"),
+    INFINITY_FLAME("Infinity Flame"),
+    ECHO_RINGS("Echo Rings"),
+    CELESTIAL_STAR("Celestial Star"),
+    CHRONO_DIAL("Chrono Dial"),
+    PLASMA_BLAST("Plasma Blast"),
+    HOLOGRAM_MATRIX("Hologram Matrix"),
+    SOLAR_ECLIPSE("Solar Eclipse"),
+    VORTEX_FLOW("Vortex Flow");
 
     companion object {
         fun fromName(name: String): LogoVariant = entries.find { it.name.equals(name, ignoreCase = true) } ?: WORDMARK
@@ -234,6 +252,39 @@ enum class DensityScale(val value: Float, val label: String) {
         fun fromValue(value: Float): DensityScale = entries.find { it.value == value } ?: NATIVE
     }
 }
+
+enum class GestureAction(val title: String, val description: String) {
+    NEXT_TRACK("Next Track", "Skip to the next song in queue"),
+    PREVIOUS_TRACK("Previous Track", "Skip to the previous song in queue"),
+    PLAY_PAUSE("Play / Pause", "Toggle music playback"),
+    SEEK_FORWARD("Seek Forward 10s", "Fast-forward playback by 10 seconds"),
+    SEEK_BACKWARD("Seek Backward 10s", "Rewind playback by 10 seconds"),
+    TOGGLE_LIKE("Toggle Like", "Add or remove current track from liked songs"),
+    TOGGLE_LYRICS("Toggle Lyrics", "Show or hide synchronized lyrics"),
+    TOGGLE_FLOW("Toggle FLOW", "Enable or disable NØTUNE FLOW mood journey"),
+    TOGGLE_INCOGNITO("Toggle Incognito", "Switch private session mode on or off"),
+    OPEN_QUEUE("Open Queue", "Open current playback queue drawer"),
+    OPEN_EQUALIZER("Open Equalizer", "Launch high-fidelity audio equalizer"),
+    OPEN_AI_ASSISTANT("Open AI Assistant", "Launch Ask NØTUNE AI companion"),
+    TOGGLE_SLEEP_TIMER("Toggle Sleep Timer", "Set or cancel sleep timer"),
+    MUTE_UNMUTE("Mute / Unmute", "Instantly silence or restore volume"),
+    NONE("Disabled", "No action assigned");
+
+    companion object {
+        fun fromName(name: String): GestureAction = entries.find { it.name.equals(name, ignoreCase = true) } ?: NONE
+    }
+}
+
+val SwipeLeftActionKey = stringPreferencesKey("notune_swipe_left_action")
+val SwipeRightActionKey = stringPreferencesKey("notune_swipe_right_action")
+val SwipeUpActionKey = stringPreferencesKey("notune_swipe_up_action")
+val SwipeDownActionKey = stringPreferencesKey("notune_swipe_down_action")
+val DoubleTapLeftActionKey = stringPreferencesKey("notune_double_tap_left_action")
+val DoubleTapRightActionKey = stringPreferencesKey("notune_double_tap_right_action")
+val DoubleTapCenterActionKey = stringPreferencesKey("notune_double_tap_center_action")
+val LongPressActionKey = stringPreferencesKey("notune_long_press_action")
+val TwoFingerTapActionKey = stringPreferencesKey("notune_two_finger_tap_action")
+val PinchGestureActionKey = stringPreferencesKey("notune_pinch_gesture_action")
 
 val DefaultOpenTabKey = stringPreferencesKey("defaultOpenTab")
 val SlimNavBarKey = booleanPreferencesKey("slimNavBar")

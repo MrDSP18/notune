@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- NØ Ring -->
+    <path
+        android:pathData="M54,27 A27,27 0 1,1 53.99,27 Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round" />
+    <!-- Equalizer Left -->
+    <path
+        android:pathData="M38,47 L38,61"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round" />
+    <!-- Equalizer Right -->
+    <path
+        android:pathData="M70,45 L70,63"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round" />
+    <!-- NØ Slash Beam -->
+    <path
+        android:pathData="M31,77 L77,31"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round" />
+    <!-- Note Node 1 -->
+    <path
+        android:pathData="M61.5,43.5 A4.5,4.5 0 1,1 61.49,43.5 Z"
+        android:fillColor="#FFFFFF" />
+    <!-- Note Node 2 -->
+    <path
+        android:pathData="M46.5,64.5 A4.5,4.5 0 1,1 46.49,64.5 Z"
+        android:fillColor="#FFFFFF" />
+</vector>

@@ -215,7 +215,7 @@ class GatewayClient {
             val op = json.getInt("op")
             val d = json.opt("d")
             val s = if (json.has("s") && !json.isNull("s")) json.getInt("s") else null
-            val t = json.optString("t", null as String?)
+            val t = json.optString("t", "").takeIf { it.isNotBlank() }
 
             if (s != null && s > liveSeq) {
                 liveSeq = s
