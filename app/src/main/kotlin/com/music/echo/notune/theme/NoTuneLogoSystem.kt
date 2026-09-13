@@ -118,6 +118,66 @@ fun NoTuneLogo(
                 drawPath(path = path, color = tint, style = Stroke(width = w * 0.16f))
             }
         }
+        LogoVariant.CYBER_PULSE -> {
+            Canvas(modifier = modifier.size(size)) {
+                val w = this.size.width
+                val h = this.size.height
+                val stroke = w * 0.12f
+                // Cyberpunk equalizer bars with slashed Ø ring
+                drawLine(color = tint, start = Offset(w * 0.2f, h * 0.7f), end = Offset(w * 0.2f, h * 0.3f), strokeWidth = stroke)
+                drawLine(color = tint, start = Offset(w * 0.4f, h * 0.9f), end = Offset(w * 0.4f, h * 0.1f), strokeWidth = stroke)
+                drawLine(color = tint, start = Offset(w * 0.6f, h * 0.8f), end = Offset(w * 0.6f, h * 0.2f), strokeWidth = stroke)
+                drawLine(color = tint, start = Offset(w * 0.8f, h * 0.6f), end = Offset(w * 0.8f, h * 0.4f), strokeWidth = stroke)
+            }
+        }
+        LogoVariant.HARMONIC_WAVE -> {
+            Canvas(modifier = modifier.size(size)) {
+                val w = this.size.width
+                val h = this.size.height
+                val path = Path().apply {
+                    moveTo(0f, h * 0.5f)
+                    cubicTo(w * 0.25f, 0f, w * 0.25f, h, w * 0.5f, h * 0.5f)
+                    cubicTo(w * 0.75f, 0f, w * 0.75f, h, w, h * 0.5f)
+                }
+                drawPath(path = path, color = tint, style = Stroke(width = w * 0.14f))
+            }
+        }
+        LogoVariant.VINYL_GROOVES -> {
+            Canvas(modifier = modifier.size(size)) {
+                val center = Offset(this.size.width / 2f, this.size.height / 2f)
+                val r = this.size.minDimension / 2f
+                drawCircle(color = tint, radius = r, style = Stroke(width = r * 0.15f))
+                drawCircle(color = tint.copy(alpha = 0.6f), radius = r * 0.7f, style = Stroke(width = r * 0.1f))
+                drawCircle(color = tint.copy(alpha = 0.3f), radius = r * 0.4f, style = Stroke(width = r * 0.08f))
+                drawCircle(color = tint, radius = r * 0.15f)
+            }
+        }
+        LogoVariant.INFINITE_LOOP -> {
+            Canvas(modifier = modifier.size(size)) {
+                val w = this.size.width
+                val h = this.size.height
+                val path = Path().apply {
+                    moveTo(w * 0.3f, h * 0.5f)
+                    cubicTo(w * 0.1f, h * 0.1f, w * 0.1f, h * 0.9f, w * 0.5f, h * 0.5f)
+                    cubicTo(w * 0.9f, h * 0.1f, w * 0.9f, h * 0.9f, w * 0.7f, h * 0.5f)
+                }
+                drawPath(path = path, color = tint, style = Stroke(width = w * 0.14f))
+            }
+        }
+        LogoVariant.ACOUSTIC_MESH -> {
+            Canvas(modifier = modifier.size(size)) {
+                val center = Offset(this.size.width / 2f, this.size.height / 2f)
+                val r = this.size.minDimension / 2f
+                val count = 8
+                for (i in 0 until count) {
+                    val angle = (i * 360f / count) * (Math.PI.toFloat() / 180f)
+                    val endX = center.x + r * Math.cos(angle.toDouble()).toFloat()
+                    val endY = center.y + r * Math.sin(angle.toDouble()).toFloat()
+                    drawLine(color = tint.copy(alpha = 0.8f), start = center, end = Offset(endX, endY), strokeWidth = r * 0.1f)
+                }
+                drawCircle(color = tint, radius = r * 0.25f)
+            }
+        }
     }
 }
 

@@ -8,15 +8,18 @@ import org.junit.Test
 class PersonalizationSystemTest {
 
     @Test
-    fun `NoTuneThemeEngine contains 12 distinct theme presets`() {
+    fun `NoTuneThemeEngine contains 20 distinct theme presets`() {
         val themes = NoTuneThemeEngine.ALL_THEMES
-        assertEquals(12, themes.size)
+        assertEquals(20, themes.size)
 
         val pure = NoTuneThemeEngine.getThemeById("notune_pure")
         assertEquals("NØTUNE Pure", pure.name)
 
         val midnight = NoTuneThemeEngine.getThemeById("midnight")
         assertTrue(midnight.isOledOptimized)
+
+        val tokyo = NoTuneThemeEngine.getThemeById("tokyo_neon")
+        assertEquals("Tokyo Cyberpunk", tokyo.name)
     }
 
     @Test
@@ -55,13 +58,18 @@ class PersonalizationSystemTest {
     }
 
     @Test
-    fun `LogoVariant and enum resolution functions cleanly`() {
+    fun `LogoVariant supports all 12 creative logo variants`() {
+        assertEquals(12, LogoVariant.entries.size)
         assertEquals(LogoVariant.WORDMARK, LogoVariant.fromName("wordmark"))
         assertEquals(LogoVariant.GLYPH, LogoVariant.fromName("glyph"))
+        assertEquals(LogoVariant.CYBER_PULSE, LogoVariant.fromName("cyber_pulse"))
+        assertEquals(LogoVariant.HARMONIC_WAVE, LogoVariant.fromName("harmonic_wave"))
+        assertEquals(LogoVariant.VINYL_GROOVES, LogoVariant.fromName("vinyl_grooves"))
+        assertEquals(LogoVariant.INFINITE_LOOP, LogoVariant.fromName("infinite_loop"))
+        assertEquals(LogoVariant.ACOUSTIC_MESH, LogoVariant.fromName("acoustic_mesh"))
 
         assertEquals(FontFamilyStyle.SANS, FontFamilyStyle.fromName("sans"))
         assertEquals(FontFamilyStyle.MONO, FontFamilyStyle.fromName("mono"))
-
         assertEquals(UiContext.WORKOUT, UiContext.fromName("workout"))
         assertEquals(CornerRadiusStyle.ROUNDED, CornerRadiusStyle.fromName("rounded"))
     }

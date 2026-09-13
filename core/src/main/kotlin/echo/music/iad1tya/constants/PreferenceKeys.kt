@@ -101,7 +101,12 @@ enum class LogoVariant(val title: String) {
     MONOGRAM("Monogram"),
     CIRCULAR("Circular"),
     GEOMETRIC("Geometric"),
-    GLYPH("Glyph");
+    GLYPH("Glyph"),
+    CYBER_PULSE("Cyber Pulse"),
+    HARMONIC_WAVE("Harmonic Wave"),
+    VINYL_GROOVES("Vinyl Grooves"),
+    INFINITE_LOOP("Infinite Loop"),
+    ACOUSTIC_MESH("Acoustic Mesh");
 
     companion object {
         fun fromName(name: String): LogoVariant = entries.find { it.name.equals(name, ignoreCase = true) } ?: WORDMARK
