@@ -45,7 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.music.echo.R
+import echo.music.iad1tya.R
 import echo.music.iad1tya.ui.theme.NothingFont
 import kotlinx.coroutines.launch
 import java.util.UUID
