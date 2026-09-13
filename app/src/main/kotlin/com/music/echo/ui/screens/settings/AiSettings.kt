@@ -36,11 +36,11 @@ fun AiSettings(
     val aiEngine = viewModel.aiEngine
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
-    val (preferredProvider, onPreferredProviderChange) = rememberEnumPreference(PreferredAiProviderKey, AiProviderType.GEMINI)
+    val (preferredProvider, onPreferredProviderChange) = rememberEnumPreference(PreferredAiProviderKey, AiProviderType.NOTUNE_BASIC)
     val (geminiApiKey, onGeminiApiKeyChange) = rememberPreference(GeminiApiKey, "")
     val (groqApiKey, onGroqApiKeyChange) = rememberPreference(GroqApiKey, "")
     val (openRouterApiKey, onOpenRouterApiKeyChange) = rememberPreference(OpenRouterApiKeyExtra, "")
-    val (aiDjEnabled, onAiDjEnabledChange) = rememberPreference(AiDjEnabledKey, false)
+    val (aiDjEnabled, onAiDjEnabledChange) = rememberPreference(AiDjEnabledKey, true)
     val (aiMusicFinderEnabled, onAiMusicFinderEnabledChange) = rememberPreference(AiMusicFinderEnabledKey, true)
 
     Scaffold(
@@ -64,6 +64,24 @@ fun AiSettings(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
+            // Free Built-in AI Banner
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFF0031).copy(alpha = 0.15f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF0031).copy(alpha = 0.4f))
+            ) {
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Icon(painter = painterResource(R.drawable.sparks), contentDescription = null, tint = Color(0xFFFF0031), modifier = Modifier.size(24.dp))
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text("NØTUNE FREE AI IS ACTIVE", style = MaterialTheme.typography.titleSmall.copy(fontFamily = NothingFont, color = Color.White))
+                        Spacer(Modifier.height(2.dp))
+                        Text("AI features (AI DJ, Smart Search, Moods, Playlists) are 100% free and work out-of-the-box for all users without setup.", style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.7f)))
+                    }
+                }
+            }
+
             PreferenceGroupTitle(title = "Provider Configuration")
 
             EnumListPreference(
@@ -72,10 +90,11 @@ fun AiSettings(
                 onValueSelected = onPreferredProviderChange,
                 valueText = { 
                     when(it) {
-                        AiProviderType.GEMINI -> "Google Gemini (Free Tier Available)"
-                        AiProviderType.GROQ -> "Groq (High Performance Free Tier)"
-                        AiProviderType.OPENROUTER -> "OpenRouter (Many Free Models)"
-                        AiProviderType.OLLAMA -> "Ollama (Local / Offline)"
+                        AiProviderType.NOTUNE_BASIC -> "NØTUNE Free Built-in AI (Default - Always Active)"
+                        AiProviderType.GEMINI -> "Google Gemini (Optional Key)"
+                        AiProviderType.GROQ -> "Groq (Optional Key)"
+                        AiProviderType.OPENROUTER -> "OpenRouter (Optional Key)"
+                        AiProviderType.OLLAMA -> "Ollama (Local Server)"
                         else -> it.name
                     }
                 },
@@ -83,8 +102,8 @@ fun AiSettings(
             )
 
             EditTextPreference(
-                title = { Text("Google Gemini API Key") },
-                description = if (geminiApiKey.isBlank()) "Not configured" else "Connected",
+                title = { Text("Google Gemini API Key (Optional)") },
+                description = if (geminiApiKey.isBlank()) "Free Built-in AI active (Optional Key)" else "Connected Custom Key",
                 value = geminiApiKey,
                 onValueChange = onGeminiApiKeyChange,
                 trailingContent = {

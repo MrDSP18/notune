@@ -125,7 +125,7 @@ fun TasteProfileScreen(
             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     if (profile.favoriteArtists.isEmpty()) {
-                        Text("No favorite artists selected", style = MaterialTheme.typography.bodySmall)
+                        Text("No favorite artists selected yet. Complete taste onboarding or add artists in settings.", style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant))
                     } else {
                         profile.favoriteArtists.forEach { artist ->
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 4.dp)) {
@@ -133,8 +133,65 @@ fun TasteProfileScreen(
                                     Text(artist.name.take(1), style = MaterialTheme.typography.titleSmall.copy(color = Color.White))
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
-                                Text(artist.name, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
+                                Text(artist.name, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), modifier = Modifier.weight(1f))
+                                Surface(shape = RoundedCornerShape(4.dp), color = Color(0xFFFF0031).copy(alpha = 0.15f)) {
+                                    Text("Seeded", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFFFF0031)))
+                                }
                             }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Dynamic Suggested Songs Loaded from Selected Artists
+            Text("SUGGESTED SONGS FROM YOUR ARTISTS", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp), color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(10.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    val recommendedSongs = remember(profile.favoriteArtists) {
+                        if (profile.favoriteArtists.isEmpty()) {
+                            listOf(
+                                "Jai Ho" to "A.R. Rahman",
+                                "Blinding Lights" to "The Weeknd",
+                                "Naa Ready" to "Anirudh Ravichander",
+                                "Cruel Summer" to "Taylor Swift"
+                            )
+                        } else {
+                            profile.favoriteArtists.take(5).map { artist ->
+                                val sampleTrack = when {
+                                    "Rahman" in artist.name -> "Urvashe Urvashe"
+                                    "Anirudh" in artist.name -> "Hukum"
+                                    "Swift" in artist.name -> "Anti-Hero"
+                                    "Weeknd" in artist.name -> "Starboy"
+                                    "Arijit" in artist.name -> "Kesariya"
+                                    "Sid" in artist.name -> "Srivalli"
+                                    "BTS" in artist.name -> "Dynamite"
+                                    "Drake" in artist.name -> "God's Plan"
+                                    else -> "Popular Track"
+                                }
+                                sampleTrack to artist.name
+                            }
+                        }
+                    }
+
+                    recommendedSongs.forEach { (track, artistName) ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(painterResource(R.drawable.music_note), contentDescription = null, tint = Color(0xFFFF0031), modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(track, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
+                                Text(artistName, style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant))
+                            }
+                            Text("Recommended", style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFFFF0031)))
                         }
                     }
                 }

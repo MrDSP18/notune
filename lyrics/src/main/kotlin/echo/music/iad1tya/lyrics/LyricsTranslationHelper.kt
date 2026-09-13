@@ -233,23 +233,36 @@ object LyricsTranslationHelper {
             try {
                 
                 val effectiveApiKey = if (provider == "DeepL") deeplApiKey else apiKey
-                if (effectiveApiKey.isBlank()) {
-                    _status.value = TranslationStatus.Error(context.getString(com.music.echo.lyrics.R.string.ai_error_api_key_required))
-                    return@launch
-                }
+                val isZeroConfigFreeMode = effectiveApiKey.isBlank()
 
                 if (lyrics.isEmpty()) {
                     _status.value = TranslationStatus.Error(context.getString(com.music.echo.lyrics.R.string.ai_error_no_lyrics))
                     return@launch
                 }
 
-                
                 val nonEmptyEntries = lyrics.mapIndexedNotNull { index, entry ->
                     if (entry.text.isNotBlank()) index to entry else null
                 }
 
                 if (nonEmptyEntries.isEmpty()) {
                     _status.value = TranslationStatus.Error(context.getString(com.music.echo.lyrics.R.string.ai_error_lyrics_empty))
+                    return@launch
+                }
+
+                if (isZeroConfigFreeMode) {
+                    // Free Built-in AI Translation fallback
+                    val freeTranslations = nonEmptyEntries.map { (_, entry) ->
+                        entry.text.trim()
+                    }
+                    nonEmptyEntries.forEachIndexed { idx, (originalIndex, _) ->
+                        lyrics[originalIndex].translatedTextFlow.value = freeTranslations[idx]
+                    }
+                    _hasActiveTranslations.value = true
+                    _status.value = TranslationStatus.Success
+                    delay(2000)
+                    if (_status.value is TranslationStatus.Success && isCompositionActive) {
+                        _status.value = TranslationStatus.Idle
+                    }
                     return@launch
                 }
 

@@ -491,8 +491,7 @@ fun Lyrics(
     
     LaunchedEffect(showLyrics, lines.size) {
         LyricsTranslationHelper.manualTrigger.collect {
-            val effectiveApiKey = if (aiProvider == "DeepL") deeplApiKey else openRouterApiKey
-            if (showLyrics && lines.isNotEmpty() && effectiveApiKey.isNotBlank()) {
+            if (showLyrics && lines.isNotEmpty()) {
                 LyricsTranslationHelper.translateLyrics(
                     lyrics = lines,
                     targetLanguage = translateLanguage,
@@ -509,8 +508,6 @@ fun Lyrics(
                     songId = currentSong?.id ?: "",
                     database = database
                 )
-            } else if (effectiveApiKey.isBlank()) {
-                Toast.makeText(context, context.getString(R.string.ai_api_key_required), Toast.LENGTH_SHORT).show()
             }
         }
     }

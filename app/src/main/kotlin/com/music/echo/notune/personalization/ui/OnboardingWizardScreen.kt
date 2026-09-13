@@ -351,40 +351,298 @@ private fun MusicLanguagesStep(selectedLangs: Set<String>, onToggle: (String) ->
     }
 }
 
+private data class SuggestedSong(val title: String, val artist: String, val album: String)
+
 @Composable
-private fun FavoriteArtistsStep(selected: List<SelectedArtist>, onToggle: (SelectedArtist) -> Unit, onNext: () -> Unit) {
-    val popularArtists = listOf(
-        SelectedArtist("1", "A.R. Rahman"), SelectedArtist("2", "Anirudh Ravichander"),
-        SelectedArtist("3", "Taylor Swift"), SelectedArtist("4", "The Weeknd"),
-        SelectedArtist("5", "Arijit Singh"), SelectedArtist("6", "Sid Sriram"),
-        SelectedArtist("7", "BTS"), SelectedArtist("8", "Drake"),
-        SelectedArtist("9", "Kendrick Lamar"), SelectedArtist("10", "Yuvan Shankar Raja")
-    )
-    Column(modifier = Modifier.fillMaxWidth()) {
+private fun FavoriteArtistsStep(
+    selected: List<SelectedArtist>,
+    onToggle: (SelectedArtist) -> Unit,
+    onNext: () -> Unit
+) {
+    var searchQuery by remember { mutableStateOf("") }
+
+    val popularArtists = remember {
+        listOf(
+            SelectedArtist("1", "A.R. Rahman"), SelectedArtist("2", "Anirudh Ravichander"),
+            SelectedArtist("3", "Taylor Swift"), SelectedArtist("4", "The Weeknd"),
+            SelectedArtist("5", "Arijit Singh"), SelectedArtist("6", "Sid Sriram"),
+            SelectedArtist("7", "BTS"), SelectedArtist("8", "Drake"),
+            SelectedArtist("9", "Kendrick Lamar"), SelectedArtist("10", "Yuvan Shankar Raja"),
+            SelectedArtist("11", "Harris Jayaraj"), SelectedArtist("12", "Santhosh Narayanan"),
+            SelectedArtist("13", "Billie Eilish"), SelectedArtist("14", "Eminem"),
+            SelectedArtist("15", "Ed Sheeran"), SelectedArtist("16", "Dua Lipa"),
+            SelectedArtist("17", "Bad Bunny"), SelectedArtist("18", "Post Malone"),
+            SelectedArtist("19", "Justin Bieber"), SelectedArtist("20", "Ariana Grande"),
+            SelectedArtist("21", "Bruno Mars"), SelectedArtist("22", "Coldplay"),
+            SelectedArtist("23", "Imagine Dragons"), SelectedArtist("24", "Shreya Ghoshal"),
+            SelectedArtist("25", "S.P. Balasubrahmanyam"), SelectedArtist("26", "Ilaiyaraaja"),
+            SelectedArtist("27", "Pradeep Kumar"), SelectedArtist("28", "Shankar-Ehsaan-Loy")
+        )
+    }
+
+    val filteredArtists = remember(searchQuery) {
+        if (searchQuery.isBlank()) {
+            popularArtists
+        } else {
+            popularArtists.filter { it.name.contains(searchQuery, ignoreCase = true) }
+        }
+    }
+
+    val artistSongCatalog = remember {
+        mapOf(
+            "A.R. Rahman" to listOf(
+                SuggestedSong("Jai Ho", "A.R. Rahman", "Slumdog Millionaire"),
+                SuggestedSong("Urvashe Urvashe", "A.R. Rahman", "Kadhalan"),
+                SuggestedSong("Roja Janeman", "A.R. Rahman", "Roja"),
+                SuggestedSong("Tere Bina", "A.R. Rahman", "Guru")
+            ),
+            "Anirudh Ravichander" to listOf(
+                SuggestedSong("Naa Ready", "Anirudh Ravichander", "Leo"),
+                SuggestedSong("Hukum", "Anirudh Ravichander", "Jailer"),
+                SuggestedSong("Vathi Coming", "Anirudh Ravichander", "Master"),
+                SuggestedSong("Chaleya", "Anirudh Ravichander", "Jawan")
+            ),
+            "Taylor Swift" to listOf(
+                SuggestedSong("Cruel Summer", "Taylor Swift", "Lover"),
+                SuggestedSong("Anti-Hero", "Taylor Swift", "Midnights"),
+                SuggestedSong("Blank Space", "Taylor Swift", "1989"),
+                SuggestedSong("Cardigan", "Taylor Swift", "Folklore")
+            ),
+            "The Weeknd" to listOf(
+                SuggestedSong("Blinding Lights", "The Weeknd", "After Hours"),
+                SuggestedSong("Starboy", "The Weeknd", "Starboy"),
+                SuggestedSong("Save Your Tears", "The Weeknd", "After Hours"),
+                SuggestedSong("Die For You", "The Weeknd", "Starboy")
+            ),
+            "Arijit Singh" to listOf(
+                SuggestedSong("Kesariya", "Arijit Singh", "Brahmastra"),
+                SuggestedSong("Tum Hi Ho", "Arijit Singh", "Aashiqui 2"),
+                SuggestedSong("Channa Mereya", "Arijit Singh", "Ae Dil Hai Mushkil"),
+                SuggestedSong("Apna Bana Le", "Arijit Singh", "Bhediya")
+            ),
+            "Sid Sriram" to listOf(
+                SuggestedSong("Srivalli", "Sid Sriram", "Pushpa"),
+                SuggestedSong("Inkem Inkem", "Sid Sriram", "Geetha Govindam"),
+                SuggestedSong("Adiye", "Sid Sriram", "Kadal"),
+                SuggestedSong("Kadhaippoma", "Sid Sriram", "Oh My Kadavule")
+            ),
+            "BTS" to listOf(
+                SuggestedSong("Dynamite", "BTS", "BE"),
+                SuggestedSong("Butter", "BTS", "Butter"),
+                SuggestedSong("Boy With Luv", "BTS", "Map of the Soul: Persona"),
+                SuggestedSong("Spring Day", "BTS", "You Never Walk Alone")
+            ),
+            "Drake" to listOf(
+                SuggestedSong("God's Plan", "Drake", "Scorpion"),
+                SuggestedSong("Hotline Bling", "Drake", "Views"),
+                SuggestedSong("One Dance", "Drake", "Views"),
+                SuggestedSong("Passionfruit", "Drake", "More Life")
+            ),
+            "Kendrick Lamar" to listOf(
+                SuggestedSong("HUMBLE.", "Kendrick Lamar", "DAMN."),
+                SuggestedSong("Not Like Us", "Kendrick Lamar", "Single"),
+                SuggestedSong("DNA.", "Kendrick Lamar", "DAMN."),
+                SuggestedSong("All The Stars", "Kendrick Lamar", "Black Panther")
+            ),
+            "Yuvan Shankar Raja" to listOf(
+                SuggestedSong("Rowdy Baby", "Yuvan Shankar Raja", "Maari 2"),
+                SuggestedSong("High On Love", "Yuvan Shankar Raja", "Pyaar Prema Kadhal"),
+                SuggestedSong("Pogattuma", "Yuvan Shankar Raja", "Single"),
+                SuggestedSong("Evanda Enakku Custody", "Yuvan Shankar Raja", "Mankatha")
+            ),
+            "Harris Jayaraj" to listOf(
+                SuggestedSong("Vaseegara", "Harris Jayaraj", "Minnale"),
+                SuggestedSong("Annul Maale", "Harris Jayaraj", "Vaaranam Aayiram"),
+                SuggestedSong("Hasili Fisili", "Harris Jayaraj", "Aadhavan")
+            ),
+            "Santhosh Narayanan" to listOf(
+                SuggestedSong("Rakita Rakita", "Santhosh Narayanan", "Jagame Thandhiram"),
+                SuggestedSong("Neruppu Da", "Santhosh Narayanan", "Kabali"),
+                SuggestedSong("Enjoy Enjaami", "Santhosh Narayanan & Dhee", "Single")
+            ),
+            "Billie Eilish" to listOf(
+                SuggestedSong("bad guy", "Billie Eilish", "WHEN WE ALL FALL ASLEEP"),
+                SuggestedSong("BIRDS OF A FEATHER", "Billie Eilish", "HIT ME HARD AND SOFT"),
+                SuggestedSong("Ocean Eyes", "Billie Eilish", "Don't Smile at Me")
+            ),
+            "Eminem" to listOf(
+                SuggestedSong("Lose Yourself", "Eminem", "8 Mile"),
+                SuggestedSong("Without Me", "Eminem", "The Eminem Show"),
+                SuggestedSong("Houdini", "Eminem", "The Death of Slim Shady")
+            ),
+            "Ed Sheeran" to listOf(
+                SuggestedSong("Shape of You", "Ed Sheeran", "÷"),
+                SuggestedSong("Perfect", "Ed Sheeran", "÷"),
+                SuggestedSong("Bad Habits", "Ed Sheeran", "=")
+            ),
+            "Dua Lipa" to listOf(
+                SuggestedSong("Levitating", "Dua Lipa", "Future Nostalgia"),
+                SuggestedSong("Don't Start Now", "Dua Lipa", "Future Nostalgia"),
+                SuggestedSong("Houdini", "Dua Lipa", "Radical Optimism")
+            )
+        )
+    }
+
+    val defaultSuggestedSongs = remember {
+        listOf(
+            SuggestedSong("Jai Ho", "A.R. Rahman", "Slumdog Millionaire"),
+            SuggestedSong("Blinding Lights", "The Weeknd", "After Hours"),
+            SuggestedSong("Naa Ready", "Anirudh Ravichander", "Leo"),
+            SuggestedSong("Cruel Summer", "Taylor Swift", "Lover"),
+            SuggestedSong("Kesariya", "Arijit Singh", "Brahmastra"),
+            SuggestedSong("Dynamite", "BTS", "BE")
+        )
+    }
+
+    val suggestedSongs = remember(selected) {
+        if (selected.isEmpty()) {
+            defaultSuggestedSongs
+        } else {
+            selected.flatMap { artist ->
+                artistSongCatalog[artist.name] ?: listOf(SuggestedSong("Top Track", artist.name, "Popular Hits"))
+            }.distinctBy { it.title }.take(6)
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
         Text("FAVORITE ARTISTS", style = MaterialTheme.typography.titleLarge.copy(fontFamily = NothingFont, color = Color.White))
-        Text("Select artists you love to seed your recommendations", style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.6f)))
-        Spacer(Modifier.height(16.dp))
-        LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(popularArtists) { artist ->
-                val isSelected = selected.any { it.name == artist.name }
-                Card(
-                    modifier = Modifier.clickable { onToggle(artist) },
-                    colors = CardDefaults.cardColors(containerColor = if (isSelected) Color(0xFFFF0031).copy(alpha = 0.3f) else Color.White.copy(alpha = 0.05f)),
-                    border = if (isSelected) androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF0031)) else null
-                ) {
-                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
-                            Text(artist.name.take(1), style = MaterialTheme.typography.titleSmall.copy(color = Color.White))
-                        }
+        Text("Select artists you love to calibrate your personalized recommendations", style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.6f)))
+        
+        Spacer(Modifier.height(12.dp))
+
+        // Search Input
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text("Search or type artist name...", color = Color.White.copy(alpha = 0.4f), style = MaterialTheme.typography.bodyMedium) },
+            leadingIcon = { Icon(painterResource(R.drawable.search), contentDescription = null, tint = Color(0xFFFF0031)) },
+            trailingIcon = if (searchQuery.isNotEmpty()) {
+                {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(painterResource(R.drawable.close), contentDescription = null, tint = Color.White.copy(alpha = 0.6f))
+                    }
+                }
+            } else null,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            shape = RoundedCornerShape(8.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color(0xFFFF0031),
+                unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                focusedContainerColor = Color.White.copy(alpha = 0.05f),
+                unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White
+            ),
+            singleLine = true
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            // Artist Selection Grid
+            Text("POPULAR & REGIONAL ARTISTS", style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, color = Color(0xFFFF0031), letterSpacing = 1.sp))
+            Spacer(Modifier.height(8.dp))
+
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (searchQuery.isNotBlank() && filteredArtists.none { it.name.equals(searchQuery, ignoreCase = true) }) {
+                    val customArtist = SelectedArtist(searchQuery.hashCode().toString(), searchQuery.trim())
+                    val isSelected = selected.any { it.name.equals(searchQuery, ignoreCase = true) }
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { onToggle(customArtist) },
+                        label = { Text("+ Add \"${searchQuery.trim()}\"") },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0xFFFF0031),
+                            selectedLabelColor = Color.White,
+                            containerColor = Color(0xFFFF0031).copy(alpha = 0.2f),
+                            labelColor = Color.White
+                        )
+                    )
+                }
+
+                filteredArtists.forEach { artist ->
+                    val isSelected = selected.any { it.name == artist.name }
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { onToggle(artist) },
+                        label = { Text(artist.name) },
+                        leadingIcon = if (isSelected) {
+                            { Icon(painterResource(R.drawable.check), contentDescription = null, modifier = Modifier.size(16.dp)) }
+                        } else null,
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0xFFFF0031),
+                            selectedLabelColor = Color.White,
+                            containerColor = Color.White.copy(alpha = 0.08f),
+                            labelColor = Color.White
+                        )
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            // Dynamic Suggested Songs Loaded Based on Selection
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF0031).copy(alpha = 0.3f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(painterResource(R.drawable.music_note), contentDescription = null, tint = Color(0xFFFF0031), modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text(artist.name, style = MaterialTheme.typography.bodyMedium.copy(color = Color.White), maxLines = 1, modifier = Modifier.weight(1f))
+                        Text(
+                            text = if (selected.isEmpty()) "DEFAULT SUGGESTED SONGS" else "LIVE SUGGESTED TRACKS (${selected.size} ARTISTS MATCHED)",
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, color = Color.White, letterSpacing = 1.sp)
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = if (selected.isEmpty()) "Select your favorite artists above to load personalized songs!" else "Songs dynamically recommended for your selected artists:",
+                        style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.6f))
+                    )
+                    Spacer(Modifier.height(12.dp))
+
+                    suggestedSongs.forEach { song ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFFF0031).copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(painterResource(R.drawable.play), contentDescription = null, tint = Color(0xFFFF0031), modifier = Modifier.size(16.dp))
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(song.title, style = MaterialTheme.typography.bodyMedium.copy(color = Color.White, fontWeight = FontWeight.Bold), maxLines = 1)
+                                Text("${song.artist} • ${song.album}", style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.5f)), maxLines = 1)
+                            }
+                            Surface(shape = RoundedCornerShape(4.dp), color = Color(0xFFFF0031).copy(alpha = 0.15f)) {
+                                Text("MATCHED", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFFFF0031), fontSize = 9.sp))
+                            }
+                        }
                     }
                 }
             }
+
+            Spacer(Modifier.height(16.dp))
         }
-        Spacer(Modifier.height(16.dp))
-        Button(onClick = onNext, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(2.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)) {
-            Text("CONTINUE (${selected.size} ARTISTS)", style = MaterialTheme.typography.labelLarge.copy(fontFamily = NothingFont))
+
+        Spacer(Modifier.height(12.dp))
+        Button(
+            onClick = onNext,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            shape = RoundedCornerShape(2.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+        ) {
+            Text("CONTINUE (${selected.size} ARTISTS SELECTED)", style = MaterialTheme.typography.labelLarge.copy(fontFamily = NothingFont))
         }
     }
 }

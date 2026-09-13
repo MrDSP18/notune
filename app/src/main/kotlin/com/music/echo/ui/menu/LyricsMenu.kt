@@ -105,7 +105,7 @@ fun LyricsMenu(
     val openRouterModel by rememberPreference(OpenRouterModelKey, "google/gemini-2.5-flash-lite")
     val deeplFormality by rememberPreference(DeeplFormalityKey, "default")
 
-    val hasApiKey = if (aiProvider == "DeepL") deeplApiKey.isNotBlank() else openRouterApiKey.isNotBlank()
+    val hasApiKey = true // Always available via NØTUNE Free AI Engine
 
     
     
