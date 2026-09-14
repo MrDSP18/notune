@@ -249,7 +249,11 @@ android {
             useLegacyPackaging = true
             keepDebugSymbols += listOf(
                 "**/libandroidx.graphics.path.so",
-                "**/libdatastore_shared_counter.so"
+                "**/libdatastore_shared_counter.so",
+                "**/libav*.so",
+                "**/libsw*.so",
+                "**/libffmpeg*.so",
+                "**/libc++_shared.so"
             )
         }
         resources {
