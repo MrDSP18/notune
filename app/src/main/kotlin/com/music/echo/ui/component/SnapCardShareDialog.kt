@@ -84,7 +84,7 @@ sealed interface ShareItem {
         val title: String,
         val artist: String,
         val coverUrl: String?,
-        override val shareUrl: String = "https://share.notune.fun/watch?v=$id"
+        override val shareUrl: String = "https://music.youtube.com/watch?v=$id"
     ) : ShareItem
 
     data class Playlist(
@@ -93,7 +93,7 @@ sealed interface ShareItem {
         val author: String? = null,
         val songCount: Int? = null,
         val coverUrl: String? = null,
-        override val shareUrl: String = "https://share.notune.fun/playlist?list=$id"
+        override val shareUrl: String = "https://music.youtube.com/playlist?list=$id"
     ) : ShareItem
 }
 

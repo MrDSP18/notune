@@ -3,6 +3,7 @@
 package echo.music.iad1tya.ui.screens
 
 import android.content.Context
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -742,8 +743,8 @@ private fun RoomStatusCard(
 
             if (isHost) {
                 Spacer(modifier = Modifier.height(16.dp))
-                val inviteLink = remember(roomCode) {
-                    "https://notune-listen-together.onrender.com/listen?code=$roomCode"
+                val inviteMessage = remember(roomCode) {
+                    "🎵 Join my NØTUNE Listen Together room!\nRoom Code: $roomCode\nApp Direct Link: notune://listen?code=$roomCode"
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -752,20 +753,22 @@ private fun RoomStatusCard(
                 ) {
                     FilledTonalButton(
                         onClick = {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                            val clip = android.content.ClipData.newPlainText("Listen Together Link", inviteLink)
-                            clipboard.setPrimaryClip(clip)
-                            Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_SUBJECT, "NØTUNE Listen Together Room")
+                                putExtra(Intent.EXTRA_TEXT, inviteMessage)
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Share Room Code"))
                         },
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.link),
-                            contentDescription = stringResource(R.string.copy_link),
+                            painter = painterResource(R.drawable.ios_share),
+                            contentDescription = stringResource(R.string.share),
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.copy_link))
+                        Text(stringResource(R.string.share))
                     }
 
                     FilledTonalButton(
