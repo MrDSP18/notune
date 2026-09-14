@@ -44,6 +44,14 @@ val BiometricLockKey = booleanPreferencesKey("biometric_lock_enabled")
 val PrivateAiChatKey = booleanPreferencesKey("private_ai_chat_enabled")
 val DataRetentionPeriodKey = stringPreferencesKey("data_retention_period")
 
+// NØTUNE Advanced Audio Studio Keys
+val SpatialRoomPresetKey = stringPreferencesKey("notune_spatial_room_preset")
+val KaraokeVocalRemoverKey = booleanPreferencesKey("notune_karaoke_vocal_remover")
+val AnalogTapeEmulationKey = booleanPreferencesKey("notune_analog_tape_emulation")
+val SpectrumVisualizerPresetKey = stringPreferencesKey("notune_spectrum_visualizer_preset")
+val AcousticAlarmEnabledKey = booleanPreferencesKey("notune_acoustic_alarm_enabled")
+val AcousticAlarmTimeKey = stringPreferencesKey("notune_acoustic_alarm_time")
+
 // NØTUNE Next-Gen Adaptive UI & Personalization Keys
 val AppearanceModeKey = stringPreferencesKey("notune_appearance_mode")
 val ThemePresetVariantKey = stringPreferencesKey("notune_theme_preset_variant")
