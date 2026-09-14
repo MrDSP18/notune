@@ -376,7 +376,7 @@ private fun SocialPostCard(
             // Comments Section
             AnimatedVisibility(visible = expandedComments) {
                 Column(modifier = Modifier.padding(top = 10.dp)) {
-                    Divider(modifier = Modifier.padding(vertical = 6.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
                     post.comments.forEach { comment ->
                         Row(modifier = Modifier.padding(vertical = 4.dp)) {
                             Text("${comment.authorName}: ", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
