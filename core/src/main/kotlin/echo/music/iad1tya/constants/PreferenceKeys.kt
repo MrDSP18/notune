@@ -182,7 +182,10 @@ enum class CardStyleVariant(val title: String) {
     SOFT("Soft Surface"),
     ELEVATED("Elevated"),
     BORDERED("Subtle Border"),
-    GLASS("Glassmorphic");
+    GLASS("Glassmorphic"),
+    NEUMORPHIC("Neumorphic 3D"),
+    HOLOGRAPHIC("Holographic Beam"),
+    GLOWING_NEON("Glowing Neon");
 
     companion object {
         fun fromName(name: String): CardStyleVariant = entries.find { it.name.equals(name, ignoreCase = true) } ?: CLEAN

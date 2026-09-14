@@ -139,6 +139,49 @@ fun NoTuneSurfaceCard(
             }
         }
 
+        CardStyleVariant.HOLOGRAPHIC -> {
+            Box(
+                modifier = clickableModifier
+                    .clip(shape)
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                primaryColor.copy(alpha = 0.20f),
+                                secondaryColor.copy(alpha = 0.10f),
+                                Color.Black.copy(alpha = 0.80f)
+                            )
+                        )
+                    )
+                    .border(
+                        width = 1.8.dp,
+                        brush = Brush.sweepGradient(
+                            colors = listOf(primaryColor, secondaryColor, Color.White, primaryColor)
+                        ),
+                        shape = shape
+                    )
+                    .padding(16.dp)
+            ) {
+                Column { content() }
+            }
+        }
+
+        CardStyleVariant.GLOWING_NEON -> {
+            Box(
+                modifier = clickableModifier
+                    .shadow(elevation = 12.dp, shape = shape, spotColor = primaryColor, ambientColor = primaryColor)
+                    .clip(shape)
+                    .background(surfaceColor)
+                    .border(
+                        width = 2.dp,
+                        color = primaryColor,
+                        shape = shape
+                    )
+                    .padding(16.dp)
+            ) {
+                Column { content() }
+            }
+        }
+
         CardStyleVariant.CLEAN -> {
             Box(
                 modifier = clickableModifier
