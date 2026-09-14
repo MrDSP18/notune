@@ -1107,11 +1107,33 @@ val ExperimentalAiFeaturesKey = booleanPreferencesKey("experimentalAiFeatures")
 val ExperimentalVisualizersKey = booleanPreferencesKey("experimentalVisualizers")
 val ExperimentalAnimationsKey = booleanPreferencesKey("experimentalAnimations")
 
+val SelectedLogoKey = stringPreferencesKey("selected_logo")
+val WidgetStyleKey = stringPreferencesKey("widget_style")
+
 enum class ThemePreset {
     NOTHING,
+    NOTUNE_PURE,
+    MIDNIGHT,
+    AURORA,
+    MONO,
+    NEBULA,
+    OCEAN,
+    EMBER,
+    FOREST,
+    LAVENDER,
+    SOLAR,
+    GLASS,
+    CARBON,
+    TOKYO_NEON,
+    AMETHYST_ROYAL,
+    TITANIUM_PRO,
+    SAKURA_BLOSSOM,
+    DESERT_DUNE,
+    HYPER_LIME,
+    DEEP_OCEANIC,
+    CHRONO_GOLD,
     CYBERPUNK,
     AMOLED_BLACK,
-    GLASS,
     NEON,
     MINIMAL_WHITE,
     RETRO,
@@ -1121,6 +1143,34 @@ enum class ThemePreset {
     NORD,
     MATERIAL,
     CUSTOM
+}
+
+enum class LogoStyle {
+    LOGO_ORIGINAL,
+    LOGO_DOT_MATRIX,
+    LOGO_GLITCH,
+    LOGO_MINIMAL,
+    LOGO_NEON,
+    LOGO_OLED,
+    LOGO_CYBER,
+    LOGO_WAVE,
+    LOGO_SOLAR,
+    LOGO_CARBON,
+    LOGO_TITANIUM,
+    LOGO_ABSTRACT
+}
+
+enum class WidgetStyle {
+    MINIMAL,
+    GLASS,
+    TECHNICAL,
+    ARTWORK,
+    WAVEFORM,
+    COMPACT,
+    EDITORIAL,
+    PIXEL,
+    CINEMA,
+    DYNAMIC
 }
 
 enum class AppIconStyle {

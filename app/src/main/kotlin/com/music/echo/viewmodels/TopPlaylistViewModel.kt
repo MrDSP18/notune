@@ -1,5 +1,3 @@
-
-
 package echo.music.iad1tya.viewmodels
 
 import android.content.Context
@@ -13,6 +11,7 @@ import echo.music.iad1tya.utils.dataStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -26,7 +25,7 @@ import javax.inject.Inject
 class TopPlaylistViewModel
 @Inject
 constructor(
-    @ApplicationContext context: Context,
+    @ApplicationContext val context: Context,
     database: MusicDatabase,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -34,15 +33,18 @@ constructor(
 
     val topPeriod = MutableStateFlow(MyTopFilter.ALL_TIME)
 
+    private val hideVideoSongsFlow: Flow<Boolean> =
+        context.dataStore.data
+            .map { prefs -> prefs[HideVideoSongsKey] ?: false }
+            .distinctUntilChanged()
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val topSongs =
-        combine(
-            topPeriod,
-            context.dataStore.data.map { (try { it[HideVideoSongsKey] } catch(e: Exception) { null }) ?: false }.distinctUntilChanged()
-        ) { period, hideVideoSongs -> period to hideVideoSongs }
-            .flatMapLatest { (period, hideVideoSongs) ->
-                database.mostPlayedSongs(period.toTimeMillis(), top.toInt()).map { songs ->
-                    if (hideVideoSongs) songs.filter { !it.song.isVideo } else songs
-                }
-            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+        combine(topPeriod, hideVideoSongsFlow) { period, hideVideo ->
+            period to hideVideo
+        }.flatMapLatest { (period, hideVideoSongs) ->
+            database.mostPlayedSongs(period.toTimeMillis(), top.toInt()).map { songs ->
+                if (hideVideoSongs) songs.filter { !it.song.isVideo } else songs
+            }
+        }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 }

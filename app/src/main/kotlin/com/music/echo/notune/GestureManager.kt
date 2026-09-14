@@ -43,7 +43,10 @@ enum class GestureAction {
     AI_EXPLAIN,
     REPEAT_MODE,
     SHUFFLE_MODE,
+    ROOMS_LISTEN_TOGETHER,
+    TRANSLATE_LYRICS,
 }
+
 
 /** Gesture slot → action mapping. All defaults match Nothing Phone-inspired UX. */
 data class GestureConfig(
@@ -172,6 +175,9 @@ object GestureManager {
                 val enabled = !player.shuffleModeEnabled.value
                 player.player.shuffleModeEnabled = enabled
             }
+            GestureAction.ROOMS_LISTEN_TOGETHER -> onToggleQueue?.invoke()
+            GestureAction.TRANSLATE_LYRICS -> onToggleLyrics?.invoke()
         }
     }
 }
+

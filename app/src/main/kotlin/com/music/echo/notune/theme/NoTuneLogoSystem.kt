@@ -486,3 +486,30 @@ private fun NoTuneSymbolCanvas(
         )
     }
 }
+
+@Composable
+fun NoTuneLogo(
+    style: echo.music.iad1tya.constants.LogoStyle,
+    tint: Color = MaterialTheme.colorScheme.primary,
+    secondaryTint: Color = MaterialTheme.colorScheme.secondary,
+    modifier: Modifier = Modifier,
+    size: Dp = 32.dp
+) {
+    val variant = when (style) {
+        echo.music.iad1tya.constants.LogoStyle.LOGO_ORIGINAL -> LogoVariant.WORDMARK
+        echo.music.iad1tya.constants.LogoStyle.LOGO_DOT_MATRIX -> LogoVariant.SYMBOL
+        echo.music.iad1tya.constants.LogoStyle.LOGO_GLITCH -> LogoVariant.CYBER_PULSE
+        echo.music.iad1tya.constants.LogoStyle.LOGO_MINIMAL -> LogoVariant.MINIMAL_SYMBOL
+        echo.music.iad1tya.constants.LogoStyle.LOGO_NEON -> LogoVariant.NEON_ORBIT
+        echo.music.iad1tya.constants.LogoStyle.LOGO_OLED -> LogoVariant.GLYPH
+        echo.music.iad1tya.constants.LogoStyle.LOGO_CYBER -> LogoVariant.CYBER_HEX
+        echo.music.iad1tya.constants.LogoStyle.LOGO_WAVE -> LogoVariant.QUANTUM_WAVE
+        echo.music.iad1tya.constants.LogoStyle.LOGO_SOLAR -> LogoVariant.SPECTRUM_RING
+        echo.music.iad1tya.constants.LogoStyle.LOGO_CARBON -> LogoVariant.SYNTH_GRID
+        echo.music.iad1tya.constants.LogoStyle.LOGO_TITANIUM -> LogoVariant.HYPER_CUBE
+        echo.music.iad1tya.constants.LogoStyle.LOGO_ABSTRACT -> LogoVariant.ACOUSTIC_MESH
+    }
+    NoTuneLogo(variant = variant, tint = tint, secondaryTint = secondaryTint, modifier = modifier, size = size)
+}
+
+

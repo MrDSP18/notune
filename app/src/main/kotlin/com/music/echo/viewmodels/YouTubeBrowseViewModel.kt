@@ -7,16 +7,19 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.music.innertube.YouTube
+import com.music.innertube.models.filterExplicit
+import com.music.innertube.models.filterVideoSongs
+import com.music.innertube.models.filterYoutubeShorts
 import com.music.innertube.pages.BrowseResult
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import echo.music.iad1tya.constants.HideExplicitKey
 import echo.music.iad1tya.constants.HideVideoSongsKey
 import echo.music.iad1tya.constants.HideYoutubeShortsKey
 import echo.music.iad1tya.utils.dataStore
-import echo.music.iad1tya.utils.get
 import echo.music.iad1tya.utils.reportException
-import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -34,9 +37,10 @@ constructor(
 
     init {
         viewModelScope.launch {
-            val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-            val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
-            val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+            val prefs = context.dataStore.data.first()
+            val hideExplicit = prefs[HideExplicitKey] ?: false
+            val hideVideoSongs = prefs[HideVideoSongsKey] ?: false
+            val hideYoutubeShorts = prefs[HideYoutubeShortsKey] ?: false
             YouTube
                 .browse(browseId, params)
                 .onSuccess {
