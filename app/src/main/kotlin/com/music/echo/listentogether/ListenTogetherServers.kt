@@ -29,6 +29,12 @@ object ListenTogetherServers {
     private val _servers = MutableStateFlow(
         listOf(
             ListenTogetherServer(
+                name = "NØTUNE Cloud Server",
+                url = "wss://notune-backend-service.onrender.com/ws",
+                location = "Global Cloud (Render)",
+                operator = "NØTUNE Ecosystem"
+            ),
+            ListenTogetherServer(
                 name = "Metrolist Server",
                 url = "wss://metroserverx.meowery.eu/ws",
                 location = "Poland",
