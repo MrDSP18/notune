@@ -1358,6 +1358,343 @@ object NoTuneThemeEngine {
         )
     )
 
+    val HYPER_GLITCH = NoTuneThemePalette(
+        id = "hyper_glitch",
+        name = "Hyper Glitch",
+        description = "High-voltage cyber green with electric magenta accents",
+        primaryAccent = Color(0xFF00FF66),
+        secondaryAccent = Color(0xFFFF007F),
+        tertiaryAccent = Color(0xFF8A2BE2),
+        isOledOptimized = true,
+        darkColorScheme = darkColorScheme(
+            primary = Color(0xFF00FF66),
+            onPrimary = Color.Black,
+            secondary = Color(0xFFFF007F),
+            onSecondary = Color.White,
+            background = Color.Black,
+            onBackground = Color.White,
+            surface = Color(0xFF0D0D12),
+            onSurface = Color.White,
+            surfaceVariant = Color(0xFF181824),
+            onSurfaceVariant = Color(0xFF00FF66)
+        ),
+        lightColorScheme = lightColorScheme(
+            primary = Color(0xFF00B348),
+            onPrimary = Color.White,
+            secondary = Color(0xFFD6006B),
+            onSecondary = Color.White,
+            background = Color(0xFFF4FFF8),
+            onBackground = Color(0xFF002910),
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF002910),
+            surfaceVariant = Color(0xFFE2FCEB),
+            onSurfaceVariant = Color(0xFF007A31)
+        )
+    )
+
+    val LUNAR_ECLIPSE = NoTuneThemePalette(
+        id = "lunar_eclipse",
+        name = "Lunar Eclipse",
+        description = "Deep blood crimson and obsidian shadow glow",
+        primaryAccent = Color(0xFFDC143C),
+        secondaryAccent = Color(0xFFFF4500),
+        tertiaryAccent = Color(0xFF8B0000),
+        isOledOptimized = true,
+        darkColorScheme = darkColorScheme(
+            primary = Color(0xFFDC143C),
+            onPrimary = Color.White,
+            secondary = Color(0xFFFF4500),
+            onSecondary = Color.White,
+            background = Color.Black,
+            onBackground = Color.White,
+            surface = Color(0xFF12080A),
+            onSurface = Color.White,
+            surfaceVariant = Color(0xFF220E12),
+            onSurfaceVariant = Color(0xFFFF8095)
+        ),
+        lightColorScheme = lightColorScheme(
+            primary = Color(0xFFB00020),
+            onPrimary = Color.White,
+            secondary = Color(0xFFD83A00),
+            onSecondary = Color.White,
+            background = Color(0xFFFFF5F6),
+            onBackground = Color(0xFF2D0007),
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF2D0007),
+            surfaceVariant = Color(0xFFFFE5E8),
+            onSurfaceVariant = Color(0xFF8B0016)
+        )
+    )
+
+    val NEON_GENESIS = NoTuneThemePalette(
+        id = "neon_genesis",
+        name = "Neon Genesis",
+        description = "Futuristic evangelion purple and cyan lime spectrum",
+        primaryAccent = Color(0xFF9932CC),
+        secondaryAccent = Color(0xFF00FFCC),
+        tertiaryAccent = Color(0xFFFFD700),
+        darkColorScheme = darkColorScheme(
+            primary = Color(0xFFB84DFF),
+            onPrimary = Color.White,
+            secondary = Color(0xFF00FFCC),
+            onSecondary = Color.Black,
+            background = Color(0xFF0F051A),
+            onBackground = Color.White,
+            surface = Color(0xFF180A28),
+            onSurface = Color.White,
+            surfaceVariant = Color(0xFF27123F),
+            onSurfaceVariant = Color(0xFFE5B3FF)
+        ),
+        lightColorScheme = lightColorScheme(
+            primary = Color(0xFF7A1EA6),
+            onPrimary = Color.White,
+            secondary = Color(0xFF00B38F),
+            onSecondary = Color.White,
+            background = Color(0xFFFAEEFF),
+            onBackground = Color(0xFF220038),
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF220038),
+            surfaceVariant = Color(0xFFF2D6FF),
+            onSurfaceVariant = Color(0xFF550E7A)
+        )
+    )
+
+    val TITANIUM_STARK = NoTuneThemePalette(
+        id = "titanium_stark",
+        name = "Titanium Stark",
+        description = "Industrial brushed titanium steel and platinum precision",
+        primaryAccent = Color(0xFFC0C0C0),
+        secondaryAccent = Color(0xFFE5E4E2),
+        tertiaryAccent = Color(0xFF708090),
+        isOledOptimized = true,
+        darkColorScheme = darkColorScheme(
+            primary = Color(0xFFE0E0E0),
+            onPrimary = Color.Black,
+            secondary = Color(0xFFB0BEC5),
+            onSecondary = Color.Black,
+            background = Color.Black,
+            onBackground = Color.White,
+            surface = Color(0xFF121417),
+            onSurface = Color.White,
+            surfaceVariant = Color(0xFF1E2228),
+            onSurfaceVariant = Color(0xFFCFD8DC)
+        ),
+        lightColorScheme = lightColorScheme(
+            primary = Color(0xFF37474F),
+            onPrimary = Color.White,
+            secondary = Color(0xFF546E7A),
+            onSecondary = Color.White,
+            background = Color(0xFFF1F3F5),
+            onBackground = Color(0xFF0D1317),
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF0D1317),
+            surfaceVariant = Color(0xFFE2E6EA),
+            onSurfaceVariant = Color(0xFF263238)
+        )
+    )
+
+    val VAPORWAVE_DREAM = NoTuneThemePalette(
+        id = "vaporwave_dream",
+        name = "Vaporwave Dream",
+        description = "Pastel aesthetic pink cyan twilight wave",
+        primaryAccent = Color(0xFFFFB7B2),
+        secondaryAccent = Color(0xFF70D6FF),
+        tertiaryAccent = Color(0xFFE7C6FF),
+        darkColorScheme = darkColorScheme(
+            primary = Color(0xFFFFB7B2),
+            onPrimary = Color.Black,
+            secondary = Color(0xFF70D6FF),
+            onSecondary = Color.Black,
+            background = Color(0xFF1A121E),
+            onBackground = Color.White,
+            surface = Color(0xFF261B2C),
+            onSurface = Color.White,
+            surfaceVariant = Color(0xFF392842),
+            onSurfaceVariant = Color(0xFFFFD6E8)
+        ),
+        lightColorScheme = lightColorScheme(
+            primary = Color(0xFFE65C55),
+            onPrimary = Color.White,
+            secondary = Color(0xFF0091CA),
+            onSecondary = Color.White,
+            background = Color(0xFFFFF0F5),
+            onBackground = Color(0xFF2E0916),
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF2E0916),
+            surfaceVariant = Color(0xFFFFDBE8),
+            onSurfaceVariant = Color(0xFF9E1F42)
+        )
+    )
+
+    val VOLCANIC_MAGMA_PRO = NoTuneThemePalette(
+        id = "volcanic_magma_pro",
+        name = "Volcanic Magma Pro",
+        description = "Molten lava red and blaze orange thermal fire",
+        primaryAccent = Color(0xFFFF3300),
+        secondaryAccent = Color(0xFFFF8800),
+        tertiaryAccent = Color(0xFFFFCC00),
+        isOledOptimized = true,
+        darkColorScheme = darkColorScheme(
+            primary = Color(0xFFFF3300),
+            onPrimary = Color.White,
+            secondary = Color(0xFFFF8800),
+            onSecondary = Color.Black,
+            background = Color.Black,
+            onBackground = Color.White,
+            surface = Color(0xFF170A07),
+            onSurface = Color.White,
+            surfaceVariant = Color(0xFF2A120C),
+            onSurfaceVariant = Color(0xFFFF9980)
+        ),
+        lightColorScheme = lightColorScheme(
+            primary = Color(0xFFD62800),
+            onPrimary = Color.White,
+            secondary = Color(0xFFD66A00),
+            onSecondary = Color.White,
+            background = Color(0xFFFFF4F0),
+            onBackground = Color(0xFF380800),
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF380800),
+            surfaceVariant = Color(0xFFFFE0D6),
+            onSurfaceVariant = Color(0xFF8A1A00)
+        )
+    )
+
+    val DEEP_ABYSS_PRO = NoTuneThemePalette(
+        id = "deep_abyss_pro",
+        name = "Deep Abyss Pro",
+        description = "Bioluminescent deep ocean trench glow",
+        primaryAccent = Color(0xFF00F5D4),
+        secondaryAccent = Color(0xFF00BBF9),
+        tertiaryAccent = Color(0xFF4B0082),
+        isOledOptimized = true,
+        darkColorScheme = darkColorScheme(
+            primary = Color(0xFF00F5D4),
+            onPrimary = Color.Black,
+            secondary = Color(0xFF00BBF9),
+            onSecondary = Color.Black,
+            background = Color.Black,
+            onBackground = Color.White,
+            surface = Color(0xFF041216),
+            onSurface = Color.White,
+            surfaceVariant = Color(0xFF0A2229),
+            onSurfaceVariant = Color(0xFF80FAEA)
+        ),
+        lightColorScheme = lightColorScheme(
+            primary = Color(0xFF009682),
+            onPrimary = Color.White,
+            secondary = Color(0xFF0077A3),
+            onSecondary = Color.White,
+            background = Color(0xFFEEFDFB),
+            onBackground = Color(0xFF002B25),
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF002B25),
+            surfaceVariant = Color(0xFFD4F8F3),
+            onSurfaceVariant = Color(0xFF00594D)
+        )
+    )
+
+    val ZEN_MONOCHROME_PRO = NoTuneThemePalette(
+        id = "zen_monochrome_pro",
+        name = "Zen Monochrome Pro",
+        description = "Pure stark black and white minimal contrast",
+        primaryAccent = Color(0xFFFFFFFF),
+        secondaryAccent = Color(0xFFCCCCCC),
+        tertiaryAccent = Color(0xFF888888),
+        isOledOptimized = true,
+        darkColorScheme = darkColorScheme(
+            primary = Color.White,
+            onPrimary = Color.Black,
+            secondary = Color(0xFFCCCCCC),
+            onSecondary = Color.Black,
+            background = Color.Black,
+            onBackground = Color.White,
+            surface = Color.Black,
+            onSurface = Color.White,
+            surfaceVariant = Color(0xFF141414),
+            onSurfaceVariant = Color.White
+        ),
+        lightColorScheme = lightColorScheme(
+            primary = Color.Black,
+            onPrimary = Color.White,
+            secondary = Color(0xFF333333),
+            onSecondary = Color.White,
+            background = Color.White,
+            onBackground = Color.Black,
+            surface = Color.White,
+            onSurface = Color.Black,
+            surfaceVariant = Color(0xFFF2F2F2),
+            onSurfaceVariant = Color.Black
+        )
+    )
+
+    val CHRONO_PUNK_PRO = NoTuneThemePalette(
+        id = "chrono_punk_pro",
+        name = "Chrono Punk Pro",
+        description = "Steampunk coppers, amber brass, and clockwork gold",
+        primaryAccent = Color(0xFFFFBF00),
+        secondaryAccent = Color(0xFFB87333),
+        tertiaryAccent = Color(0xFFC04000),
+        darkColorScheme = darkColorScheme(
+            primary = Color(0xFFFFC824),
+            onPrimary = Color.Black,
+            secondary = Color(0xFFD48B46),
+            onSecondary = Color.Black,
+            background = Color(0xFF140D06),
+            onBackground = Color.White,
+            surface = Color(0xFF21150A),
+            onSurface = Color.White,
+            surfaceVariant = Color(0xFF332110),
+            onSurfaceVariant = Color(0xFFFFE29D)
+        ),
+        lightColorScheme = lightColorScheme(
+            primary = Color(0xFF9E7200),
+            onPrimary = Color.White,
+            secondary = Color(0xFF8A4E1B),
+            onSecondary = Color.White,
+            background = Color(0xFFFFF8EE),
+            onBackground = Color(0xFF332000),
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF332000),
+            surfaceVariant = Color(0xFFFCECD7),
+            onSurfaceVariant = Color(0xFF5E4400)
+        )
+    )
+
+    val CELESTIAL_NEBULA_PRO = NoTuneThemePalette(
+        id = "celestial_nebula_pro",
+        name = "Celestial Nebula Pro",
+        description = "Cosmic deep space indigo and galaxy violet pulse",
+        primaryAccent = Color(0xFF8A2BE2),
+        secondaryAccent = Color(0xFFFF00CC),
+        tertiaryAccent = Color(0xFF00E5FF),
+        isOledOptimized = true,
+        darkColorScheme = darkColorScheme(
+            primary = Color(0xFFA855F7),
+            onPrimary = Color.White,
+            secondary = Color(0xFFFF00CC),
+            onSecondary = Color.White,
+            background = Color.Black,
+            onBackground = Color.White,
+            surface = Color(0xFF0F0717),
+            onSurface = Color.White,
+            surfaceVariant = Color(0xFF1E0D2E),
+            onSurfaceVariant = Color(0xFFE9D5FF)
+        ),
+        lightColorScheme = lightColorScheme(
+            primary = Color(0xFF7E22CE),
+            onPrimary = Color.White,
+            secondary = Color(0xFFC00099),
+            onSecondary = Color.White,
+            background = Color(0xFFFAF5FF),
+            onBackground = Color(0xFF2E0854),
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF2E0854),
+            surfaceVariant = Color(0xFFF3E8FF),
+            onSurfaceVariant = Color(0xFF581C87)
+        )
+    )
+
     val ALL_THEMES = listOf(
         NOTUNE_PURE, MIDNIGHT, AURORA, MONO, NEBULA,
         OCEAN, EMBER, FOREST, LAVENDER, SOLAR, GLASS, CARBON,
@@ -1367,7 +1704,10 @@ object NoTuneThemeEngine {
         SUPERNOVA_BURST, ZEN_GARDEN, VOLCANIC_MAGMA, NORTHERN_LIGHTS,
         NEON_CYBERNETIC, SOLARIS_FLAME, NEON_DATADRIVE, AURORA_BOREALIS,
         CELESTIAL_COSMOS, RUBY_VALENTINE, CYBER_VORTEX, TROPICAL_PALM,
-        ICE_CRYSTAL, MIDNIGHT_AMBER, ELECTRIC_STORM, OPAL_IRIDESCENCE
+        ICE_CRYSTAL, MIDNIGHT_AMBER, ELECTRIC_STORM, OPAL_IRIDESCENCE,
+        HYPER_GLITCH, LUNAR_ECLIPSE, NEON_GENESIS, TITANIUM_STARK,
+        VAPORWAVE_DREAM, VOLCANIC_MAGMA_PRO, DEEP_ABYSS_PRO, ZEN_MONOCHROME_PRO,
+        CHRONO_PUNK_PRO, CELESTIAL_NEBULA_PRO
     )
 
     fun getThemeById(id: String): NoTuneThemePalette {
