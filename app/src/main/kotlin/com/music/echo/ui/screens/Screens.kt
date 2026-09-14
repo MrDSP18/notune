@@ -84,6 +84,13 @@ sealed class Screens(
         route = "taste_profile"
     )
 
+    object SocialHub : Screens(
+        titleId = R.string.together,
+        iconIdInactive = R.drawable.group_outlined,
+        iconIdActive = R.drawable.group_filled,
+        route = "social_hub"
+    )
+
     companion object {
         val MainScreens = listOf(Home, Search, ListenTogether, Library)
     }

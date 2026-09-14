@@ -1106,6 +1106,12 @@ class MainActivity : ComponentActivity() {
                                                     contentDescription = stringResource(R.string.stats)
                                                 )
                                             }
+                                            IconButton(onClick = { navController.navigate("social_hub") }) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.group_filled),
+                                                    contentDescription = "Social Hub"
+                                                )
+                                            }
                                             if (listenTogetherInTopBar) {
                                                 IconButton(onClick = { navController.navigate("listen_together_from_topbar") }) {
                                                     Icon(

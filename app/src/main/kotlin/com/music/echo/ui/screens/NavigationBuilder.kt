@@ -132,6 +132,15 @@ fun NavGraphBuilder.navigationBuilder(
         CommentTogetherScreen(navController)
     }
 
+    composable(Screens.SocialHub.route) {
+        com.music.echo.notune.social.ui.SocialHubScreen(
+            onNavigateToListenTogether = { username ->
+                navController.navigate(Screens.ListenTogether.route)
+            },
+            onDismiss = { navController.popBackStack() }
+        )
+    }
+
     composable("history") {
         HistoryScreen(navController)
     }
