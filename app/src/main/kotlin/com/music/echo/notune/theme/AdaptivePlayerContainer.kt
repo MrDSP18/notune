@@ -1,5 +1,6 @@
 package com.music.echo.notune.theme
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -8,9 +9,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -33,13 +37,24 @@ fun AdaptivePlayerPreview(
     val secondaryColor = MaterialTheme.colorScheme.secondary
     val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
 
+    val infiniteTransition = rememberInfiniteTransition(label = "player_preview_rotation")
+    val vinylRotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 6000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "vinylRotation"
+    )
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(8.dp),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = surfaceVariant.copy(alpha = 0.9f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(
             modifier = Modifier
@@ -100,6 +115,7 @@ fun AdaptivePlayerPreview(
                         }
                     }
                 }
+
                 PlayerStyleVariant.CLASSIC -> {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(
@@ -117,6 +133,7 @@ fun AdaptivePlayerPreview(
                         Text(artistName, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
+
                 PlayerStyleVariant.CINEMATIC -> {
                     Box(
                         modifier = Modifier
@@ -125,7 +142,7 @@ fun AdaptivePlayerPreview(
                             .clip(RoundedCornerShape(24.dp))
                             .background(
                                 Brush.verticalGradient(
-                                    listOf(primaryColor.copy(alpha = 0.3f), Color.Black.copy(alpha = 0.8f))
+                                    listOf(primaryColor.copy(alpha = 0.3f), Color.Black.copy(alpha = 0.85f))
                                 )
                             )
                             .border(1.dp, primaryColor.copy(alpha = 0.4f), RoundedCornerShape(24.dp))
@@ -139,12 +156,49 @@ fun AdaptivePlayerPreview(
                         }
                     }
                 }
+
                 PlayerStyleVariant.TYPOGRAPHY -> {
                     Column(horizontalAlignment = Alignment.Start, modifier = Modifier.fillMaxWidth()) {
                         Text(songTitle.uppercase(), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
                         Text(artistName, style = MaterialTheme.typography.titleMedium, color = primaryColor, fontWeight = FontWeight.Bold)
                     }
                 }
+
+                PlayerStyleVariant.GLASS, PlayerStyleVariant.IMMERSIVE -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp)
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(primaryColor.copy(alpha = 0.25f), secondaryColor.copy(alpha = 0.15f))
+                                )
+                            )
+                            .border(1.5.dp, Brush.linearGradient(listOf(primaryColor, secondaryColor)), RoundedCornerShape(24.dp))
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(70.dp)
+                                    .rotate(vinylRotation)
+                                    .background(Color.Black, CircleShape)
+                                    .border(2.dp, primaryColor, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Box(modifier = Modifier.size(20.dp).background(primaryColor, CircleShape))
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(songTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                                Text(artistName, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+
                 else -> {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(
