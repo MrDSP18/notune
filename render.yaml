@@ -8,9 +8,8 @@ services:
     rootDir: notune-backend
     buildCommand: npm install
     startCommand: npm start
+    healthCheckPath: /api/v1/health
     envVars:
-      - key: PORT
-        value: 8080
       - key: NODE_ENV
         value: production
       - key: JWT_SECRET

@@ -11,7 +11,7 @@ const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET || 'notune_production_jwt_secret_key_2026';
 const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/notune_db';
 
@@ -282,6 +282,6 @@ function broadcastWebSocketMessage(targetUserId, payload) {
 }
 
 // Start Server
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 NØTUNE Cloud Server active on port ${PORT}`);
 });
