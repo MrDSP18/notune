@@ -86,7 +86,7 @@ class CloudSyncManager @Inject constructor(
             _syncState.value = SyncStatus.SYNCING
             try {
                 // Network HTTP dispatch attempt to NØTUNE Cloud Backend API
-                val backendUrlStr = "https://notune-backend-service.onrender.com/api/v1/sync"
+                val backendUrlStr = "https://notune.dharansundarapandiyan24.workers.dev/api/v1/sync"
                 val url = URL(backendUrlStr)
                 val connection = (url.openConnection() as HttpURLConnection).apply {
                     requestMethod = "POST"

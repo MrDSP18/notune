@@ -20,6 +20,14 @@ export default {
     }
 
     try {
+      // 0. Root Welcome Route
+      if (path === '/' || path === '') {
+        return Response.json(
+          { status: 'ACTIVE', name: 'NØTUNE Social Cloud Ecosystem', health: '/api/v1/health' },
+          { headers: corsHeaders }
+        );
+      }
+
       // 1. Health Check
       if (path === '/api/v1/health') {
         return Response.json(
