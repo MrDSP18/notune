@@ -1,5 +1,5 @@
 # Render Infrastructure as Code Blueprint for NØTUNE Cloud Ecosystem
-# Automatically provisions free Node.js backend web service and PostgreSQL database.
+# Automatically provisions free Node.js backend web service, PostgreSQL database & Cloudflare R2 storage.
 
 services:
   - type: web
@@ -14,6 +14,14 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
+      - key: R2_ACCOUNT_ID
+        value: c4062f2f7ab8860317a18a059f9cd756
+      - key: R2_ACCESS_KEY_ID
+        value: 1cde81840d6a160f7a4bbf0230f7c6af
+      - key: R2_SECRET_ACCESS_KEY
+        value: 89606808b1f0074082e844763594283dc3678c9d068ef00c7bab612facc7a97c
+      - key: R2_ENDPOINT
+        value: https://c4062f2f7ab8860317a18a059f9cd756.r2.cloudflarestorage.com
       - key: DATABASE_URL
         fromDatabase:
           name: notune-postgres-db

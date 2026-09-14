@@ -15,6 +15,12 @@ const PORT = process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET || 'notune_production_jwt_secret_key_2026';
 const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/notune_db';
 
+// Cloudflare R2 Object Storage Config (10GB Free S3 Media Storage)
+const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID || 'c4062f2f7ab8860317a18a059f9cd756';
+const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID || '1cde81840d6a160f7a4bbf0230f7c6af';
+const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY || '89606808b1f0074082e844763594283dc3678c9d068ef00c7bab612facc7a97c';
+const R2_ENDPOINT = process.env.R2_ENDPOINT || 'https://c4062f2f7ab8860317a18a059f9cd756.r2.cloudflarestorage.com';
+
 const app = express();
 app.use(cors());
 app.use(express.json());
