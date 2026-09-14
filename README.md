@@ -1,9 +1,19 @@
 
 # NØTUNE 🎧
 
-**The Futuristic AI-Native Music Ecosystem for Android.**
+**The Futuristic AI-Native & Social Music Ecosystem for Android.**
 
-NØTUNE is a premium, minimalist music streaming client that blends industrial design with a powerful AI core. It offers an ad-free, high-fidelity listening experience powered by the YouTube Music catalog, enhanced with deep personalization and multi-provider AI intelligence.
+---
+
+### 📲 1-TAP DIRECT DOWNLOAD (No Unzipping / Actions Required!)
+
+[<img src="https://img.shields.io/badge/⚡_DIRECT_DOWNLOAD_APK-v2.0_Universal-FF0031?style=for-the-badge&logo=android&logoColor=white" height="48">](https://github.com/MrDSP18/notune/releases/latest/download/app-universal-foss-debug.apk)
+[<img src="https://img.shields.io/badge/📦_GITHUB_RELEASES-v2.0_Latest-000000?style=for-the-badge&logo=github&logoColor=white" height="48">](https://github.com/MrDSP18/notune/releases/latest)
+
+> 💡 **1-Tap Direct Download**: Click the red button above on any phone or browser to instantly download `app-universal-foss-debug.apk` without unzipping or going to GitHub Actions!
+
+
+---
 
 ## 🚀 Key Features
 
@@ -29,10 +39,10 @@ NØTUNE is a premium, minimalist music streaming client that blends industrial d
 
 ## 📥 Installation
 
-1. Go to the [Releases](https://github.com/MrDSP18/notune/releases) section.
-2. Download the latest `notune-v1.x.x-universal-gms-release.apk`.
-3. Open the APK on your Android device and install.
-4. Follow the **NØTUNE Initialization** onboarding process.
+1. Tap [**⚡ Direct APK Download**](https://github.com/MrDSP18/notune/releases/latest/download/app-universal-foss-debug.apk) or visit [Releases Page](https://github.com/MrDSP18/notune/releases).
+2. Open the downloaded `.apk` file on your Android device and tap Install.
+3. Follow the **NØTUNE Initialization** onboarding process.
+
 
 ## ⚙️ AI Setup
 

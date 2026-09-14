@@ -1,4 +1,12 @@
-# Setup Instructions
+# Setup & Download Instructions
+
+### 📲 1-Tap Direct APK Download (No Building / Unzipping Required)
+If you want to install NØTUNE directly on your Android phone without building from source:
+- [**⚡ Download app-universal-foss-debug.apk (Direct Download)**](https://github.com/MrDSP18/notune/releases/latest/download/app-universal-foss-debug.apk)
+- [**📦 Latest GitHub Release Assets Page**](https://github.com/MrDSP18/notune/releases/latest)
+
+
+---
 
 This document provides instructions for setting up the NØTUNE project for development.
 
