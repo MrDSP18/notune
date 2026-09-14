@@ -1,5 +1,5 @@
-# Cloudflare Worker Configuration for NØTUNE Global Edge Server & Database
-name = "notune-backend-worker"
+# Cloudflare Worker Configuration for NØTUNE Global Edge Server
+name = "notune"
 main = "worker.js"
 compatibility_date = "2026-09-14"
 account_id = "c4062f2f7ab8860317a18a059f9cd756"
@@ -11,8 +11,3 @@ JWT_SECRET = "notune_cloudflare_worker_jwt_secret_2026"
 [[r2_buckets]]
 binding = "NOTUNE_STORAGE"
 bucket_name = "notune-media"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "notune-d1-db"
-database_id = "notune_d1_db_id"
