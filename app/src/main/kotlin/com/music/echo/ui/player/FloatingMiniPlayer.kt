@@ -57,6 +57,10 @@ import echo.music.iad1tya.constants.SwipeSensitivityKey
 import echo.music.iad1tya.constants.SwipeThumbnailKey
 import echo.music.iad1tya.extensions.togglePlayPause
 import echo.music.iad1tya.utils.rememberPreference
+import echo.music.iad1tya.ui.theme.NothingFont
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.roundToInt
@@ -219,8 +223,11 @@ fun FloatingMiniPlayer(
 
             if (isInline) {
                 Text(
-                    text = mediaMetadata?.title.orEmpty(),
-                    style = MaterialTheme.typography.bodySmall,
+                    text = mediaMetadata?.title.orEmpty().uppercase(),
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontFamily = NothingFont,
+                        letterSpacing = 1.sp
+                    ),
                     color = contentColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -228,17 +235,33 @@ fun FloatingMiniPlayer(
                 )
             } else {
                 Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFFF0031))
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = mediaMetadata?.title.orEmpty().uppercase(),
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontFamily = NothingFont,
+                                letterSpacing = 1.sp
+                            ),
+                            color = contentColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                     Text(
-                        text = mediaMetadata?.title.orEmpty(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = contentColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = mediaMetadata?.artists?.joinToString { it.name }.orEmpty(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = contentColor.copy(alpha = 0.7f),
+                        text = mediaMetadata?.artists?.joinToString { it.name }.orEmpty().uppercase(),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontFamily = NothingFont,
+                            letterSpacing = 0.5.sp,
+                            fontSize = 10.sp
+                        ),
+                        color = contentColor.copy(alpha = 0.65f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )

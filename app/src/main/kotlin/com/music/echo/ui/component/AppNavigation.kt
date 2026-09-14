@@ -58,7 +58,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import echo.music.iad1tya.ui.screens.Screens
 import echo.music.iad1tya.ui.component.LocalGlassEffectConfig
-import echo.music.iad1tya.ui.component.liquidGlass
+import echo.music.iad1tya.ui.theme.NothingFont
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
@@ -337,7 +337,12 @@ fun AppNavigationBar(
                 label = if (!slimNav) {
                     {
                         Text(
-                            text = stringResource(screen.titleId),
+                            text = stringResource(screen.titleId).uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontFamily = NothingFont,
+                                color = if (isSelected) Color(0xFFFF0031) else Color.White.copy(alpha = 0.65f),
+                                letterSpacing = 1.2.sp
+                            ),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
