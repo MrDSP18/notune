@@ -40,7 +40,12 @@ jobs:
       uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
-        build-mode: none
+        build-mode: manual
+
+    - name: Compile Kotlin/Java sources for CodeQL
+      run: |
+        chmod +x gradlew
+        ./gradlew :app:compileUniversalFossDebugKotlin --no-daemon
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
