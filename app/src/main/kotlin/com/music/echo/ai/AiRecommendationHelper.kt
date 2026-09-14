@@ -32,20 +32,21 @@ class AiRecommendationHelper @Inject constructor(
         onLog?.invoke("NØTUNE Engine: Scanning musical DNA...")
 
         val topSongs: List<Song> = database.topSongs(20).firstOrNull() ?: emptyList()
-        if (topSongs.isEmpty()) {
-            onLog?.invoke("Inadequate data for neural analysis.")
-            return@withContext
+        val tasteList = if (topSongs.isNotEmpty()) {
+            topSongs.map { "${it.song.title} by ${it.artists.joinToString { a -> a.name }}" }
+        } else {
+            listOf("Blinding Lights by The Weeknd", "Starboy by The Weeknd", "Nightcall by Kavinsky", "Midnight City by M83")
         }
 
-        val tasteList = topSongs.map { "${it.song.title} by ${it.artists.joinToString { a -> a.name }}" }
         val prompt = "Based on my top songs:\n${tasteList.joinToString("\n")}\nRecommend 20 new songs. Respond ONLY as a JSON array: [{\"title\": \"Song\", \"artist\": \"Artist\"}]"
 
         onLog?.invoke("Resolving neural predictions...")
         val result = aiEngine.generateResponse(prompt)
         val jsonOutput = result.getOrNull()?.text ?: return@withContext
-        val cleanJson = jsonOutput.replace("```json", "").replace("```", "").trim()
+        val jsonMatch = Regex("""\[.*\]""", RegexOption.DOT_MATCHES_ALL).find(jsonOutput)?.value
+            ?: jsonOutput.replace("```json", "").replace("```", "").trim()
         
-        val jsonArray = runCatching { JSONArray(cleanJson) }.getOrNull() ?: return@withContext
+        val jsonArray = runCatching { JSONArray(jsonMatch) }.getOrNull() ?: return@withContext
 
         val resolvedSongs = mutableListOf<SongItem>()
         for (i in 0 until jsonArray.length()) {

@@ -43,9 +43,10 @@ class AiPlaylistGenerator @Inject constructor(
         val result = aiEngine.generateResponse(fullPrompt, systemInstruction = systemPrompt)
         
         val jsonOutput = result.getOrNull()?.text ?: return@withContext null
-        val cleanJson = jsonOutput.replace("```json", "").replace("```", "").trim()
+        val jsonMatch = Regex("""\{.*\}""", RegexOption.DOT_MATCHES_ALL).find(jsonOutput)?.value
+            ?: jsonOutput.replace("```json", "").replace("```", "").trim()
         
-        val parsedJson = runCatching { JSONObject(cleanJson) }.getOrNull() ?: return@withContext null
+        val parsedJson = runCatching { JSONObject(jsonMatch) }.getOrNull() ?: return@withContext null
         val playlistName = parsedJson.optString("name", "NØTUNE AI Mix")
         val songsArray = parsedJson.optJSONArray("songs") ?: return@withContext null
 

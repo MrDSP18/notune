@@ -71,7 +71,7 @@ class AiEngine @Inject constructor(
             }
         }
 
-        return Result.failure(lastError ?: Exception("No AI providers configured or available"))
+        return noTuneBasicAiProvider.generateResponse(prompt, tools = tools, systemInstruction = systemInstruction)
     }
 
     suspend fun getMusicTools(): List<AiTool> = listOf(
