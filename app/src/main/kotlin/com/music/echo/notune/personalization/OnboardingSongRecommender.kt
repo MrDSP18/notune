@@ -23,7 +23,7 @@ class OnboardingSongRecommender @Inject constructor() {
         val selectedGenres = if (profile.favoriteGenres.isNotEmpty()) profile.favoriteGenres.toList() else listOf("Pop", "Electronic")
         val selectedLanguages = if (profile.musicLanguages.isNotEmpty()) profile.musicLanguages.toList() else listOf("English")
         val selectedArtists = if (profile.favoriteArtists.isNotEmpty()) profile.favoriteArtists.map { it.name } else listOf("Top Artist")
-        val selectedEras = if (profile.favoriteEras.isNotEmpty()) profile.favoriteEras.toList() else listOf("2020s")
+        val selectedEras = if (profile.preferredEras.isNotEmpty()) profile.preferredEras.toList() else listOf("2020s")
         val selectedMoods = if (profile.preferredMoods.isNotEmpty()) profile.preferredMoods.toList() else listOf("Chill")
 
         val recommendations = mutableListOf<OnboardingRecommendedTrack>()
