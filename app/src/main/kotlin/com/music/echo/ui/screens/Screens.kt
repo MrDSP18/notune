@@ -91,6 +91,34 @@ sealed class Screens(
         route = "social_hub"
     )
 
+    object CollaborativePlaylist : Screens(
+        titleId = R.string.filter_library,
+        iconIdInactive = R.drawable.library_music_outlined,
+        iconIdActive = R.drawable.library_music_filled,
+        route = "social/collaborative_playlist"
+    )
+
+    object MusicCompatibility : Screens(
+        titleId = R.string.together,
+        iconIdInactive = R.drawable.sparks,
+        iconIdActive = R.drawable.sparks,
+        route = "social/music_compatibility"
+    )
+
+    object FriendCircles : Screens(
+        titleId = R.string.together,
+        iconIdInactive = R.drawable.group_outlined,
+        iconIdActive = R.drawable.group_filled,
+        route = "social/friend_circles"
+    )
+
+    object MusicStories : Screens(
+        titleId = R.string.together,
+        iconIdInactive = R.drawable.sparks,
+        iconIdActive = R.drawable.sparks,
+        route = "social/music_stories"
+    )
+
     companion object {
         val MainScreens = listOf(Home, Search, ListenTogether, Library)
     }

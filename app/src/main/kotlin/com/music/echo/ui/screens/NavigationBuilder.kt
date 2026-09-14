@@ -141,6 +141,32 @@ fun NavGraphBuilder.navigationBuilder(
         )
     }
 
+    composable(Screens.CollaborativePlaylist.route) {
+        com.music.echo.notune.social.ui.CollaborativePlaylistScreen(
+            onDismiss = { navController.popBackStack() }
+        )
+    }
+
+    composable(Screens.MusicCompatibility.route) {
+        com.music.echo.notune.social.ui.MusicCompatibilityScreen(
+            onStartListenTogether = { navController.navigate(Screens.ListenTogether.route) },
+            onDismiss = { navController.popBackStack() }
+        )
+    }
+
+    composable(Screens.FriendCircles.route) {
+        com.music.echo.notune.social.ui.FriendCirclesScreen(
+            onNavigateToListenTogether = { navController.navigate(Screens.ListenTogether.route) },
+            onDismiss = { navController.popBackStack() }
+        )
+    }
+
+    composable(Screens.MusicStories.route) {
+        com.music.echo.notune.social.ui.MusicStoriesScreen(
+            onDismiss = { navController.popBackStack() }
+        )
+    }
+
     composable("history") {
         HistoryScreen(navController)
     }

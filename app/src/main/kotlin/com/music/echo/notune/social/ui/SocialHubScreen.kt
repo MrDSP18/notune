@@ -152,14 +152,16 @@ fun SocialHubScreen(
                             onLike = { socialRepository.toggleLikePost(post.id) },
                             onAddComment = { comment -> socialRepository.addCommentToPost(post.id, comment) },
                             onPlaySong = {
-                                val meta = MediaMetadata(
-                                    id = post.songId,
-                                    title = post.songTitle,
-                                    artists = listOf(MediaMetadata.Artist(name = post.artistName, id = null)),
-                                    duration = -1,
-                                    thumbnailUrl = post.thumbnailUrl
-                                )
-                                playerConnection?.playQueue(YouTubeQueue.radio(meta))
+                                post.songId?.let { sId ->
+                                    val meta = MediaMetadata(
+                                        id = sId,
+                                        title = post.songTitle,
+                                        artists = listOf(MediaMetadata.Artist(name = post.artistName, id = null)),
+                                        duration = -1,
+                                        thumbnailUrl = post.thumbnailUrl
+                                    )
+                                    playerConnection?.playQueue(YouTubeQueue.radio(meta))
+                                }
                             },
                             onShare = {
                                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
