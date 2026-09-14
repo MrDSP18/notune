@@ -399,8 +399,14 @@ class ListenTogetherClient @Inject constructor(
         .build()
 
     private fun getServerUrl(): String {
-        return context.dataStore.get(ListenTogetherServerUrlKey, DEFAULT_SERVER_URL)
+        val saved = context.dataStore.get(ListenTogetherServerUrlKey, DEFAULT_SERVER_URL)
+        return if (saved.isBlank() || saved.contains("hf.space") || saved.contains("notune-listen-together")) {
+            ListenTogetherServers.defaultServerUrl
+        } else {
+            saved
+        }
     }
+
     
     
     private fun calculateBackoffDelay(attempt: Int): Long {

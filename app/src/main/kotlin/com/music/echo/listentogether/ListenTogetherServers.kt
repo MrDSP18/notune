@@ -22,32 +22,32 @@ data class ListenTogetherServer(
 
 @OptIn(DelicateCoroutinesApi::class)
 object ListenTogetherServers {
-    private const val SERVER_JSON_URL = "https://raw.githubusercontent.com/EchoMusicApp/notune/refs/heads/main/app/server.json"
+    private const val SERVER_JSON_URL = "https://raw.githubusercontent.com/MrDSP18/notune/refs/heads/main/app/server.json"
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    private val _servers = MutableStateFlow(
-        listOf(
-            ListenTogetherServer(
-                name = "NØTUNE Cloudflare Edge",
-                url = "wss://notune.dharansundarapandiyan24.workers.dev/ws",
-                location = "Global Edge (Cloudflare)",
-                operator = "NØTUNE Ecosystem"
-            ),
-            ListenTogetherServer(
-                name = "NØTUNE Cloud Server",
-                url = "wss://notune-backend-service.onrender.com/ws",
-                location = "Global Cloud (Render)",
-                operator = "NØTUNE Ecosystem"
-            ),
-            ListenTogetherServer(
-                name = "Metrolist Server",
-                url = "wss://metroserverx.meowery.eu/ws",
-                location = "Poland",
-                operator = "Metrolist"
-            )
+    private val DEFAULT_SERVERS = listOf(
+        ListenTogetherServer(
+            name = "Metrolist Server",
+            url = "wss://metroserverx.meowery.eu/ws",
+            location = "Global Sync (Metrolist)",
+            operator = "Metrolist"
+        ),
+        ListenTogetherServer(
+            name = "NØTUNE Cloudflare Edge",
+            url = "wss://notune.dharansundarapandiyan24.workers.dev/ws",
+            location = "Global Edge (Cloudflare)",
+            operator = "NØTUNE Ecosystem"
+        ),
+        ListenTogetherServer(
+            name = "NØTUNE Cloud Server",
+            url = "wss://notune-backend-service.onrender.com/ws",
+            location = "Global Cloud (Render)",
+            operator = "NØTUNE Ecosystem"
         )
     )
+
+    private val _servers = MutableStateFlow(DEFAULT_SERVERS)
     
     val serversFlow: StateFlow<List<ListenTogetherServer>> = _servers
 
@@ -62,24 +62,27 @@ object ListenTogetherServers {
                 val response = client.newCall(request).execute()
                 response.body.string().let { jsonString ->
                     val jsonObject = Json.parseToJsonElement(jsonString).jsonObject
-                    val name = jsonObject["name"]?.jsonPrimitive?.content ?: "Hugging Face Sync"
-                    val url = jsonObject["serverUrl"]?.jsonPrimitive?.content ?: "wss://devilmi-vivi-music-listen-together.hf.space"
-                    val region = jsonObject["region"]?.jsonPrimitive?.content ?: "Global - VIVIDH"
+                    val name = jsonObject["name"]?.jsonPrimitive?.content
+                    val url = jsonObject["serverUrl"]?.jsonPrimitive?.content
+                    val region = jsonObject["region"]?.jsonPrimitive?.content ?: "Global"
                     
-                    _servers.value = listOf(
-                        ListenTogetherServer(
-                            name = name,
+                    if (!url.isNullOrBlank() && url != "wss://devilmi-vivi-music-listen-together.hf.space") {
+                        val fetchedServer = ListenTogetherServer(
+                            name = name ?: "Custom Server",
                             url = url,
                             location = region,
-                            operator = ""
+                            operator = "Remote Config"
                         )
-                    )
+                        val combined = (listOf(fetchedServer) + DEFAULT_SERVERS).distinctBy { it.url }
+                        _servers.value = combined
+                    }
                 }
             } catch (e: Exception) {
-                // Fallback implicitly retained
+                // Keep default servers intact on error
             }
         }
     }
+
 
     val defaultServerUrl: String
         get() = servers.first().url
