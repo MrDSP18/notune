@@ -108,7 +108,7 @@ fun NoTuneAmbientCanvas(
             drawCircle(
                 color = if (i % 2 == 0) accentColor.copy(alpha = particleAlpha) else secondaryColor.copy(alpha = particleAlpha),
                 radius = (3 + (i % 4) * 2).dp.toPx(),
-                center = Offset(px.toFloat(), py.toFloat())
+                center = Offset(px, py)
             )
         }
 
