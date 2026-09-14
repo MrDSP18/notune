@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,16 +30,25 @@ fun LanguageSettingsScreen(
 ) {
     var appLanguageCode by rememberPreference(AppLanguageKey, "en")
     var searchQuery by remember { mutableStateOf("") }
+    var selectedFilterRegion by remember { mutableStateOf("All") }
 
-    val filteredLanguages = remember(searchQuery) {
-        if (searchQuery.isBlank()) {
-            NoTuneLanguageEngine.SUPPORTED_LANGUAGES
-        } else {
-            NoTuneLanguageEngine.SUPPORTED_LANGUAGES.filter {
-                it.nameInEnglish.contains(searchQuery, ignoreCase = true) ||
-                it.nativeName.contains(searchQuery, ignoreCase = true) ||
-                it.code.contains(searchQuery, ignoreCase = true)
+    val regions = listOf("All", "🇮🇳 Indian Languages", "🌍 Global Languages")
+
+    val filteredLanguages = remember(searchQuery, selectedFilterRegion) {
+        NoTuneLanguageEngine.SUPPORTED_LANGUAGES.filter { lang ->
+            val matchesRegion = when (selectedFilterRegion) {
+                "🇮🇳 Indian Languages" -> lang.region == "India"
+                "🌍 Global Languages" -> lang.region == "Global"
+                else -> true
             }
+
+            val matchesSearch = if (searchQuery.isBlank()) true else {
+                lang.nameInEnglish.contains(searchQuery, ignoreCase = true) ||
+                lang.nativeName.contains(searchQuery, ignoreCase = true) ||
+                lang.code.contains(searchQuery, ignoreCase = true)
+            }
+
+            matchesRegion && matchesSearch
         }
     }
 
@@ -67,23 +77,39 @@ fun LanguageSettingsScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "UNIVERSAL LANGUAGE HUB",
+                        text = "ALL INDIAN & GLOBAL LANGUAGES",
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp),
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "App & AI Multilingual Settings",
+                        text = "Universal Multilingual Hub",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black)
                     )
                 }
             }
+
+            // Region Filter Chips
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(regions) { reg ->
+                    FilterChip(
+                        selected = selectedFilterRegion == reg,
+                        onClick = { selectedFilterRegion = reg },
+                        label = { Text(reg, fontWeight = FontWeight.Bold) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Search Bar
             Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search 50+ languages (e.g., தமிழ், Hindi, Español)...") },
+                    placeholder = { Text("Search all Indian languages (e.g., தமிழ், हिन्दी, తెలుగు, മലയാളം)...") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     singleLine = true,
@@ -94,7 +120,7 @@ fun LanguageSettingsScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Active Language Card
             val activeLang = NoTuneLanguageEngine.getLanguageByCode(appLanguageCode)
@@ -117,7 +143,7 @@ fun LanguageSettingsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Language Selection List
             LazyColumn(
