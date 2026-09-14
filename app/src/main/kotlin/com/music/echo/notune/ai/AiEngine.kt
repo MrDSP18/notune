@@ -108,6 +108,17 @@ class AiEngine @Inject constructor(
         AiTool("change_logo", "Change dynamic app logo variant.", mapOf("logo_variant" to ToolParameter("string", "Logo variant title e.g. CYBERPUNK, HYPER_CUBE, NEON_ORBIT"))),
         AiTool("toggle_flow", "Enable or disable NØTUNE FLOW mood radio mode.", mapOf("enable" to ToolParameter("string", "true or false"))),
         AiTool("toggle_incognito", "Enable or disable private session mode.", mapOf("enable" to ToolParameter("string", "true or false"))),
-        AiTool("set_sleep_timer", "Set a sleep timer for music playback.", mapOf("minutes" to ToolParameter("string", "Duration in minutes e.g. 15, 30, 60")))
+        AiTool("set_sleep_timer", "Set a sleep timer for music playback.", mapOf("minutes" to ToolParameter("string", "Duration in minutes e.g. 15, 30, 60"))),
+        AiTool("get_vibe_check", "Get user daily musical horoscope and acoustic DNA vibe check.", emptyMap()),
+        AiTool("get_song_trivia", "Get interactive song trivia and creation background.", mapOf("query" to ToolParameter("string", "Song title"))),
+        AiTool("get_artist_journey", "Get curated discography path for any artist.", mapOf("artist" to ToolParameter("string", "Artist name"))),
+        AiTool("blend_genres", "Blend two genres into a hybrid queue.", mapOf("genre1" to ToolParameter("string", "First genre"), "genre2" to ToolParameter("string", "Second genre"))),
+        AiTool("decade_time_machine", "Transpose queue aesthetic to a specific decade.", mapOf("decade" to ToolParameter("string", "e.g. 80s, 90s, 00s"))),
+        AiTool("ai_doctor_playlist", "Diagnose playlist health and fix duplicate tracks.", emptyMap()),
+        AiTool("set_equalizer_preset", "Set audio equalizer preset profile.", mapOf("preset" to ToolParameter("string", "e.g. BASS_BOOST, SYNTHWAVE, VOCAL_CLEAR"))),
+        AiTool("translate_lyrics", "Translate sync lyrics into target language.", mapOf("language" to ToolParameter("string", "Target language e.g. English, Hindi"))),
+        AiTool("generate_singalong_guide", "Generate phonetic guide for active lyrics.", emptyMap()),
+        AiTool("get_similarity_score", "Compute acoustic similarity score between tracks.", emptyMap()),
+        AiTool("get_couple_compatibility", "Calculate Music DNA match score for Couple Mode.", emptyMap())
     )
 }

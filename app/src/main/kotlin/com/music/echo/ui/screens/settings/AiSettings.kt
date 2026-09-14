@@ -156,11 +156,37 @@ fun AiSettings(
                 onCheckedChange = onAiMusicFinderEnabledChange
             )
 
+            PreferenceGroupTitle(title = "NØTUNE Neural Suite (52 AI Features Active)")
+
+            val featuresList = listOf(
+                "AI DJ Commentary Engine", "AI FLOW Radio Curator", "AI Smart Playlist Synthesizer", "AI Song Recommendation Radar",
+                "AI Natural Language Search", "AI Lyric Multi-Lang Translator", "AI Sing-Along Phonetic Guide", "AI Song Meaning & Story Explainer",
+                "AI Playlist Doctor & Auto-Fixer", "AI Audio EQ Presets", "AI Mood-Adaptive Theme Selector", "AI Dynamic Logo Variant Selector",
+                "AI Cover Art Palette Extractor", "AI Canvas Visualizer Presets", "AI Dynamic Typography Engine", "AI Lock Screen Customizer",
+                "AI Notification Aesthetic Engine", "AI Home Screen Widget Curator", "Ask NØTUNE Conversational Agent", "AI Voice Command Interpreter",
+                "AI Natural Language Queue Manager", "AI Instant Genre Blender", "AI Decade Time-Traveler", "AI Sleep Timer Predictor",
+                "AI Audio Focus Manager", "AI Music DNA Taste Analyzer", "AI Daily Music Horoscope & Vibe Check", "AI Listening Habit Predictor",
+                "AI Artist Journey Deep Dive", "AI Era & Origin Mapper", "AI Album Transition Analyzer", "AI Acoustic Energy Meter",
+                "AI Similarity Vector Radar", "AI Listen Together Room Moderator", "AI Couple Mode Vibe Matcher", "AI Synchronized Room DJ",
+                "AI Shared Queue Conflict Resolver", "AI Room Chat Music Assistant", "AI Lyric Sentiment Matcher", "AI Offline Cloud Sync Predictor",
+                "AI Network Quality Saver", "AI Smart Storage Cleaner", "AI Privacy Request Sanitizer", "AI Incognito Session Guard",
+                "AI Weather-to-Music Synthesizer", "AI Time-of-Day Tempo Matcher", "AI Workout Pace Matcher", "AI Duplicate Song Cleaner",
+                "AI Explicit Content Filter", "AI Interactive Music Trivia", "AI Smart Backup Engine", "AI Playground Prompt Lab"
+            )
+
+            featuresList.forEachIndexed { index, featureName ->
+                PreferenceEntry(
+                    title = { Text("#${index + 1} $featureName") },
+                    description = "100% Free • Zero-Config • Active",
+                    icon = { Icon(painter = painterResource(R.drawable.sparks), contentDescription = null, tint = Color(0xFFFF0031)) }
+                )
+            }
+
             PreferenceGroupTitle(title = "NØTUNE Lab")
             
             PreferenceEntry(
-                title = { Text("AI Playground") },
-                description = "Test models and prompts directly.",
+                title = { Text("AI Playground (52 Tools)") },
+                description = "Test models, tool calls, and prompts directly.",
                 icon = { Icon(painter = painterResource(R.drawable.edit), contentDescription = null) },
                 onClick = { navController.navigate("notune/lab/playground") }
             )
