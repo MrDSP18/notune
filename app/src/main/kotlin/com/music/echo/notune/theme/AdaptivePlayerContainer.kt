@@ -74,7 +74,7 @@ fun AdaptivePlayerPreview(
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp),
                         color = primaryColor
                     )
-                    AudioResolutionBadge(sampleRate = "96kHz", bitrate = "FLAC 24-BIT", format = "DSD")
+                    AudioResolutionBadge()
                 }
             }
 

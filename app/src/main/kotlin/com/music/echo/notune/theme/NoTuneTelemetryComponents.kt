@@ -110,9 +110,9 @@ fun SystemTelemetryHeader(
 
 @Composable
 fun AudioResolutionBadge(
-    sampleRate: String = "96kHz",
-    bitrate: String = "FLAC 24-BIT",
-    format: String = "DSD",
+    sampleRate: String = "AUTO",
+    bitrate: String = "SRC FMT",
+    format: String = "STANDARD",
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -167,9 +167,9 @@ fun AudioResolutionBadge(
 @Composable
 fun VibeRadarCard(
     modifier: Modifier = Modifier,
-    stateText: String = "CALM FOCUS",
-    energyPercent: String = "62.4%",
-    attentionState: String = "ALPHA-8",
+    stateText: String = "SPECTRUM ACTIVE",
+    energyPercent: String = "DYNAMIC",
+    attentionState: String = "AUTO-EQ",
     repeatRate: String = "LOW [0.12]"
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "vibe_wave")
@@ -202,7 +202,7 @@ fun VibeRadarCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Vibe Radar // Biosensory Feedback",
+                    text = "Vibe Radar // Procedural Audio Spectrum",
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontFamily = FontFamily.Monospace,
                         color = Color.White,
@@ -228,7 +228,7 @@ fun VibeRadarCard(
                 }
             }
 
-            // Real-Time Animated Spectrum Bars
+            // Real-Time Animated Spectrum Bars (Procedural Canvas Math)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -250,13 +250,13 @@ fun VibeRadarCard(
                 }
             }
 
-            // Telemetry Grid
+            // Telemetry Grid (Procedural Audio Spectrum Attributes)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                TelemetryStatBox(label = "ENERGY", value = energyPercent, color = Color.White, modifier = Modifier.weight(1f))
-                TelemetryStatBox(label = "ATTENTION", value = attentionState, color = TertiaryCyan, modifier = Modifier.weight(1f))
+                TelemetryStatBox(label = "SPECTRUM", value = energyPercent, color = Color.White, modifier = Modifier.weight(1f))
+                TelemetryStatBox(label = "AUDIO DYN", value = attentionState, color = TertiaryCyan, modifier = Modifier.weight(1f))
                 TelemetryStatBox(label = "REPEAT RT", value = repeatRate, color = CrimsonVivid, modifier = Modifier.weight(1f))
             }
         }

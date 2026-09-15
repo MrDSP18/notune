@@ -8,15 +8,21 @@
 
 ---
 
-## EXECUTIVE SUMMARY
+## AUDIT CERTIFICATION STATEMENT
 
-A strict, evidence-based production audit of the NØTUNE codebase was conducted following the Stitch UI reconstruction and subsystem integration. Claims of UI completion, design system conformance, and build stability were evaluated against actual source code, network traces, security configurations, and native build manifests.
-
-The system meets high-fidelity design goals and exhibits real backend connectivity for core playback, room synchronization, telemetry metrics, and AI routing. Production release signing and physical hardware testing remain key prerequisites prior to Google Play Store / F-Droid distribution.
+> **Strong Release Candidate with substantial real implementation; production release remains blocked by signing, physical-device validation, and several partially implemented/runtime-dependent features.**
 
 ---
 
-## SUBSYSTEM AUDIT DETAILED FINDINGS
+## EXECUTIVE SUMMARY
+
+A strict, evidence-based production audit of the NØTUNE codebase was conducted following the Stitch UI reconstruction and subsystem hardening pass. Claims of UI completion, design system conformance, and build stability were evaluated against actual source code, network traces, security configurations, and native build manifests.
+
+The system meets high-fidelity design goals and exhibits real backend connectivity for core playback, room synchronization, telemetry metrics, and AI routing. Production release signing, physical hardware validation, and production domain deployment remain key prerequisites prior to Google Play Store / F-Droid distribution.
+
+---
+
+## SUBSYSTEM AUDIT DETAILED HARDENING FINDINGS
 
 ### A. STITCH DESIGN
 * **Status**: `REAL IMPLEMENTED`
@@ -31,14 +37,14 @@ The system meets high-fidelity design goals and exhibits real backend connectivi
 ---
 
 ### B. TELEMETRY
-* **Status**: `PARTIALLY IMPLEMENTED`
+* **Status**: `PARTIALLY IMPLEMENTED (TRUTHFUL FALLBACK ENFORCED)`
 * **Telemetry Element Breakdown**:
   * **SYS / TIME / DEVICE**: `REAL IMPLEMENTED` — Dynamically reads system clock, Android OS build metrics, battery status, and memory load in `SystemTelemetryHeader`.
   * **LATENCY / SYNC**: `REAL IMPLEMENTED` — Dynamic round-trip ping time calculation in milliseconds against WebSocket endpoint `wss://metroserverx.meowery.eu/ws` in `RoomRepository.kt`.
   * **WEATHER / REGION**: `REAL IMPLEMENTED` — Queries real-time geolocation and weather via Open-Meteo API in `VibeRadarCard`.
-  * **DAC / FLAC / 24-BIT / DSD**: `PARTIALLY IMPLEMENTED / DECORATIVE FALLBACK` — Player reads sample rate and format from ExoPlayer `Format` when available in `MusicService.kt`. However, UI badges in `AudioResolutionBadge` display default fallback chips (`96kHz`, `FLAC 24-BIT`, `DSD`) when standard lossy or unannotated streams are played.
-  * **ATTENTION / ENERGY**: `DESIGN ONLY` — Procedural visualizer calculations rendered via Canvas math in `VibeRadarCard`.
-* **Result**: PASS (Real metrics) / NOT PRODUCTION READY (Audio format badge fallback values when format header missing).
+  * **DAC / AUDIO RESOLUTION BADGES**: `TRUTHFUL FALLBACK ENFORCED` — Hardcoded deceptive default badges (`96kHz`, `FLAC 24-BIT`, `DSD`) removed in hardening pass. `AudioResolutionBadge` defaults to truthful dynamic states (`AUTO`, `SRC FMT`, `STANDARD`) when source format header is unannotated.
+  * **VIBE RADAR / ATTENTION / ENERGY**: `EXPLICITLY RELABELED` — Relabeled from `"Biosensory Feedback"` to `"Procedural Audio Spectrum"` (`[PROCEDURAL VISUALIZER]`) so procedural Canvas animations are never presented as measured user biometrics.
+* **Result**: PASS (Truthful fallback strings and explicit procedural labeling enforced).
 
 ---
 
@@ -49,7 +55,7 @@ The system meets high-fidelity design goals and exhibits real backend connectivi
   * Playback Queue, Seeking, Shuffle, Repeat: [PlayerRepository.kt](file:///home/dharan-25486/Documents/music/V2/notune/stitch_n_tune_music_os/app/src/main/java/com/music/echo/data/PlayerRepository.kt)
   * Audio Focus & Bluetooth Receiver: `AudioManager` focus listener & `BluetoothHeadset` broadcast receiver in `MusicService.kt`.
   * Equalizer & System Audio Effects: `AudioEffect` session integration.
-* **Verification Command**: `./gradlew testDebugUnitTest --tests "*Playback*"` (All unit tests passed).
+* **Verification Command**: `./gradlew testDebugUnitTest` (All unit tests passed).
 * **Result**: PASS.
 
 ---
@@ -59,7 +65,7 @@ The system meets high-fidelity design goals and exhibits real backend connectivi
 * **Evidence & File Paths**:
   * Natural Language Command & AI Terminal: [AskNoTuneScreen.kt](file:///home/dharan-25486/Documents/music/V2/notune/stitch_n_tune_music_os/app/src/main/java/com/music/echo/social/ui/AskNoTuneScreen.kt)
   * Gemini API Provider & Local Rule Fallback: [AiRepository.kt](file:///home/dharan-25486/Documents/music/V2/notune/stitch_n_tune_music_os/app/src/main/java/com/music/echo/data/AiRepository.kt) & `AiFallbackProvider.kt`
-* **Behavior**: Real API requests sent to Gemini endpoint. If API key is missing or network fails, app seamlessly falls back to offline heuristic AI engine without crashing or returning fake success flags.
+* **Behavior**: Real API requests sent to Gemini endpoint. If API key is missing or network fails, app seamlessly falls back to offline heuristic AI engine without returning fake success flags.
 * **Result**: PASS.
 
 ---
@@ -93,11 +99,12 @@ The system meets high-fidelity design goals and exhibits real backend connectivi
 ---
 
 ### H. DEEP LINK ARCHITECTURE
-* **Status**: `REAL IMPLEMENTED`
+* **Status**: `PARTIALLY IMPLEMENTED (NØTUNE HTTPS DOMAIN RECOMMENDED)`
 * **Evidence & File Paths**:
   * Manifest Intent Filters: [AndroidManifest.xml](file:///home/dharan-25486/Documents/music/V2/notune/stitch_n_tune_music_os/app/src/main/AndroidManifest.xml)
   * Deep Link Handler: [MainActivity.kt](file:///home/dharan-25486/Documents/music/V2/notune/stitch_n_tune_music_os/app/src/main/java/com/music/echo/MainActivity.kt)
-* **Domain Configuration**: Supports custom scheme `notune://listen` and HTTPS App Link domains (`notune-listen-together.onrender.com`, `share.notune.fun`). GitHub repository fallback URL (`https://github.com/MrDSP18/notune?code=ROOM_CODE`) handles uninstalled browser redirection.
+* **Domain Configuration**: Configured for custom scheme `notune://listen` and HTTPS App Link domains (`notune-listen-together.onrender.com`, `share.notune.fun`). GitHub repository fallback URL handles uninstalled browser redirection.
+* **Recommendation**: Production launch should deploy a dedicated NØTUNE-controlled HTTPS landing domain (`notune.fun`) as primary link architecture.
 * **Result**: PASS.
 
 ---
@@ -140,17 +147,17 @@ The system meets high-fidelity design goals and exhibits real backend connectivi
 ---
 
 ### M. PHYSICAL DEVICE VALIDATION
-* **Status**: `UNVERIFIED`
-* **Details**: Compiled and validated via headless Gradle execution (`BUILD SUCCESSFUL` across 301 tasks) and Compose static analysis. Physical Android hardware deployment requires testing on a physical device or connected emulator.
-* **Result**: UNVERIFIED (Headless build PASS; physical touch & Bluetooth hardware verification pending).
+* **Status**: `UNVERIFIED (PHYSICAL TEST MATRIX CREATED)`
+* **Details**: Compiled and validated via headless Gradle execution (`BUILD SUCCESSFUL` across 301 tasks) and Compose static analysis. Physical Android hardware deployment checklist created in [PHYSICAL_DEVICE_TEST_MATRIX.md](file:///home/dharan-25486/Documents/music/V2/notune/docs/PHYSICAL_DEVICE_TEST_MATRIX.md).
+* **Result**: UNVERIFIED (Physical hardware touch & Bluetooth verification pending).
 
 ---
 
 ### N. WIDGETS
-* **Status**: `PARTIALLY IMPLEMENTED`
+* **Status**: `PARTIALLY IMPLEMENTED (WIDGET MATRIX CREATED)`
 * **Evidence & File Paths**:
-  * Android Glance AppWidgets: `NowPlayingWidget.kt`, `CompactPlayerWidget.kt`, `QuickControlsWidget.kt` located in `com/music/echo/widget/`.
-* **Details**: Core player widgets are fully functional AppWidgets. Specialized concept cards (e.g., `Music DNA Widget`, `NØTUNE FLOW Widget`) exist as `DESIGN ONLY` screens.
+  * Android Glance AppWidgets: `NowPlayingWidget.kt`, `CompactPlayerWidget.kt`, `QuickControlsWidget.kt` in `com/music/echo/widget/`.
+* **Details**: Core player widgets are fully functional Glance AppWidgets. Documented in [WIDGET_STATUS_MATRIX.md](file:///home/dharan-25486/Documents/music/V2/notune/docs/WIDGET_STATUS_MATRIX.md). Concept screens (`Music DNA`, `NØTUNE FLOW`) are labeled `DESIGN ONLY / CONCEPT PREVIEW`.
 * **Result**: PARTIALLY IMPLEMENTED.
 
 ---
@@ -160,8 +167,8 @@ The system meets high-fidelity design goals and exhibits real backend connectivi
 | Feature / Subsystem | Audit Status | Evidence File / Reference |
 | :--- | :--- | :--- |
 | **Stitch Design System (28/28 Screens)** | `REAL IMPLEMENTED` | [ThemeEngine.kt](file:///home/dharan-25486/Documents/music/V2/notune/stitch_n_tune_music_os/app/src/main/java/com/music/echo/ui/theme/ThemeEngine.kt) |
-| **System & Room Telemetry** | `REAL IMPLEMENTED` | [NoTuneTelemetryComponents.kt](file:///home/dharan-25486/Documents/music/V2/notune/stitch_n_tune_music_os/app/src/main/java/com/music/echo/ui/components/NoTuneTelemetryComponents.kt) |
-| **Audio Resolution Badges (Fallback state)** | `PARTIALLY IMPLEMENTED` | [NoTuneTelemetryComponents.kt](file:///home/dharan-25486/Documents/music/V2/notune/stitch_n_tune_music_os/app/src/main/java/com/music/echo/ui/components/NoTuneTelemetryComponents.kt) |
+| **System & Room Telemetry** | `REAL IMPLEMENTED` | [NoTuneTelemetryComponents.kt](file:///home/dharan-25486/Documents/music/V2/notune/app/src/main/kotlin/com/music/echo/notune/theme/NoTuneTelemetryComponents.kt) |
+| **Audio Resolution Badges (Truthful Fallbacks)**| `REAL IMPLEMENTED` | [NoTuneTelemetryComponents.kt](file:///home/dharan-25486/Documents/music/V2/notune/app/src/main/kotlin/com/music/echo/notune/theme/NoTuneTelemetryComponents.kt) |
 | **ExoPlayer Audio Engine & Media3** | `REAL IMPLEMENTED` | [MusicService.kt](file:///home/dharan-25486/Documents/music/V2/notune/stitch_n_tune_music_os/app/src/main/java/com/music/echo/service/MusicService.kt) |
 | **Ask NØTUNE AI Terminal & Gemini** | `REAL IMPLEMENTED` | [AskNoTuneScreen.kt](file:///home/dharan-25486/Documents/music/V2/notune/stitch_n_tune_music_os/app/src/main/java/com/music/echo/social/ui/AskNoTuneScreen.kt) |
 | **Social Activity & Friend Feeds** | `REAL IMPLEMENTED` | [SocialRepository.kt](file:///home/dharan-25486/Documents/music/V2/notune/stitch_n_tune_music_os/app/src/main/java/com/music/echo/data/SocialRepository.kt) |
@@ -172,16 +179,11 @@ The system meets high-fidelity design goals and exhibits real backend connectivi
 | **GitHub Actions CI/CD Release Workflow** | `REAL IMPLEMENTED` | [.github/workflows/release.yml](file:///home/dharan-25486/Documents/music/V2/notune/stitch_n_tune_music_os/.github/workflows/release.yml) |
 | **Security & Network Config** | `REAL IMPLEMENTED` | [network_security_config.xml](file:///home/dharan-25486/Documents/music/V2/notune/stitch_n_tune_music_os/app/src/main/res/xml/network_security_config.xml) |
 | **Native FFmpeg Libraries** | `REAL IMPLEMENTED` | `app/build.gradle.kts` |
-| **Physical Device Validation** | `UNVERIFIED` | Headless compilation passed |
-| **Glance AppWidgets** | `PARTIALLY IMPLEMENTED` | `com/music/echo/widget/` |
+| **Physical Device Validation** | `UNVERIFIED` | [PHYSICAL_DEVICE_TEST_MATRIX.md](file:///home/dharan-25486/Documents/music/V2/notune/docs/PHYSICAL_DEVICE_TEST_MATRIX.md) |
+| **Glance AppWidgets** | `PARTIALLY IMPLEMENTED` | [WIDGET_STATUS_MATRIX.md](file:///home/dharan-25486/Documents/music/V2/notune/docs/WIDGET_STATUS_MATRIX.md) |
 
 ---
 
-## OVERALL AUDIT CERTIFICATION
+## FINAL CERTIFICATION CONTEXT
 
-```text
-STATUS CERTIFICATION: RELEASE CANDIDATE
-```
-
-**Certification Summary**:  
-NØTUNE v2.0.0 achieves full architectural alignment with the Google Stitch visual system while providing real underlying runtime implementation for audio playback, room synchronization, telemetry headers, AI routing, and deep link handling. The codebase compiles cleanly (`301 Gradle tasks passed`), passes unit testing, and is certified as a **RELEASE CANDIDATE**. Production signing keys injection and physical device deployment are the final steps before Play Store release.
+**Strong Release Candidate with substantial real implementation; production release remains blocked by signing, physical-device validation, and several partially implemented/runtime-dependent features.**
