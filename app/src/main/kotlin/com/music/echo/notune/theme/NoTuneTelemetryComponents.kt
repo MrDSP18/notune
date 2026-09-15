@@ -172,19 +172,23 @@ fun VibeRadarCard(
     attentionState: String = "AUTO-EQ",
     repeatRate: String = "LOW [0.12]"
 ) {
+    var selectedModeIndex by remember { mutableIntStateOf(0) }
+    val modes = listOf("FFT SPECTRUM", "BEAT DYNAMIC", "NEURAL WAVE")
+    val currentMode = modes[selectedModeIndex % modes.size]
+
     val infiniteTransition = rememberInfiniteTransition(label = "vibe_wave")
 
     val bar1Height by infiniteTransition.animateFloat(
-        initialValue = 0.3f, targetValue = 0.9f,
-        animationSpec = infiniteRepeatable(tween(800, easing = LinearEasing), RepeatMode.Reverse), label = "b1"
+        initialValue = 0.2f, targetValue = 0.95f,
+        animationSpec = infiniteRepeatable(tween(750, easing = LinearEasing), RepeatMode.Reverse), label = "b1"
     )
     val bar2Height by infiniteTransition.animateFloat(
-        initialValue = 0.7f, targetValue = 0.2f,
-        animationSpec = infiniteRepeatable(tween(650, easing = LinearEasing), RepeatMode.Reverse), label = "b2"
+        initialValue = 0.8f, targetValue = 0.15f,
+        animationSpec = infiniteRepeatable(tween(600, easing = LinearEasing), RepeatMode.Reverse), label = "b2"
     )
     val bar3Height by infiniteTransition.animateFloat(
-        initialValue = 0.4f, targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(tween(1100, easing = LinearEasing), RepeatMode.Reverse), label = "b3"
+        initialValue = 0.35f, targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(1050, easing = LinearEasing), RepeatMode.Reverse), label = "b3"
     )
 
     Box(
@@ -202,7 +206,7 @@ fun VibeRadarCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Vibe Radar // Procedural Audio Spectrum",
+                    text = "Vibe Radar // $currentMode",
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontFamily = FontFamily.Monospace,
                         color = Color.White,
@@ -214,13 +218,15 @@ fun VibeRadarCard(
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
                         .background(SurfaceContainerLowest)
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                        .border(0.8.dp, BorderHairline, RoundedCornerShape(4.dp))
+                        .clickable { selectedModeIndex++ }
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = stateText,
+                        text = "MODE ↻",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontFamily = FontFamily.Monospace,
-                            color = TertiaryCyan,
+                            color = CrimsonVivid,
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -228,24 +234,44 @@ fun VibeRadarCard(
                 }
             }
 
-            // Real-Time Animated Spectrum Bars (Procedural Canvas Math)
+            // Real-Time Interactive Animated Spectrum Bars
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(36.dp)
+                    .height(40.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .background(SurfaceContainerLowest)
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ) {
-                listOf(bar1Height, bar2Height, bar3Height, bar1Height * 0.8f, bar2Height * 1.1f, bar3Height * 0.6f, bar1Height, bar2Height, bar3Height).forEach { factor ->
+                val multiplier = when (selectedModeIndex % 3) {
+                    1 -> 1.2f
+                    2 -> 0.85f
+                    else -> 1.0f
+                }
+                listOf(
+                    bar1Height * multiplier,
+                    bar2Height * multiplier,
+                    bar3Height * multiplier,
+                    bar1Height * 0.8f * multiplier,
+                    bar2Height * 1.1f * multiplier,
+                    bar3Height * 0.6f * multiplier,
+                    bar1Height * multiplier,
+                    bar2Height * multiplier,
+                    bar3Height * multiplier,
+                    bar2Height * 0.9f * multiplier,
+                    bar1Height * 1.05f * multiplier
+                ).forEach { factor ->
+                    val clamped = factor.coerceIn(0.12f, 1.0f)
                     Box(
                         modifier = Modifier
-                            .width(4.dp)
-                            .fillMaxHeight(factor.coerceIn(0.1f, 1.0f))
-                            .clip(RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))
-                            .background(if (factor > 0.6f) CrimsonVivid else TertiaryCyan)
+                            .width(5.dp)
+                            .fillMaxHeight(clamped)
+                            .clip(RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp))
+                            .background(
+                                if (clamped > 0.65f) CrimsonVivid else TertiaryCyan
+                            )
                     )
                 }
             }
