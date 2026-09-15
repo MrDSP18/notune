@@ -246,6 +246,10 @@ fun SearchScreen(
                 modifier = Modifier
                     .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface)
             ) {
+                com.music.echo.notune.theme.SystemTelemetryHeader(
+                    title = "NØTUNE // NATURAL LANGUAGE SEARCH TERMINAL",
+                    subtitle = "Query Matrix"
+                )
                 SearchBar(
                     inputField = {
                         BasicTextField(
