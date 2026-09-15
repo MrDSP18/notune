@@ -80,27 +80,33 @@ fun LibraryScreen(navController: NavController) {
     }
 
     val filterContent = @Composable {
-        Row {
-            ChipsRow(
-                chips =
-                listOf(
-                    LibraryFilter.PLAYLISTS to stringResource(R.string.filter_playlists),
-                    LibraryFilter.SONGS to stringResource(R.string.filter_songs),
-                    LibraryFilter.ALBUMS to stringResource(R.string.filter_albums),
-                    LibraryFilter.ARTISTS to stringResource(R.string.filter_artists),
-                    LibraryFilter.LOCAL to stringResource(R.string.filter_local),
-                ),
-                currentValue = filterType,
-                onValueUpdate = {
-                    filterType =
-                        if (filterType == it) {
-                            LibraryFilter.LIBRARY
-                        } else {
-                            it
-                        }
-                },
-                modifier = Modifier.weight(1f),
+        Column {
+            com.music.echo.notune.theme.SystemTelemetryHeader(
+                title = "NØTUNE // LIBRARY STORAGE MATRIX",
+                subtitle = "DAC: LOSSLESS FLAC 24-BIT"
             )
+            Row {
+                ChipsRow(
+                    chips =
+                    listOf(
+                        LibraryFilter.PLAYLISTS to stringResource(R.string.filter_playlists),
+                        LibraryFilter.SONGS to stringResource(R.string.filter_songs),
+                        LibraryFilter.ALBUMS to stringResource(R.string.filter_albums),
+                        LibraryFilter.ARTISTS to stringResource(R.string.filter_artists),
+                        LibraryFilter.LOCAL to stringResource(R.string.filter_local),
+                    ),
+                    currentValue = filterType,
+                    onValueUpdate = {
+                        filterType =
+                            if (filterType == it) {
+                                LibraryFilter.LIBRARY
+                            } else {
+                                it
+                            }
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
     }
 

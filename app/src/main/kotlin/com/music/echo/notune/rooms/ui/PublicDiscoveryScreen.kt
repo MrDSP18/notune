@@ -46,16 +46,28 @@ fun PublicDiscoveryScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("NØTUNE Rooms", fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("📻", fontSize = 20.sp)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
+            Column {
+                com.music.echo.notune.theme.SystemTelemetryHeader(
+                    title = "NØTUNE // PUBLIC DISCOVERY MATRIX",
+                    subtitle = "Mesh Rooms & Channels"
+                )
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "PUBLIC ROOMS & SESSIONS",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 1.5.sp,
+                                    color = Color.White
+                                )
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF131313))
+                )
+            }
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
