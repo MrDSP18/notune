@@ -154,8 +154,34 @@ android {
     }
 
     signingConfigs {
+        val userDebugKeystore = file("${System.getProperty("user.home")}/.android/debug.keystore")
+        val projectDebugKeystore = rootProject.file("debug.keystore")
+
+        fun resolveDebugKeystore(): File {
+            if (userDebugKeystore.exists()) return userDebugKeystore
+            if (projectDebugKeystore.exists()) return projectDebugKeystore
+            val parent = projectDebugKeystore.parentFile
+            if (parent != null && !parent.exists()) parent.mkdirs()
+            try {
+                ProcessBuilder(
+                    "keytool", "-genkey", "-v",
+                    "-keystore", projectDebugKeystore.absolutePath,
+                    "-storepass", "android",
+                    "-alias", "androiddebugkey",
+                    "-keypass", "android",
+                    "-keyalg", "RSA",
+                    "-keysize", "2048",
+                    "-validity", "10000",
+                    "-dname", "CN=Android Debug,O=Android,C=US"
+                ).start().waitFor()
+            } catch (_: Exception) {}
+            return if (projectDebugKeystore.exists()) projectDebugKeystore else userDebugKeystore
+        }
+
+        val activeDebugKeystore = resolveDebugKeystore()
+
         create("persistentDebug") {
-            storeFile = file("persistent-debug.keystore")
+            storeFile = activeDebugKeystore
             storePassword = "android"
             keyAlias = "androiddebugkey"
             keyPassword = "android"
@@ -174,7 +200,7 @@ android {
                 keyAlias = System.getenv("KEY_ALIAS")
                 keyPassword = System.getenv("KEY_PASSWORD")
             } else {
-                storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
+                storeFile = activeDebugKeystore
                 storePassword = "android"
                 keyAlias = "androiddebugkey"
                 keyPassword = "android"
@@ -184,7 +210,7 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
             storePassword = "android"
-            storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
+            storeFile = activeDebugKeystore
         }
     }
 
