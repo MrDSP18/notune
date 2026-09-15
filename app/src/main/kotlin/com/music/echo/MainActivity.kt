@@ -1569,7 +1569,10 @@ class MainActivity : ComponentActivity() {
         val listenCode = uri.getQueryParameter("code")
             ?: uri.getQueryParameter("room")
             ?: uri.pathSegments.getOrNull(1)
-        val isListenLink = uri.pathSegments.firstOrNull() == "listen" || uri.host?.equals("listen", ignoreCase = true) == true
+        val isListenLink = uri.pathSegments.firstOrNull() == "listen" ||
+                uri.host?.equals("listen", ignoreCase = true) == true ||
+                uri.host?.equals("github.com", ignoreCase = true) == true ||
+                !listenCode.isNullOrBlank()
         if (!listenCode.isNullOrBlank() && isListenLink) {
             val username = dataStore.get(ListenTogetherUsernameKey, "").ifBlank { "Guest" }
             listenTogetherManager.joinRoom(listenCode, username)
