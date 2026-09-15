@@ -246,6 +246,13 @@ fun ListenTogetherScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        item {
+            com.music.echo.notune.theme.SystemTelemetryHeader(
+                title = "NØTUNE // LISTEN TOGETHER TELEMETRY",
+                subtitle = "Room Sync Matrix"
+            )
+        }
+
         if (connectionState == ConnectionState.CONNECTED && !isInRoom) {
             item {
                 Text(

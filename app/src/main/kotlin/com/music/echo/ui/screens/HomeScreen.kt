@@ -956,6 +956,20 @@ fun HomeScreen(
                 contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
             ) {
                 item {
+                    com.music.echo.notune.theme.SystemTelemetryHeader(
+                        title = "NØTUNE // MUSIC OS v1.0",
+                        subtitle = "Home Dashboard"
+                    )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    com.music.echo.notune.theme.VibeRadarCard(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                    )
+                }
+
+                item {
                     NoTuneAIPromptCard(
                         onAskClick = { navController.navigate("notune/ask") },
                         onLabClick = { navController.navigate("notune/lab") },

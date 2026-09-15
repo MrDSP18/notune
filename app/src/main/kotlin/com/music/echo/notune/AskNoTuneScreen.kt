@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -80,34 +81,41 @@ fun AskNoTuneScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        NoTuneLogo(variant = LogoVariant.SYMBOL, size = 28.dp)
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            "ASK NØTUNE AI",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 2.sp
-                            )
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(
-                            painter = androidx.compose.ui.res.painterResource(id = R.drawable.arrow_back),
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+            Column {
+                com.music.echo.notune.theme.SystemTelemetryHeader(
+                    title = "NØTUNE // AI DJ INTELLIGENCE",
+                    subtitle = "Voice & Neural Matrix"
                 )
-            )
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            NoTuneLogo(variant = LogoVariant.SYMBOL, size = 26.dp)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                "AI DJ INTELLIGENCE",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 1.5.sp,
+                                    color = Color.White
+                                )
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.navigateUp() }) {
+                            Icon(
+                                painter = androidx.compose.ui.res.painterResource(id = R.drawable.arrow_back),
+                                contentDescription = "Back",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFF131313)
+                    )
+                )
+            }
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->

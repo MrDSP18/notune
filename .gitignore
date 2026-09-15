@@ -61,5 +61,10 @@ bin/
 # Environment and secrets
 .env
 *.env
-notune-backend/.env
+
+# Stitch n Tune mockups & release binaries
+stitch_n_tune_music_os/**/*.png
+releases/
+*.apk
+
 

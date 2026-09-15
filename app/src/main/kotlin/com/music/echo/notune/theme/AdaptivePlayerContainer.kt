@@ -68,11 +68,14 @@ fun AdaptivePlayerPreview(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 NoTuneLogo(variant = echo.music.iad1tya.constants.LogoVariant.SYMBOL, size = 24.dp)
-                Text(
-                    text = "PLAYER STAGE • ${playerStyle.title.uppercase()}",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp),
-                    color = primaryColor
-                )
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "PLAYER STAGE • ${playerStyle.title.uppercase()}",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp),
+                        color = primaryColor
+                    )
+                    AudioResolutionBadge(sampleRate = "96kHz", bitrate = "FLAC 24-BIT", format = "DSD")
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
