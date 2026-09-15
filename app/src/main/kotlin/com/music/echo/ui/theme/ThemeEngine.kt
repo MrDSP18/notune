@@ -19,13 +19,13 @@ object ThemeEngine {
     fun getThemeConfig(preset: ThemePreset, customAccent: Color = Color(0xFFFF0031)): NotuneThemeConfig {
         return when (preset) {
             ThemePreset.NOTHING, ThemePreset.NOTUNE_PURE -> NotuneThemeConfig(
-                primary = Color(0xFFFF0031),
+                primary = Color(0xFFFF002E),
                 onPrimary = Color.White,
-                background = Color(0xFF000000),
-                surface = Color(0xFF070707),
-                surfaceVariant = Color.White.copy(alpha = 0.05f),
-                outline = Color.White.copy(alpha = 0.12f),
-                name = "NØTUNE PURE"
+                background = Color(0xFF131313),
+                surface = Color(0xFF09090B),
+                surfaceVariant = Color(0xFF18181B),
+                outline = Color(0xFF27272A),
+                name = "NØTUNE STITCH & TUNE"
             )
             ThemePreset.MIDNIGHT -> NotuneThemeConfig(
                 primary = Color(0xFF6366F1),
