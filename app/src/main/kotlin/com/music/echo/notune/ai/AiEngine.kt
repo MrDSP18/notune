@@ -34,8 +34,8 @@ class AiEngine @Inject constructor(
     private val openRouterProvider: OpenRouterProvider,
     private val ollamaProvider: OllamaProvider,
     private val noTuneBasicAiProvider: NoTuneBasicAiProvider,
-    private val tasteProfileRepository: com.music.echo.notune.personalization.repository.TasteProfileRepository,
-    private val toolManager: echo.music.iad1tya.notune.ai.tools.AiToolManager
+    private val tasteProfileRepository: TasteProfileRepository,
+    private val toolManager: echo.music.iad1tya.notune.ai.tools.AiToolManager,
 ) {
     private val providers = mapOf(
         AiProviderType.NOTUNE_BASIC to noTuneBasicAiProvider,
