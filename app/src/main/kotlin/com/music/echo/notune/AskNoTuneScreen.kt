@@ -115,7 +115,7 @@ fun AskNoTuneScreen(
                     actions = {
                         IconButton(onClick = { viewModel.clearHistory() }) {
                             Icon(
-                                imageVector = androidx.compose.material.icons.filled.Delete,
+                                imageVector = Icons.Default.Delete,
                                 contentDescription = "Clear History",
                                 tint = Color.White.copy(alpha = 0.6f)
                             )

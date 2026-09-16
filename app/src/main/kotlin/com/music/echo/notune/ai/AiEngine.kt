@@ -18,7 +18,7 @@ import echo.music.iad1tya.notune.ai.providers.OpenRouterProvider
 import echo.music.iad1tya.notune.ai.providers.OllamaProvider
 
 import echo.music.iad1tya.notune.ai.providers.NoTuneBasicAiProvider
-import echo.music.iad1tya.notune.personalization.repository.TasteProfileRepository
+import com.music.echo.notune.personalization.repository.TasteProfileRepository
 import android.os.BatteryManager
 import android.content.IntentFilter
 import android.net.ConnectivityManager

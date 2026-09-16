@@ -2897,7 +2897,6 @@ fun InlineLyricsView(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val database = LocalDatabase.current
-    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(mediaMetadata?.id, currentLyrics) {
         if (mediaMetadata != null && currentLyrics == null) {
