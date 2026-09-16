@@ -243,7 +243,7 @@ fun Lyrics(
     
     val openRouterApiKey by rememberPreference(OpenRouterApiKey, "")
     val deeplApiKey by rememberPreference(DeeplApiKey, "")
-    val aiProvider by rememberPreference(AiProviderKey, "OpenRouter")
+    val aiProvider by rememberPreference(AiProviderKey, "NØTUNE Neural")
     val openRouterBaseUrl by rememberPreference(OpenRouterBaseUrlKey, "https://openrouter.ai/api/v1/chat/completions")
     val openRouterModel by rememberPreference(OpenRouterModelKey, "google/gemini-2.5-flash-lite")
     val translateLanguage by rememberPreference(TranslateLanguageKey, "en")
@@ -819,7 +819,38 @@ fun Lyrics(
                     }
                 }
                 is LyricsTranslationHelper.TranslationStatus.Idle -> {
-                    
+                    if (!hasActiveTranslations) {
+                        Card(
+                            onClick = { LyricsTranslationHelper.triggerManualTranslation() },
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.White.copy(alpha = 0.05f)
+                            ),
+                            shape = RoundedCornerShape(16.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.translate),
+                                    contentDescription = null,
+                                    tint = Color.White.copy(alpha = 0.7f),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "AI NEURAL TRANSLATE",
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontFamily = echo.music.iad1tya.ui.theme.NothingFont,
+                                        letterSpacing = 1.sp
+                                    ),
+                                    color = Color.White.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

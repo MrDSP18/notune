@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
@@ -108,6 +109,15 @@ fun AskNoTuneScreen(
                                 painter = androidx.compose.ui.res.painterResource(id = R.drawable.arrow_back),
                                 contentDescription = "Back",
                                 tint = Color.White
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.clearHistory() }) {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.filled.Delete,
+                                contentDescription = "Clear History",
+                                tint = Color.White.copy(alpha = 0.6f)
                             )
                         }
                     },

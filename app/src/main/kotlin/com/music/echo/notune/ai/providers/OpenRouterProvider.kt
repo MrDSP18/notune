@@ -33,7 +33,8 @@ class OpenRouterProvider @Inject constructor(
         prompt: String,
         modelId: String?,
         tools: List<AiTool>?,
-        systemInstruction: String?
+        systemInstruction: String?,
+        history: List<AiChatMessage>?
     ): Result<AiResponse> = runCatching {
         val apiKey = context.dataStore.get(OpenRouterApiKeyExtra, "")
         val targetModel = modelId ?: "google/gemini-2.0-flash-exp:free"

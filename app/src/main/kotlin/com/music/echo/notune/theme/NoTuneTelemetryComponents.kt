@@ -2,326 +2,351 @@ package com.music.echo.notune.theme
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.text.SimpleDateFormat
-import java.util.*
+import echo.music.iad1tya.ui.theme.NothingFont
 
-// Crimson Vivid Accent per Stitch & Tune Music OS spec
-val CrimsonVivid = Color(0xFFFF002E)
-val TertiaryCyan = Color(0xFF69D6E2)
-val ZincDeep = Color(0xFF09090B)
-val BorderHairline = Color(0xFF27272A)
-val SurfaceContainerLowest = Color(0xFF0E0E0E)
+val NothingRed = Color(0xFFFF0031)
+val TelemetryZinc = Color(0xFF71717A)
+val DeepZinc = Color(0xFF18181B)
 
 @Composable
-fun SystemTelemetryHeader(
-    title: String = "NØTUNE // OS v1.0",
-    subtitle: String = "Home",
+fun NoTuneTelemetryHeader(
+    section: String,
+    status: String = "ACTIVE",
     modifier: Modifier = Modifier
 ) {
-    var currentTime by remember { mutableStateOf("") }
-    LaunchedEffect(Unit) {
-        val sdf = SimpleDateFormat("HH:mm:ss 'UTC'", Locale.US)
-        while (true) {
-            currentTime = sdf.format(Date())
-            kotlinx.coroutines.delay(1000)
-        }
-    }
-
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xFF131313).copy(alpha = 0.9f))
-            .border(1.dp, BorderHairline)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(CrimsonVivid)
-            )
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        letterSpacing = 1.2.sp
-                    )
-                )
-                Text(
-                    text = subtitle.uppercase(),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 9.sp,
-                        color = Color.Gray,
-                        letterSpacing = 1.5.sp
-                    )
-                )
-            }
-        }
-
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(SurfaceContainerLowest)
-                    .border(1.dp, BorderHairline, RoundedCornerShape(4.dp))
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
-            ) {
-                Text(
-                    text = "SYS:SYNC",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 9.sp,
-                        color = TertiaryCyan,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-            }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
             Box(
                 modifier = Modifier
                     .size(6.dp)
-                    .clip(CircleShape)
-                    .background(TertiaryCyan)
+                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .background(NothingRed)
             )
-        }
-    }
-}
-
-@Composable
-fun AudioResolutionBadge(
-    sampleRate: String = "AUTO",
-    bitrate: String = "SRC FMT",
-    format: String = "STANDARD",
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(3.dp))
-                .background(SurfaceContainerLowest)
-                .border(0.8.dp, BorderHairline, RoundedCornerShape(3.dp))
-                .padding(horizontal = 5.dp, vertical = 2.dp)
-        ) {
             Text(
-                text = sampleRate,
+                text = "${section.uppercase()} // ${status.uppercase()}",
                 style = MaterialTheme.typography.labelSmall.copy(
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 9.sp,
-                    color = TertiaryCyan,
+                    fontFamily = NothingFont,
+                    color = NothingRed,
+                    letterSpacing = 1.5.sp,
                     fontWeight = FontWeight.Bold
                 )
             )
         }
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(3.dp))
-                .background(CrimsonVivid)
-                .padding(horizontal = 5.dp, vertical = 2.dp)
-        ) {
-            Text(
-                text = format,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 9.sp,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-        }
+        
         Text(
-            text = bitrate,
+            text = "SYS_NODE: 0x${section.hashCode().toString(16).takeLast(2).uppercase()}",
             style = MaterialTheme.typography.labelSmall.copy(
-                fontFamily = FontFamily.Monospace,
-                fontSize = 9.sp,
-                color = Color.Gray
+                fontFamily = NothingFont,
+                color = TelemetryZinc,
+                letterSpacing = 1.sp
             )
         )
     }
 }
 
 @Composable
-fun VibeRadarCard(
-    modifier: Modifier = Modifier,
-    stateText: String = "SPECTRUM ACTIVE",
-    energyPercent: String = "DYNAMIC",
-    attentionState: String = "AUTO-EQ",
-    repeatRate: String = "LOW [0.12]"
+fun AudioResolutionBadge(
+    format: String? = null,
+    modifier: Modifier = Modifier
 ) {
-    var selectedModeIndex by remember { mutableIntStateOf(0) }
-    val modes = listOf("FFT SPECTRUM", "BEAT DYNAMIC", "NEURAL WAVE")
-    val currentMode = modes[selectedModeIndex % modes.size]
+    val displayFormat = format ?: "STANDARD // 44.1kHz"
+    
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(2.dp))
+            .background(DeepZinc)
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = displayFormat.uppercase(),
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontFamily = NothingFont,
+                color = Color(0xFF69D6E2), // Tertiary color from design
+                fontSize = 9.sp,
+                letterSpacing = 1.sp
+            )
+        )
+    }
+}
 
-    val infiniteTransition = rememberInfiniteTransition(label = "vibe_wave")
-
-    val bar1Height by infiniteTransition.animateFloat(
-        initialValue = 0.2f, targetValue = 0.95f,
-        animationSpec = infiniteRepeatable(tween(750, easing = LinearEasing), RepeatMode.Reverse), label = "b1"
-    )
-    val bar2Height by infiniteTransition.animateFloat(
-        initialValue = 0.8f, targetValue = 0.15f,
-        animationSpec = infiniteRepeatable(tween(600, easing = LinearEasing), RepeatMode.Reverse), label = "b2"
-    )
-    val bar3Height by infiniteTransition.animateFloat(
-        initialValue = 0.35f, targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(tween(1050, easing = LinearEasing), RepeatMode.Reverse), label = "b3"
-    )
-
-    Box(
+@Composable
+fun SystemTelemetryHeader(
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(ZincDeep)
-            .border(1.dp, BorderHairline, RoundedCornerShape(12.dp))
-            .padding(14.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val infiniteTransition = rememberInfiniteTransition(label = "telemetry_ping")
+                val alpha by infiniteTransition.animateFloat(
+                    initialValue = 0.4f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(800),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "alpha"
+                )
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(NothingRed.copy(alpha = alpha))
+                )
+                Text(
+                    text = title.uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = NothingFont,
+                        color = Color.White,
+                        letterSpacing = 2.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+            
+            Text(
+                text = "SYS_READY",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontFamily = NothingFont,
+                    color = Color(0xFF69D6E2),
+                    letterSpacing = 1.sp
+                )
+            )
+        }
+        
+        Spacer(Modifier.height(2.dp))
+        
+        Text(
+            text = subtitle.uppercase(),
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontFamily = NothingFont,
+                color = TelemetryZinc,
+                letterSpacing = 1.sp,
+                fontSize = 10.sp
+            ),
+            modifier = Modifier.padding(start = 16.dp)
+        )
+        
+        Spacer(Modifier.height(8.dp))
+        HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
+    }
+}
+
+@Composable
+fun VibeRadarCard(
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "vibe_radar")
+    
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.03f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF27272A))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Vibe Radar // $currentMode",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontFamily = FontFamily.Monospace,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
+                    text = "[PROCEDURAL AUDIO SPECTRUM]",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = NothingFont,
+                        color = NothingRed,
+                        letterSpacing = 1.5.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(SurfaceContainerLowest)
-                        .border(0.8.dp, BorderHairline, RoundedCornerShape(4.dp))
-                        .clickable { selectedModeIndex++ }
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
-                ) {
-                    Text(
-                        text = "MODE ↻",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontFamily = FontFamily.Monospace,
-                            color = CrimsonVivid,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                Text(
+                    text = "SYNC_ACTIVE",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = NothingFont,
+                        color = Color(0xFF69D6E2),
+                        fontSize = 9.sp
                     )
-                }
+                )
             }
-
-            // Real-Time Interactive Animated Spectrum Bars
+            
+            Spacer(Modifier.height(16.dp))
+            
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(SurfaceContainerLowest)
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.Bottom
             ) {
-                val multiplier = when (selectedModeIndex % 3) {
-                    1 -> 1.2f
-                    2 -> 0.85f
-                    else -> 1.0f
-                }
-                listOf(
-                    bar1Height * multiplier,
-                    bar2Height * multiplier,
-                    bar3Height * multiplier,
-                    bar1Height * 0.8f * multiplier,
-                    bar2Height * 1.1f * multiplier,
-                    bar3Height * 0.6f * multiplier,
-                    bar1Height * multiplier,
-                    bar2Height * multiplier,
-                    bar3Height * multiplier,
-                    bar2Height * 0.9f * multiplier,
-                    bar1Height * 1.05f * multiplier
-                ).forEach { factor ->
-                    val clamped = factor.coerceIn(0.12f, 1.0f)
+                val heights = listOf(0.4f, 0.8f, 0.5f, 0.9f, 0.3f, 0.7f, 0.5f, 1.0f, 0.4f, 0.6f, 0.8f, 0.3f, 0.7f, 0.9f, 0.4f, 0.5f)
+                
+                heights.forEachIndexed { index, baseH ->
+                    val heightFactor by infiniteTransition.animateFloat(
+                        initialValue = baseH * 0.5f,
+                        targetValue = baseH,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(durationMillis = 400 + (index * 100), easing = LinearEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "bar_$index"
+                    )
+                    
                     Box(
                         modifier = Modifier
-                            .width(5.dp)
-                            .fillMaxHeight(clamped)
-                            .clip(RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp))
+                            .weight(1f)
+                            .fillMaxHeight(heightFactor)
                             .background(
-                                if (clamped > 0.65f) CrimsonVivid else TertiaryCyan
+                                Brush.verticalGradient(
+                                    listOf(NothingRed, NothingRed.copy(alpha = 0.3f))
+                                )
                             )
                     )
                 }
             }
-
-            // Telemetry Grid (Procedural Audio Spectrum Attributes)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                TelemetryStatBox(label = "SPECTRUM", value = energyPercent, color = Color.White, modifier = Modifier.weight(1f))
-                TelemetryStatBox(label = "AUDIO DYN", value = attentionState, color = TertiaryCyan, modifier = Modifier.weight(1f))
-                TelemetryStatBox(label = "REPEAT RT", value = repeatRate, color = CrimsonVivid, modifier = Modifier.weight(1f))
-            }
+            
+            Spacer(Modifier.height(8.dp))
+            
+            Text(
+                text = "REAL-TIME ACOUSTIC ANALYSIS // NODE_STABLE",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontFamily = NothingFont,
+                    color = TelemetryZinc,
+                    fontSize = 8.sp,
+                    letterSpacing = 1.sp
+                )
+            )
         }
     }
 }
 
 @Composable
-private fun TelemetryStatBox(
-    label: String,
-    value: String,
-    color: Color,
+fun NoTuneQuickActionMatrix(
+    onActionClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(6.dp))
-            .background(SurfaceContainerLowest)
-            .border(0.8.dp, BorderHairline, RoundedCornerShape(6.dp))
-            .padding(6.dp)
+    val actions = listOf(
+        QuickActionItem("NEURAL_AGENT", "Ask NØTUNE", echo.music.iad1tya.R.drawable.ic_echo_brain),
+        QuickActionItem("SYNC_ROOM", "Listen Together", echo.music.iad1tya.R.drawable.radio),
+        QuickActionItem("DNA_CHECK", "Vibe Check", echo.music.iad1tya.R.drawable.biotech),
+        QuickActionItem("FLOW_OS", "Toggle Flow", echo.music.iad1tya.R.drawable.tune),
+        QuickActionItem("PLAYLIST_LAB", "Playlist Lab", echo.music.iad1tya.R.drawable.sparks),
+        QuickActionItem("SYSTEM_CORE", "Settings", echo.music.iad1tya.R.drawable.settings)
+    )
+
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        Text(
+            text = "COMMAND_MATRIX // ACCESSIBLE_NODES",
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontFamily = NothingFont,
+                color = TelemetryZinc,
+                letterSpacing = 1.sp,
+                fontSize = 10.sp
+            ),
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        echo.music.iad1tya.ui.component.ChipsRow(
+            chips = actions.map { it.id to it.label },
+            currentValue = null,
+            onValueUpdate = { id -> onActionClick(id ?: "") }
+        )
+        
+        Spacer(Modifier.height(8.dp))
+        
+        // High visibility grid for primary features
+        Row(
+            modifier = Modifier.fillMaxWidth().height(100.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            MatrixTile(
+                item = actions[0],
+                onClick = { onActionClick(actions[0].id) },
+                modifier = Modifier.weight(1f),
+                color = NothingRed
+            )
+            MatrixTile(
+                item = actions[1],
+                onClick = { onActionClick(actions[1].id) },
+                modifier = Modifier.weight(1f),
+                color = Color(0xFF69D6E2)
+            )
+        }
+    }
+}
+
+private data class QuickActionItem(val id: String, val label: String, val icon: Int)
+
+@Composable
+private fun MatrixTile(
+    item: QuickActionItem,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    color: Color = Color.White
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxHeight(),
+        shape = RoundedCornerShape(2.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
     ) {
-        Column {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 8.sp,
-                    color = Color.Gray
-                )
+        Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+            Icon(
+                painter = painterResource(item.icon),
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(24.dp).align(Alignment.TopStart)
             )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 11.sp,
-                    color = color,
-                    fontWeight = FontWeight.Bold
+            
+            Column(modifier = Modifier.align(Alignment.BottomStart)) {
+                Text(
+                    text = item.id,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = NothingFont,
+                        color = color.copy(alpha = 0.7f),
+                        fontSize = 8.sp
+                    )
                 )
-            )
+                Text(
+                    text = item.label.uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = NothingFont,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                )
+            }
         }
     }
 }

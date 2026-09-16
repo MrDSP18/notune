@@ -156,10 +156,29 @@ class PlayerConnection(
     val error = MutableStateFlow<PlaybackException?>(null)
     val isMuted = service.isMuted
 
+    val position = kotlinx.coroutines.flow.flow {
+        while (true) {
+            if (isPlayerInitialized.value) {
+                emit(player.currentPosition)
+            }
+            kotlinx.coroutines.delay(if (isPlaying.value) 1000L else 5000L)
+        }
+    }.stateIn(scope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), 0L)
+
+    val duration = kotlinx.coroutines.flow.flow {
+        while (true) {
+            if (isPlayerInitialized.value) {
+                emit(player.duration.coerceAtLeast(0L))
+            }
+            kotlinx.coroutines.delay(if (isPlaying.value) 2000L else 10000L)
+        }
+    }.stateIn(scope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), 0L)
+
     val waitingForNetworkConnection = service.waitingForNetworkConnection
     val isCrossfading: kotlinx.coroutines.flow.StateFlow<Boolean> = service.isCrossfading
     val isAutomixing: kotlinx.coroutines.flow.StateFlow<Boolean> = service.isAutomixing
     val automixDebugInfo: kotlinx.coroutines.flow.StateFlow<MusicService.AutomixDebugInfo?> = service.automixDebugInfo
+    val technicalTelemetry: kotlinx.coroutines.flow.StateFlow<echo.music.iad1tya.models.TechnicalTelemetry> = service.technicalTelemetry
 
     
     var shouldBlockPlaybackChanges: (() -> Boolean)? = null

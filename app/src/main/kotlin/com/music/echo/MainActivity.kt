@@ -272,6 +272,9 @@ class MainActivity : ComponentActivity() {
     lateinit var listenTogetherManager: echo.music.iad1tya.listentogether.ListenTogetherManager
 
     @Inject
+    lateinit var aiRecommendationHelper: echo.music.iad1tya.ai.AiRecommendationHelper
+
+    @Inject
     lateinit var tasteProfileRepository: com.music.echo.notune.personalization.repository.TasteProfileRepository
     private lateinit var navController: NavHostController
     private var pendingIntent: Intent? = null
@@ -1539,6 +1542,10 @@ class MainActivity : ComponentActivity() {
                             onDismissRequest = {
                                 showWelcomeDialog = false
                                 setLastOpenedVersionCode(BuildConfig.VERSION_CODE)
+                                // Trigger AI Recommendation generation based on newly created Taste Profile
+                                lifecycleScope.launch {
+                                    aiRecommendationHelper.generateRecommendations(this@MainActivity)
+                                }
                             }
                         )
                     }

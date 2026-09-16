@@ -455,7 +455,17 @@ private fun NewMiniPlayer(
                     outlineColor = outlineColor,
                 )
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // Technical Status Light
+                Box(
+                    modifier = Modifier
+                        .size(4.dp)
+                        .clip(CircleShape)
+                        .background(if (playerConnection.player.playWhenReady) Color(0xFFFF0031) else Color(0xFF69D6E2))
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
 
                 
                 NewMiniPlayerSongInfo(

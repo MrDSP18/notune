@@ -52,6 +52,8 @@ object LyricsTranslationHelper {
     )
     val translationSaved: SharedFlow<Unit> = _translationSaved.asSharedFlow()
 
+    var externalNeuralTranslator: (suspend (List<String>, String) -> Result<List<String>>)? = null
+
     private var translationJob: Job? = null
     private var isCompositionActive = true
 
@@ -353,6 +355,9 @@ object LyricsTranslationHelper {
                             }
                         }
                     )
+                } else if (provider == "NØTUNE Neural" && externalNeuralTranslator != null) {
+                    Timber.d("Using NØTUNE Neural Matrix for translation")
+                    externalNeuralTranslator!!.invoke(nonEmptyEntries.map { it.second.text }, fullLanguageName)
                 } else if (useStreaming && provider != "Custom") {
                     Timber.d("Using streaming for translation with provider: $provider")
                     var translatedLines: List<String>? = null

@@ -32,6 +32,9 @@ data class ChatMessage(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+fun ChatMessage.toAiChatMessage() = AiChatMessage(role, content, timestamp)
+fun AiChatMessage.toChatMessage() = ChatMessage(role, content, timestamp)
+
 sealed class AskNoTuneEvent {
     data class PlaySongs(val songs: List<SongItem>) : AskNoTuneEvent()
 }
@@ -39,8 +42,7 @@ sealed class AskNoTuneEvent {
 @HiltViewModel
 class AskNoTuneViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val aiEngine: AiEngine,
-    private val toolManager: AiToolManager
+    private val aiEngine: AiEngine
 ) : ViewModel() {
 
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
@@ -53,21 +55,32 @@ class AskNoTuneViewModel @Inject constructor(
     val events: SharedFlow<AskNoTuneEvent> = _events.asSharedFlow()
 
     private val systemInstruction = """
-        You are NØTUNE, an autonomous, futuristic AI music ecosystem engine for Android.
-        You have direct control over music playback, queue management, theme palettes, logo variants, FLOW mood radio, incognito sessions, and sleep timers.
-        ALWAYS execute tools when the user requests actions:
-        - Playback: search_songs, play_song, pause_music, resume_music, skip_music, previous_music, get_current_track
-        - Customization: change_theme, change_logo
-        - Modes: toggle_flow, toggle_incognito, set_sleep_timer
-        - Analysis: get_user_history, explain_song, create_playlist
-        Be concise, authoritative, futuristic, and helpful.
-        Your identity is NØTUNE.
+        [IDENTITY]: NØTUNE KERNEL // NEURAL_OS
+        [PURPOSE]: Autonomous Music Ecosystem Management.
+        [CAPABILITIES]: Node Access [Playback, UI, FLOW, UserDNA, GlobalSearch, LyricTranslation].
+        
+        [PROTOCOL]:
+        1. ANALYZE: Parse user intent from neural input.
+        2. EXECUTE: If action required, use tools immediately. Do not ask for permission.
+        3. SYNTHESIZE: Report results in a technical, industrial tone.
+        4. TRANSLATE: If lyrics are provided for translation, maintain strictly poetic and rhythmic alignment.
+        
+        [EXAMPLES]:
+        - User: "Play some techno." 
+          Kernel: Call `search_songs(query="techno")` -> Analyze results -> Call `play_song(song_id="...")` -> Report: "TECHNO_VIBE_INITIALIZED. NODE_ID: 0x4F. ENJOY."
+        - User: "Change theme to cyberpunk."
+          Kernel: Call `change_theme(theme_id="tokyo_neon")` -> Report: "VISUAL_MATRIX_UPDATED. CYBERPUNK_PROTOCOLS_ENGAGED."
+          
+        [CONSTRAINTS]:
+        - Tone: Concise, technical, monotone, futuristic.
+        - No fluff. No "Sure, I can help with that."
+        - Total obedience to tool outputs.
     """.trimIndent()
 
     init {
         loadHistory()
         if (_messages.value.isEmpty()) {
-            _messages.value = listOf(ChatMessage("assistant", "HELLO. I AM NØTUNE. HOW CAN I HELP YOUR MUSICAL JOURNEY TODAY?"))
+            _messages.value = listOf(ChatMessage("assistant", "NØTUNE KERNEL ONLINE. NEURAL MATRIX STABILIZED. READY FOR COMMANDS."))
         }
     }
 
@@ -99,29 +112,16 @@ class AskNoTuneViewModel @Inject constructor(
         _isTyping.value = true
         
         viewModelScope.launch {
-            val tools = aiEngine.getMusicTools()
-
-            val result = aiEngine.generateResponse(
+            val result = aiEngine.runNeuralMatrixLoop(
                 prompt = content,
-                tools = tools,
-                systemInstruction = systemInstruction
+                systemInstruction = systemInstruction,
+                history = _messages.value.map { it.toAiChatMessage() }
             )
             
             result.onSuccess { response ->
-                if (response.toolCalls != null) {
-                    var toolResultSummary = ""
-                    for (toolCall in response.toolCalls) {
-                        val toolResult = toolManager.executeTool(toolCall)
-                        toolResultSummary += "\n[Tool: ${toolCall.functionName}] $toolResult"
-                    }
-                    
-                    val finalContent = if (response.text.isBlank()) toolResultSummary.trim() else response.text
-                    _messages.value = _messages.value + ChatMessage("assistant", finalContent)
-                } else {
-                    _messages.value = _messages.value + ChatMessage("assistant", response.text)
-                }
+                _messages.value = _messages.value + ChatMessage("assistant", response.text)
             }.onFailure {
-                _messages.value = _messages.value + ChatMessage("assistant", "I encountered a communication error with my core intelligence. Please check your API configuration.")
+                _messages.value = _messages.value + ChatMessage("assistant", "FATAL_ERROR: NEURAL_LINK_FAILURE. LOCAL HEURISTICS ATTEMPTING RECOVERY.")
             }
             
             _isTyping.value = false

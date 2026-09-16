@@ -176,6 +176,8 @@ import echo.music.iad1tya.constants.SliderStyle
 import echo.music.iad1tya.constants.SliderStyleKey
 import echo.music.iad1tya.constants.SquigglySliderKey
 import echo.music.iad1tya.constants.SwipeLyricsKey
+import echo.music.iad1tya.constants.PlayerStyleKey
+import echo.music.iad1tya.constants.PlayerStyleVariant
 import echo.music.iad1tya.constants.ThumbnailCornerRadius
 import echo.music.iad1tya.constants.UseNewPlayerDesignKey
 import echo.music.iad1tya.db.entities.LyricsEntity
@@ -184,6 +186,7 @@ import echo.music.iad1tya.extensions.togglePlayPause
 import echo.music.iad1tya.extensions.toggleRepeatMode
 import echo.music.iad1tya.listentogether.RoomRole
 import echo.music.iad1tya.models.MediaMetadata
+import echo.music.iad1tya.models.TechnicalTelemetry
 import echo.music.iad1tya.playback.ExoDownloadService
 import echo.music.iad1tya.notune.getConnectedBluetoothDeviceName
 import echo.music.iad1tya.notune.isBuds
@@ -212,6 +215,7 @@ import echo.music.iad1tya.utils.makeTimeString
 import echo.music.iad1tya.utils.isLocalMediaId
 import echo.music.iad1tya.ui.theme.NothingFont
 import echo.music.iad1tya.ui.theme.NothingRed
+import com.music.echo.ui.player.StitchPlayerContent
 import echo.music.iad1tya.utils.rememberEnumPreference
 import echo.music.iad1tya.utils.rememberPreference
 import dagger.hilt.android.EntryPointAccessors
@@ -268,11 +272,24 @@ fun BottomSheetPlayer(
     pureBlack: Boolean,
 ) {
     val context = LocalContext.current
+    val playerScope = rememberCoroutineScope()
     val database = LocalDatabase.current
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val menuState = LocalMenuState.current
     val bottomSheetPageState = LocalBottomSheetPageState.current
     val playerConnection = LocalPlayerConnection.current ?: return
+
+    var showInlineLyrics by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    val dismissedBound = echo.music.iad1tya.constants.QueuePeekHeight + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()
+    val queueSheetState = rememberBottomSheetState(
+        dismissedBound = dismissedBound,
+        expandedBound = state.expandedBound,
+        collapsedBound = dismissedBound + 1.dp,
+        initialAnchor = 1
+    )
 
     val (useNewPlayerDesign, onUseNewPlayerDesignChange) = rememberPreference(
         UseNewPlayerDesignKey,
@@ -283,6 +300,10 @@ fun BottomSheetPlayer(
     val (hidePlayerThumbnail, onHidePlayerThumbnailChange) = rememberPreference(HidePlayerThumbnailKey, false)
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
     val showLyricsOnPlayer by rememberPreference(ShowLyricsOnPlayerKey, false)
+    val playerStyle by rememberEnumPreference(
+        key = PlayerStyleKey,
+        defaultValue = PlayerStyleVariant.MINIMAL
+    )
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val isLocalMedia = mediaMetadata?.id?.isLocalMediaId() == true
 
@@ -334,6 +355,42 @@ fun BottomSheetPlayer(
         }
     }
     val swipeLyrics by rememberPreference(SwipeLyricsKey, false)
+
+
+    if (state.isExpanded && playerStyle == PlayerStyleVariant.STITCH && mediaMetadata != null) {
+        val positionState = playerConnection.position.collectAsState()
+        val durationState = playerConnection.duration.collectAsState()
+        val telemetryState = playerConnection.technicalTelemetry.collectAsState()
+        
+        StitchPlayerContent(
+            mediaMetadata = mediaMetadata!!,
+            telemetry = { telemetryState.value },
+            isPlaying = isPlaying,
+            onPlayPauseClick = playerConnection::togglePlayPause,
+            onPreviousClick = playerConnection::seekToPrevious,
+            onNextClick = playerConnection::seekToNext,
+            position = { positionState.value },
+            duration = { durationState.value },
+            onSeek = { seekTime: Long -> playerConnection.player.seekTo(seekTime) },
+            onLyricsClick = { showInlineLyrics = !showInlineLyrics },
+            onQueueClick = { 
+                playerScope.launch {
+                    queueSheetState.expandSoft()
+                }
+            },
+            onEqClick = { navController.navigate("settings") },
+            onShareClick = {
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, "https://music.youtube.com/watch?v=${mediaMetadata?.id}")
+                }
+                context.startActivity(Intent.createChooser(shareIntent, null))
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+        return
+    }
+
     val enableLyricsThumbnailPlayPause by rememberPreference(EnableLyricsThumbnailPlayPauseKey, false)
     val isKeepScreenOn by rememberPreference(KeepScreenOn, false)
     val keepScreenOn = isPlaying && isKeepScreenOn
@@ -826,9 +883,6 @@ fun BottomSheetPlayer(
         mutableStateOf(false)
     }
 
-    var showInlineLyrics by rememberSaveable {
-        mutableStateOf(false)
-    }
 
     var isFullScreen by rememberSaveable {
         mutableStateOf(false)
@@ -892,14 +946,6 @@ fun BottomSheetPlayer(
         }
     }
 
-    val dismissedBound = QueuePeekHeight + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()
-
-    val queueSheetState = rememberBottomSheetState(
-        dismissedBound = dismissedBound,
-        expandedBound = state.expandedBound,
-        collapsedBound = dismissedBound + 1.dp,
-        initialAnchor = 1
-    )
 
     val bottomSheetBackgroundColor = when {
         isLocalMedia -> Color.Black
@@ -2849,6 +2895,7 @@ fun InlineLyricsView(
     val currentLyrics by playerConnection.currentLyrics.collectAsState(initial = null)
     val lyrics = remember(currentLyrics) { currentLyrics?.lyrics?.trim() }
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val database = LocalDatabase.current
     val coroutineScope = rememberCoroutineScope()
 

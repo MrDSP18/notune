@@ -30,7 +30,8 @@ class NoTuneBasicAiProvider @Inject constructor(
         prompt: String,
         modelId: String?,
         tools: List<AiTool>?,
-        systemInstruction: String?
+        systemInstruction: String?,
+        history: List<AiChatMessage>?
     ): Result<AiResponse> {
         val lowerPrompt = prompt.lowercase()
         val lowerSystem = systemInstruction?.lowercase() ?: ""
@@ -108,30 +109,35 @@ class NoTuneBasicAiProvider @Inject constructor(
                 if (enable) "NØTUNE FLOW mood radio engaged." else "NØTUNE FLOW mood radio disengaged."
             }
 
-            "pause" in lowerPrompt || "stop" in lowerPrompt -> {
+            "pause" in lowerPrompt || "stop" in lowerPrompt || "hold" in lowerPrompt -> {
                 toolCalls.add(ToolCall(functionName = "pause_music", arguments = emptyMap()))
-                "Playback paused."
+                "NEURAL_LINK: PLAYBACK_SUSPENDED."
             }
 
-            "resume" in lowerPrompt || "unpause" in lowerPrompt -> {
+            "resume" in lowerPrompt || "unpause" in lowerPrompt || "play" in lowerPrompt && ("again" in lowerPrompt || "music" in lowerPrompt) -> {
                 toolCalls.add(ToolCall(functionName = "resume_music", arguments = emptyMap()))
-                "Playback resumed."
+                "NEURAL_LINK: PLAYBACK_RESUMED."
             }
 
-            "skip" in lowerPrompt || "next" in lowerPrompt -> {
+            "skip" in lowerPrompt || "next" in lowerPrompt || "don't like" in lowerPrompt -> {
                 toolCalls.add(ToolCall(functionName = "skip_music", arguments = emptyMap()))
-                "Skipped to next track."
+                "NEURAL_LINK: TRANSITIONING_TO_NEXT_NODE."
             }
 
             "previous" in lowerPrompt || "back" in lowerPrompt -> {
                 toolCalls.add(ToolCall(functionName = "previous_music", arguments = emptyMap()))
-                "Returned to previous track."
+                "NEURAL_LINK: REVERTING_TO_PREVIOUS_NODE."
             }
 
             "timer" in lowerPrompt || "sleep" in lowerPrompt -> {
                 val minutes = Regex("\\d+").find(lowerPrompt)?.value ?: "30"
                 toolCalls.add(ToolCall(functionName = "set_sleep_timer", arguments = mapOf("minutes" to minutes)))
-                "Sleep timer set for $minutes minutes."
+                "SLEEP_CHRONOMETER_SET: $minutes MIN."
+            }
+            
+            "vibe" in lowerPrompt || "horoscope" in lowerPrompt || "how am i" in lowerPrompt -> {
+                toolCalls.add(ToolCall(functionName = "get_vibe_check", arguments = emptyMap()))
+                "CALCULATING_ACOUSTIC_DNA_RESONANCE..."
             }
 
             "create playlist" in lowerPrompt || "make playlist" in lowerPrompt || "generate playlist" in lowerPrompt -> {
@@ -166,83 +172,40 @@ class NoTuneBasicAiProvider @Inject constructor(
     }
 
     private fun generateRecommendedSongsJson(prompt: String, favoriteArtists: List<String>): String {
-        val baseList = mutableListOf(
-            Pair("Blinding Lights", "The Weeknd"),
-            Pair("Starboy", "The Weeknd"),
-            Pair("Nightcall", "Kavinsky"),
-            Pair("Midnight City", "M83"),
-            Pair("Get Lucky", "Daft Punk"),
-            Pair("Instant Crush", "Daft Punk"),
-            Pair("Resonance", "HOME"),
-            Pair("After Hours", "The Weeknd"),
-            Pair("Save Your Tears", "The Weeknd"),
-            Pair("The Less I Know The Better", "Tame Impala"),
-            Pair("Let It Happen", "Tame Impala"),
-            Pair("As It Was", "Harry Styles"),
-            Pair("Sweater Weather", "The Neighbourhood"),
-            Pair("Heat Waves", "Glass Animals"),
-            Pair("Stressed Out", "Twenty One Pilots")
-        )
-
-        val customSongs = favoriteArtists.take(5).flatMap { artist ->
-            listOf(
-                Pair("Popular Track", artist),
-                Pair("Top Hit", artist)
-            )
+        val result = JSONArray()
+        if (favoriteArtists.isEmpty()) {
+            // Heuristic fallback for zero-DNA state
+            val trends = listOf("Popular Song", "New Release", "Top Hit", "Trending Track")
+            trends.forEach { title ->
+                result.put(JSONObject().put("title", title).put("artist", "Discovery"))
+            }
+        } else {
+            favoriteArtists.forEach { artist ->
+                result.put(JSONObject().put("title", "Essential Mix").put("artist", artist))
+                result.put(JSONObject().put("title", "Deep Cut").put("artist", artist))
+            }
         }
-
-        val combined = (customSongs + baseList).distinctBy { it.first + it.second }.take(15)
-        val jsonArray = JSONArray()
-        combined.forEach { (title, artist) ->
-            val obj = JSONObject()
-            obj.put("title", title)
-            obj.put("artist", artist)
-            jsonArray.put(obj)
-        }
-
-        return jsonArray.toString()
+        return result.toString()
     }
 
     private fun generatePlaylistJsonObject(prompt: String, favoriteArtists: List<String>): String {
         val playlistTitle = when {
-            "rain" in prompt -> "Rainy Day Acoustic Reflection"
-            "night" in prompt -> "Midnight Cybernetic Drive"
-            "workout" in prompt -> "High Energy Peak Flow"
-            "chill" in prompt || "relax" in prompt -> "Calm Low-Fi Resonance"
-            "synthwave" in prompt || "retro" in prompt -> "Retro Neon Wave"
-            "party" in prompt -> "Ultimate Dance Odyssey"
-            else -> "NØTUNE Curated Resonance"
+            "tamil" in prompt -> "Tamil Neural Matrix"
+            "hindi" in prompt -> "Hindi Neural Matrix"
+            "chill" in prompt -> "Acoustic Settle"
+            else -> "Personalized AI Mix"
         }
-
-        val songsList = listOf(
-            Pair("Blinding Lights", "The Weeknd"),
-            Pair("Starboy", "The Weeknd"),
-            Pair("Nightcall", "Kavinsky"),
-            Pair("Midnight City", "M83"),
-            Pair("Instant Crush", "Daft Punk"),
-            Pair("Resonance", "HOME"),
-            Pair("The Less I Know The Better", "Tame Impala"),
-            Pair("After Hours", "The Weeknd"),
-            Pair("Heat Waves", "Glass Animals"),
-            Pair("Sweater Weather", "The Neighbourhood"),
-            Pair("Runaway", "Aurora"),
-            Pair("Closer", "The Chainsmokers"),
-            Pair("Stay", "The Kid LAROI & Justin Bieber"),
-            Pair("Levitating", "Dua Lipa"),
-            Pair("Bad Habits", "Ed Sheeran")
-        )
 
         val jsonObj = JSONObject()
         jsonObj.put("name", playlistTitle)
         val songsArray = JSONArray()
-        songsList.forEach { (title, artist) ->
-            val songObj = JSONObject()
-            songObj.put("title", title)
-            songObj.put("artist", artist)
-            songsArray.put(songObj)
+        
+        val targetArtists = favoriteArtists.ifEmpty { listOf("Global Trends") }
+        targetArtists.take(10).forEach { artist ->
+            songsArray.put(JSONObject().put("title", "Neural Selection").put("artist", artist))
         }
+        
         jsonObj.put("songs", songsArray)
-
         return jsonObj.toString()
     }
 }

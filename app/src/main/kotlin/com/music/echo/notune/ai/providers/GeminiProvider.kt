@@ -22,7 +22,10 @@ class GeminiProvider @Inject constructor(
 ) : AiProvider {
     override val type: AiProviderType = AiProviderType.GEMINI
 
-    override suspend fun isConfigured(): Boolean = context.dataStore.get(GeminiApiKey, "").isNotBlank()
+    override suspend fun isConfigured(): Boolean {
+        val userKey = context.dataStore.get(GeminiApiKey, "")
+        return userKey.isNotBlank() || echo.music.iad1tya.BuildConfig.GEMINI_API_KEY.isNotBlank()
+    }
 
     override suspend fun getModels(): List<AiModel> = listOf(
         AiModel("gemini-1.5-flash", "Gemini 1.5 Flash (Fast & Free Tier)", listOf(ModelCapability.TEXT_GENERATION, ModelCapability.TOOL_USE)),
@@ -33,9 +36,13 @@ class GeminiProvider @Inject constructor(
         prompt: String,
         modelId: String?,
         tools: List<AiTool>?,
-        systemInstruction: String?
+        systemInstruction: String?,
+        history: List<AiChatMessage>?
     ): Result<AiResponse> = runCatching {
-        val apiKey = context.dataStore.get(GeminiApiKey, "")
+        val userKey = context.dataStore.get(GeminiApiKey, "")
+        val apiKey = userKey.ifBlank { echo.music.iad1tya.BuildConfig.GEMINI_API_KEY }
+        if (apiKey.isBlank()) throw Exception("Gemini API Key not configured")
+
         val targetModel = modelId ?: "gemini-1.5-flash"
         val url = "https://generativelanguage.googleapis.com/v1beta/models/$targetModel:generateContent?key=$apiKey"
 
@@ -48,6 +55,15 @@ class GeminiProvider @Inject constructor(
              }
         }
 
+        // Add history
+        history?.forEach { msg ->
+            contents.add(buildJsonObject {
+                put("role", if (msg.role == "assistant") "model" else "user")
+                put("parts", buildJsonArray { add(buildJsonObject { put("text", msg.content) }) })
+            })
+        }
+
+        // Add current prompt
         contents.add(buildJsonObject {
             put("role", "user")
             put("parts", buildJsonArray { add(buildJsonObject { put("text", prompt) }) })

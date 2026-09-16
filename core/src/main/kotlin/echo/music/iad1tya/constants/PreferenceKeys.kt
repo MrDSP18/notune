@@ -147,7 +147,8 @@ enum class PlayerStyleVariant(val title: String) {
     COMPACT("Compact"),
     GLASS("Glass"),
     TYPOGRAPHY("Typography"),
-    IMMERSIVE("Immersive");
+    IMMERSIVE("Immersive"),
+    STITCH("Stitch & Tune");
 
     companion object {
         fun fromName(name: String): PlayerStyleVariant = entries.find { it.name.equals(name, ignoreCase = true) } ?: MINIMAL
@@ -1153,6 +1154,7 @@ enum class ThemePreset {
     VAPORWAVE,
     NORD,
     MATERIAL,
+    STITCH,
     CUSTOM
 }
 

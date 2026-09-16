@@ -202,6 +202,35 @@ fun AdaptivePlayerPreview(
                     }
                 }
 
+                PlayerStyleVariant.STITCH -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Color(0xFF131313))
+                            .border(1.dp, Color(0xFF27272A), RoundedCornerShape(4.dp))
+                            .padding(16.dp)
+                    ) {
+                        NoTuneTelemetryHeader(section = "PREVIEW", status = "ACTIVE")
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .border(1.dp, Color(0xFF27272A), RoundedCornerShape(2.dp))
+                                    .padding(4.dp)
+                            ) {
+                                Box(modifier = Modifier.fillMaxSize().background(primaryColor))
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(songTitle.uppercase(), style = MaterialTheme.typography.titleMedium.copy(fontFamily = echo.music.iad1tya.ui.theme.NothingFont), fontWeight = FontWeight.Bold)
+                                Text(artistName.uppercase(), style = MaterialTheme.typography.bodySmall.copy(fontFamily = echo.music.iad1tya.ui.theme.NothingFont), color = primaryColor)
+                            }
+                        }
+                    }
+                }
+
                 else -> {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(

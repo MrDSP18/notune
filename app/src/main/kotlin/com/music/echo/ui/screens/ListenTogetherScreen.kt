@@ -751,7 +751,7 @@ private fun RoomStatusCard(
             if (isHost) {
                 Spacer(modifier = Modifier.height(16.dp))
                 val inviteMessage = remember(roomCode) {
-                    "🎵 Join my NØTUNE Listen Together room!\nRoom Code: $roomCode\nJoin Link: https://github.com/MrDSP18/notune?code=$roomCode"
+                    "🎵 Join my NØTUNE Listen Together room!\nRoom Code: $roomCode\n\nOpen Link: https://github.com/MrDSP18/notune?code=$roomCode\n\n(If you don't have the app, download it from the link above to join!)"
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

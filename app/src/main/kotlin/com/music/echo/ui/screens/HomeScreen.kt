@@ -1,6 +1,9 @@
 package echo.music.iad1tya.ui.screens
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
+import androidx.datastore.preferences.core.edit
+import echo.music.iad1tya.utils.dataStore
+import kotlinx.coroutines.flow.first
 
 
 import androidx.activity.compose.BackHandler
@@ -19,6 +22,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -62,6 +66,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.surfaceColorAtElevation
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
@@ -92,6 +97,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.NavController
@@ -444,6 +450,7 @@ fun CommunityPlaylistCard(
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun DailyDiscoverCard(
@@ -562,6 +569,7 @@ fun DailyDiscoverCard(
 }
 
 
+
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeScreen(
@@ -569,6 +577,7 @@ fun HomeScreen(
     snackbarHostState: SnackbarHostState,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
+    val context = LocalContext.current
     val menuState = LocalMenuState.current
     val bottomSheetPageState = LocalBottomSheetPageState.current
     val database = LocalDatabase.current
@@ -962,6 +971,83 @@ fun HomeScreen(
                     )
                 }
 
+                // High Accessibility Module Matrix
+                item {
+                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                        Text(
+                            text = "SYSTEM_MODULES // DATA_NODES",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontFamily = echo.music.iad1tya.ui.theme.NothingFont,
+                                color = Color(0xFF71717A),
+                                letterSpacing = 1.sp
+                            ),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        
+                        Row(modifier = Modifier.fillMaxWidth().height(100.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ModuleTile(
+                                label = "NEURAL_AGENT",
+                                subLabel = "Ask NØTUNE",
+                                icon = R.drawable.ic_echo_brain,
+                                color = Color(0xFFFF0031),
+                                onClick = { navController.navigate("notune/ask") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            ModuleTile(
+                                label = "SYNC_ROOM",
+                                subLabel = "Listen Together",
+                                icon = R.drawable.radio,
+                                color = Color(0xFF69D6E2),
+                                onClick = { navController.navigate("listen_together") },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        
+                        Spacer(Modifier.height(8.dp))
+                        
+                        Row(modifier = Modifier.fillMaxWidth().height(80.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ModuleTile(
+                                label = "DNA_MATRIX",
+                                subLabel = "Vibe Check",
+                                icon = R.drawable.biotech,
+                                onClick = { navController.navigate("notune/replay") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            ModuleTile(
+                                label = "ACOUSTIC_EQ",
+                                subLabel = "Equalizer",
+                                icon = R.drawable.tune,
+                                onClick = { navController.navigate("settings") },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth().height(80.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ModuleTile(
+                                label = "FLOW_OS",
+                                subLabel = "Toggle Flow",
+                                icon = R.drawable.tune,
+                                onClick = { 
+                                    scope.launch {
+                                        val current = context.dataStore.data.first()[echo.music.iad1tya.constants.FlowEnabledKey] ?: false
+                                        context.dataStore.edit { it[echo.music.iad1tya.constants.FlowEnabledKey] = !current }
+                                    }
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                            ModuleTile(
+                                label = "PROMPT_LAB",
+                                subLabel = "AI Playground",
+                                icon = R.drawable.sparks,
+                                onClick = { navController.navigate("notune/lab") },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     com.music.echo.notune.theme.VibeRadarCard(
@@ -974,6 +1060,26 @@ fun HomeScreen(
                         onAskClick = { navController.navigate("notune/ask") },
                         onLabClick = { navController.navigate("notune/lab") },
                         onReplayClick = { navController.navigate("notune/replay") }
+                    )
+                }
+
+                item {
+                    com.music.echo.notune.theme.NoTuneQuickActionMatrix(
+                        onActionClick = { actionId ->
+                            when (actionId) {
+                                "NEURAL_AGENT" -> navController.navigate("notune/ask")
+                                "SYNC_ROOM" -> navController.navigate("listen_together")
+                                "DNA_CHECK" -> navController.navigate("notune/replay")
+                                "FLOW_OS" -> {
+                                    scope.launch {
+                                        val current = context.dataStore.data.first()[echo.music.iad1tya.constants.FlowEnabledKey] ?: false
+                                        context.dataStore.edit { it[echo.music.iad1tya.constants.FlowEnabledKey] = !current }
+                                    }
+                                }
+                                "PLAYLIST_LAB" -> navController.navigate("notune/lab")
+                                "SYSTEM_CORE" -> navController.navigate("settings")
+                            }
+                        }
                     )
                 }
 
@@ -1926,6 +2032,54 @@ fun HomeScreen(
                 }
             }
 
+        }
+    }
+}
+
+@Composable
+private fun ModuleTile(
+    label: String,
+    subLabel: String,
+    icon: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    color: Color = Color.White
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.fillMaxHeight(),
+        shape = RoundedCornerShape(2.dp),
+        color = Color.White.copy(alpha = 0.05f),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+    ) {
+        Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(20.dp).align(Alignment.TopStart)
+            )
+            
+            Column(modifier = Modifier.align(Alignment.BottomStart)) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = echo.music.iad1tya.ui.theme.NothingFont,
+                        color = color.copy(alpha = 0.7f),
+                        fontSize = 8.sp,
+                        letterSpacing = 1.sp
+                    )
+                )
+                Text(
+                    text = subLabel.uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = echo.music.iad1tya.ui.theme.NothingFont,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                )
+            }
         }
     }
 }

@@ -32,7 +32,8 @@ class OllamaProvider @Inject constructor(
         prompt: String,
         modelId: String?,
         tools: List<AiTool>?,
-        systemInstruction: String?
+        systemInstruction: String?,
+        history: List<AiChatMessage>?
     ): Result<AiResponse> = runCatching {
         val baseUrl = context.dataStore.get(OllamaBaseUrlKey, "http://localhost:11434")
         val targetModel = modelId ?: "llama3"

@@ -30,16 +30,8 @@ import kotlinx.coroutines.launch
 fun AiSettings(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
-    viewModel: echo.music.iad1tya.notune.ai.AiPlaygroundViewModel = hiltViewModel(), // Reusing playground VM for engine access
     highlightKey: String? = null
 ) {
-    val aiEngine = viewModel.aiEngine
-    val scope = rememberCoroutineScope()
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val (preferredProvider, onPreferredProviderChange) = rememberEnumPreference(PreferredAiProviderKey, AiProviderType.NOTUNE_BASIC)
-    val (geminiApiKey, onGeminiApiKeyChange) = rememberPreference(GeminiApiKey, "")
-    val (groqApiKey, onGroqApiKeyChange) = rememberPreference(GroqApiKey, "")
-    val (openRouterApiKey, onOpenRouterApiKeyChange) = rememberPreference(OpenRouterApiKeyExtra, "")
     val (aiDjEnabled, onAiDjEnabledChange) = rememberPreference(AiDjEnabledKey, true)
     val (aiMusicFinderEnabled, onAiMusicFinderEnabledChange) = rememberPreference(AiMusicFinderEnabledKey, true)
 
@@ -67,91 +59,33 @@ fun AiSettings(
             // Free Built-in AI Banner
             Card(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFF0031).copy(alpha = 0.15f)),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF0031).copy(alpha = 0.4f))
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFF0031).copy(alpha = 0.05f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF0031).copy(alpha = 0.2f))
             ) {
-                Row(modifier = Modifier.padding(16.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                    Icon(painter = painterResource(R.drawable.sparks), contentDescription = null, tint = Color(0xFFFF0031), modifier = Modifier.size(24.dp))
-                    Spacer(Modifier.width(12.dp))
+                Row(modifier = Modifier.padding(20.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Icon(painter = painterResource(R.drawable.sparks), contentDescription = null, tint = Color(0xFFFF0031), modifier = Modifier.size(32.dp))
+                    Spacer(Modifier.width(16.dp))
                     Column {
-                        Text("NØTUNE FREE AI IS ACTIVE", style = MaterialTheme.typography.titleSmall.copy(fontFamily = NothingFont, color = Color.White))
-                        Spacer(Modifier.height(2.dp))
-                        Text("AI features (AI DJ, Smart Search, Moods, Playlists) are 100% free and work out-of-the-box for all users without setup.", style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.7f)))
+                        Text("NØTUNE NEURAL CORE ACTIVE", style = MaterialTheme.typography.titleMedium.copy(fontFamily = NothingFont, color = Color.White))
+                        Spacer(Modifier.height(4.dp))
+                        Text("All AI features are managed autonomously by the NØTUNE Cloud Network. Zero configuration required for the ultimate musical intelligence.", style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.6f)))
                     }
                 }
             }
 
-            PreferenceGroupTitle(title = "Provider Configuration")
-
-            EnumListPreference(
-                title = { Text("Preferred Provider") },
-                selectedValue = preferredProvider,
-                onValueSelected = onPreferredProviderChange,
-                valueText = { 
-                    when(it) {
-                        AiProviderType.NOTUNE_BASIC -> "NØTUNE Free Built-in AI (Default - Always Active)"
-                        AiProviderType.GEMINI -> "Google Gemini (Optional Key)"
-                        AiProviderType.GROQ -> "Groq (Optional Key)"
-                        AiProviderType.OPENROUTER -> "OpenRouter (Optional Key)"
-                        AiProviderType.OLLAMA -> "Ollama (Local Server)"
-                        else -> it.name
-                    }
-                },
-                icon = { Icon(painter = painterResource(R.drawable.sparks), contentDescription = null) }
-            )
-
-            EditTextPreference(
-                title = { Text("Google Gemini API Key (Optional)") },
-                description = if (geminiApiKey.isBlank()) "Free Built-in AI active (Optional Key)" else "Connected Custom Key",
-                value = geminiApiKey,
-                onValueChange = onGeminiApiKeyChange,
-                trailingContent = {
-                    TextButton(onClick = {
-                        scope.launch {
-                            val res = aiEngine.testConnection(AiProviderType.GEMINI)
-                            val msg = if (res.isSuccess) "Connection Successful!" else "Error: ${res.exceptionOrNull()?.message}"
-                            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
-                        }
-                    }) { Text("TEST", color = Color(0xFFFF0031)) }
-                }
-            )
-
-            EditTextPreference(
-                title = { Text("Groq API Key") },
-                description = if (groqApiKey.isBlank()) "Not configured" else "Connected",
-                value = groqApiKey,
-                onValueChange = onGroqApiKeyChange,
-                trailingContent = {
-                    TextButton(onClick = {
-                        scope.launch {
-                            val res = aiEngine.testConnection(AiProviderType.GROQ)
-                            val msg = if (res.isSuccess) "Connection Successful!" else "Error: ${res.exceptionOrNull()?.message}"
-                            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
-                        }
-                    }) { Text("TEST", color = Color(0xFFFF0031)) }
-                }
-            )
-
-            EditTextPreference(
-                title = { Text("OpenRouter API Key") },
-                description = if (openRouterApiKey.isBlank()) "Not configured" else "Connected",
-                value = openRouterApiKey,
-                onValueChange = onOpenRouterApiKeyChange
-            )
-
-            PreferenceGroupTitle(title = "AI Features")
+            PreferenceGroupTitle(title = "Core Intelligence")
 
             SwitchPreference(
-                title = { Text("AI DJ Commentary") },
-                description = "NØTUNE will intelligently introduce songs.",
+                title = { Text("Autonomous AI DJ") },
+                description = "NØTUNE will intelligently analyze and introduce songs in real-time.",
                 checked = aiDjEnabled,
                 onCheckedChange = onAiDjEnabledChange
             )
 
             SwitchPreference(
-                title = { Text("AI Music Finder") },
-                description = "Enable natural language search in the search bar.",
+                title = { Text("Neural Music Finder") },
+                description = "Enable natural language semantic search across the entire library.",
                 checked = aiMusicFinderEnabled,
                 onCheckedChange = onAiMusicFinderEnabledChange
             )

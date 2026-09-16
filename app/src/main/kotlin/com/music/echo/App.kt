@@ -95,6 +95,9 @@ class App : Application(), SingletonImageLoader.Factory, Configuration.Provider 
         return false
     }
 
+    @Inject
+    lateinit var aiEngine: echo.music.iad1tya.notune.ai.AiEngine
+
     override fun onCreate() {
         super.onCreate()
 
@@ -103,12 +106,15 @@ class App : Application(), SingletonImageLoader.Factory, Configuration.Provider 
             return
         }
 
-        // Removed destructive database deletion to preserve user data
+        // Initialize NØTUNE Neural Translator Bridge
+        echo.music.iad1tya.lyrics.LyricsTranslationHelper.externalNeuralTranslator = { lines, language ->
+            aiEngine.runNeuralMatrixLoop(
+                prompt = "Translate these lyrics to $language: " + lines.joinToString("\n"),
+                systemInstruction = "You are a professional lyric translator. Preserving emotion and original rhythm is critical. Output exactly one translated line per input line."
+            ).map { it.text.lines().filter { l -> l.isNotBlank() } }
+        }
 
-        
         CrashHandler.install(this)
-
-        
 
         AppContextHolder.initialize(this)
         echo.music.iad1tya.utils.cipher.CipherDeobfuscator.initialize(this)

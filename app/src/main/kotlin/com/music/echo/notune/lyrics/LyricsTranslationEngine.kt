@@ -21,6 +21,31 @@ class LyricsTranslationEngine @Inject constructor(
             return lines
         }
 
+        if (aiEngine != null) {
+            val fullText = lines.joinToString("\n") { it.originalText }
+            val prompt = """
+                Translate the following lyrics into ${targetLanguage.name}. 
+                Maintain the original emotion, slang, and cultural nuances. 
+                Respond ONLY with the translated lines, one per line, matching the original count exactly.
+                
+                LYRICS:
+                $fullText
+            """.trimIndent()
+
+            val result = aiEngine.runNeuralMatrixLoop(prompt)
+            result.onSuccess { response ->
+                val translatedLines = response.text.lines().filter { it.isNotBlank() }
+                if (translatedLines.size == lines.size) {
+                    return lines.mapIndexed { index, line ->
+                        line.copy(translatedText = translatedLines[index], transformationVersion = 2)
+                    }
+                }
+                Timber.w("LYRICS_AI: Line count mismatch in translation. Falling back to rule-based.")
+            }.onFailure {
+                Timber.e(it, "LYRICS_AI: Neural translation failed.")
+            }
+        }
+
         return lines.map { line ->
             val translatedText = ruleBasedTranslate(line.originalText, targetLanguage)
             line.copy(

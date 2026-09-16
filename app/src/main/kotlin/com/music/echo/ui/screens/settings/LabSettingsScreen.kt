@@ -31,7 +31,6 @@ fun LabSettingsScreen(
     val (experimentalAi, onExperimentalAiChange) = rememberPreference(ExperimentalAiFeaturesKey, false)
     val (experimentalVisualizers, onExperimentalVisualizersChange) = rememberPreference(ExperimentalVisualizersKey, false)
     val (experimentalAnimations, onExperimentalAnimationsChange) = rememberPreference(ExperimentalAnimationsKey, false)
-    val (geminiApiKey, onGeminiApiKeyChange) = rememberPreference(GeminiApiKey, "")
 
     Scaffold(
         topBar = {
@@ -71,13 +70,6 @@ fun LabSettingsScreen(
         ) {
             PreferenceGroupTitle(title = "AI Engine")
             
-            EditTextPreference(
-                title = { Text("Gemini API Key") },
-                icon = { Icon(painter = painterResource(R.drawable.sparks), contentDescription = null) },
-                value = geminiApiKey,
-                onValueChange = onGeminiApiKeyChange
-            )
-
             SwitchPreference(
                 title = { Text("Experimental AI Features") },
                 description = "Enable advanced natural language processing and AI DJ.",

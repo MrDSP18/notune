@@ -22,7 +22,8 @@ import echo.music.iad1tya.utils.dataStore
 @Singleton
 class AiToolManager @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val database: MusicDatabase
+    private val database: MusicDatabase,
+    private val aiSuiteManager: echo.music.iad1tya.notune.ai.suite.AiSuiteManager
 ) {
     var playerConnection: PlayerConnection? = null
 
@@ -127,15 +128,15 @@ class AiToolManager @Inject constructor(
                 "Sleep timer set for $minutes minutes."
             }
             "get_vibe_check" -> {
-                "NØTUNE Vibe Check: High acoustic resonance with Synthwave and Ambient Pop. Energy score: 85/100."
+                aiSuiteManager.getVibeCheck()
             }
             "get_song_trivia" -> {
                 val query = toolCall.arguments["query"] ?: "current track"
-                "NØTUNE Trivia for '$query': Written during a late-night studio session, blending analog synthesizers with atmospheric vocals."
+                "NØTUNE Neural Matrix Trivia: $query is recognized for its unique acoustic signature and cultural resonance in the futuristic synth-pop era."
             }
             "get_artist_journey" -> {
                 val artist = toolCall.arguments["artist"] ?: "The Weeknd"
-                "NØTUNE Artist Journey for '$artist': 1. House of Balloons (Indie Debut) -> 2. Starboy (Global Peak) -> 3. After Hours (Synthwave Renaissance)."
+                aiSuiteManager.getArtistJourney(artist)
             }
             "blend_genres" -> {
                 val g1 = toolCall.arguments["genre1"] ?: "Synthwave"

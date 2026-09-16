@@ -1433,7 +1433,7 @@ fun ListenTogetherDialog(
                             if (isHost) {
                                 Spacer(modifier = Modifier.height(12.dp))
                                 val inviteLink = remember(room.roomCode) {
-                                    "https://notune-listen-together.onrender.com/listen?code=${room.roomCode}"
+                                    "https://github.com/MrDSP18/notune?code=${room.roomCode}"
                                 }
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
