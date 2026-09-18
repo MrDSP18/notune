@@ -187,12 +187,15 @@ class AiEngine @Inject constructor(
             "STATUS: ${if (player.isPlaying.value) "STREAMING" else "IDLE"}; TRACK: ${meta?.title ?: "NONE"}; ARTIST: ${meta?.artists?.joinToString { it.name } ?: "NONE"}"
         } else "PLAYER_ENGINE: DISCONNECTED"
 
+        val room = toolManager.executeTool(ToolCall(functionName = "get_room_status"))
+
         return """
             [TIME]: ${LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_TIME)}
             [POWER]: $batteryPct%
             [NETWORK]: $networkType
             [MUSIC_DNA]: $musicDna
             [PLAYBACK_MATRIX]: $playbackState
+            [ROOM_MATRIX]: $room
         """.trimIndent()
     }
 
@@ -241,6 +244,57 @@ class AiEngine @Inject constructor(
         AiTool("translate_lyrics", "Translate sync lyrics into target language.", mapOf("language" to ToolParameter("string", "Target language e.g. English, Hindi"))),
         AiTool("generate_singalong_guide", "Generate phonetic guide for active lyrics.", emptyMap()),
         AiTool("get_similarity_score", "Compute acoustic similarity score between tracks.", emptyMap()),
-        AiTool("get_couple_compatibility", "Calculate Music DNA match score for Couple Mode.", emptyMap())
+        AiTool("get_couple_compatibility", "Calculate Music DNA match score for Couple Mode.", emptyMap()),
+        AiTool("get_friends", "Get a list of your friends and their current online status.", emptyMap()),
+        AiTool(
+            "create_room",
+            "Create a new Listen Together room.",
+            mapOf(
+                "name" to ToolParameter("string", "The name of the room"),
+                "type" to ToolParameter("string", "Room type: PUBLIC or PRIVATE")
+            )
+        ),
+        AiTool(
+            "join_room",
+            "Join an existing Listen Together room using a code.",
+            mapOf("code" to ToolParameter("string", "The 6-character room code"))
+        ),
+        AiTool("leave_room", "Leave the current Listen Together room.", emptyMap()),
+        AiTool("get_room_status", "Get information about the room you are currently in.", emptyMap()),
+        AiTool(
+            "search_library",
+            "Search for songs in your local music library.",
+            mapOf("query" to ToolParameter("string", "The search query"))
+        ),
+        AiTool(
+            "invite_friend",
+            "Invite a friend to your current Listen Together room.",
+            mapOf("handle" to ToolParameter("string", "The username or display name of the friend"))
+        ),
+        AiTool(
+            "change_font",
+            "Change the application font style.",
+            mapOf("font" to ToolParameter("string", "Font style: TECHNICAL, MONO, MODERN, etc."))
+        ),
+        AiTool(
+            "change_player_style",
+            "Change the main music player UI style.",
+            mapOf("style" to ToolParameter("string", "Player style: STITCH, MINIMAL, GLASS, etc."))
+        ),
+        AiTool(
+            "change_navigation_style",
+            "Change the application navigation layout.",
+            mapOf("style" to ToolParameter("string", "Navigation style: BOTTOM_BAR, NAVIGATION_RAIL, etc."))
+        ),
+        AiTool(
+            "change_mini_player_style",
+            "Change the mini-player UI style.",
+            mapOf("style" to ToolParameter("string", "Mini-player style: FLOATING, COMPACT, etc."))
+        ),
+        AiTool(
+            "change_appearance_mode",
+            "Change between Light, Dark, or System appearance mode.",
+            mapOf("mode" to ToolParameter("string", "Mode: LIGHT, DARK, or SYSTEM"))
+        )
     )
 }

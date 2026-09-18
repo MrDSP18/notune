@@ -9,6 +9,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import echo.music.iad1tya.extensions.metadata
 import echo.music.iad1tya.models.MediaMetadata
+import echo.music.iad1tya.models.TechnicalTelemetry
 
 @Singleton
 class PlaybackRepositoryImpl @Inject constructor(
@@ -27,7 +28,9 @@ class PlaybackRepositoryImpl @Inject constructor(
                 connection.duration,
                 connection.shuffleModeEnabled,
                 connection.repeatMode,
-                connection.technicalTelemetry
+                connection.technicalTelemetry,
+                connection.audioFormat,
+                connection.aiDjCommentary
             ) { array ->
                 val metadata = array[0] as? MediaMetadata
                 val isPlaying = array[1] as Boolean
@@ -35,7 +38,24 @@ class PlaybackRepositoryImpl @Inject constructor(
                 val dur = array[3] as Long
                 val shuffle = array[4] as Boolean
                 val repeat = array[5] as Int
-                val telemetry = array[6] as echo.music.iad1tya.models.TechnicalTelemetry
+                val telemetry = array[6] as TechnicalTelemetry
+                val format = array[7] as? androidx.media3.common.Format
+                val aiCommentary = array[8] as? String
+
+                val updatedTelemetry = if (format != null) {
+                    telemetry.copy(
+                        bitrate = if (format.bitrate != androidx.media3.common.Format.NO_VALUE) format.bitrate else null,
+                        sampleRate = if (format.sampleRate != androidx.media3.common.Format.NO_VALUE) format.sampleRate else null,
+                        codec = format.sampleMimeType?.substringAfter("audio/")?.uppercase(),
+                        mimeType = format.sampleMimeType,
+                        channelCount = if (format.channelCount != androidx.media3.common.Format.NO_VALUE) format.channelCount else null,
+                        audioSessionId = connection.player.audioSessionId.takeIf { it != androidx.media3.common.C.AUDIO_SESSION_ID_UNSET }
+                    )
+                } else {
+                    telemetry.copy(
+                         audioSessionId = connection.player.audioSessionId.takeIf { it != androidx.media3.common.C.AUDIO_SESSION_ID_UNSET }
+                    )
+                }
 
                 PlaybackState(
                     currentSong = metadata,
@@ -54,14 +74,13 @@ class PlaybackRepositoryImpl @Inject constructor(
                     shuffleModeEnabled = shuffle,
                     repeatMode = repeat,
                     volume = connection.player.volume,
-                    codec = connection.player.audioFormat?.sampleMimeType,
-                    sampleRate = connection.player.audioFormat?.sampleRate ?: 0,
-                    bitrate = connection.player.audioFormat?.bitrate ?: 0,
                     isFavorite = metadata?.liked ?: false,
-                    lyricsAvailable = !telemetry.bufferState.startsWith("IDLE")
+                    lyricsAvailable = metadata?.id != null, // simplified for now
+                    aiDjCommentary = aiCommentary,
+                    telemetry = updatedTelemetry
                 )
             }
-        }.stateIn(scope, SharingStarted.Eagerly, PlaybackState())
+        }.stateIn(scope, SharingStarted.WhileSubscribed(5000), PlaybackState())
 
     override fun play() { connectionManager.playerConnection.value?.play() }
     override fun pause() { connectionManager.playerConnection.value?.pause() }

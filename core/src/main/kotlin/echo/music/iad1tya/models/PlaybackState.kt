@@ -1,7 +1,6 @@
 package echo.music.iad1tya.models
 
 import androidx.compose.runtime.Immutable
-import echo.music.iad1tya.db.entities.Song
 
 @Immutable
 data class PlaybackState(
@@ -16,11 +15,9 @@ data class PlaybackState(
     val repeatMode: Int = 0, // Player.REPEAT_MODE_OFF
     val volume: Float = 1f,
     val audioDevice: String? = null,
-    val sampleRate: Int = 0,
-    val bitDepth: Int = 0,
-    val codec: String? = null,
-    val bitrate: Int = 0,
     val isDownloaded: Boolean = false,
     val isFavorite: Boolean = false,
-    val lyricsAvailable: Boolean = false
+    val lyricsAvailable: Boolean = false,
+    val aiDjCommentary: String? = null,
+    val telemetry: TechnicalTelemetry = TechnicalTelemetry()
 )

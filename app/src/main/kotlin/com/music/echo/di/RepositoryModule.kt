@@ -49,4 +49,10 @@ abstract class RepositoryModule {
     abstract fun bindProfileRepository(
         profileRepositoryImpl: com.music.echo.repository.ProfileRepositoryImpl
     ): echo.music.iad1tya.repository.ProfileRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRoomRepository(
+        roomRepositoryImpl: com.music.echo.repository.RoomRepositoryImpl
+    ): echo.music.iad1tya.repository.RoomRepository
 }

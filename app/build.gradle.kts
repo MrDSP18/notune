@@ -7,6 +7,9 @@ val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
     localProperties.load(localPropertiesFile.inputStream())
 }
+val sqliteTmpDir = layout.buildDirectory.dir("tmp").get().asFile.apply { mkdirs() }
+System.setProperty("org.sqlite.tmpdir", sqliteTmpDir.absolutePath)
+
 plugins {
     id("com.android.application")
     alias(libs.plugins.hilt)
@@ -445,4 +448,9 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation(libs.mockk)
+    testImplementation(libs.coroutines.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.room.testing)
+    testImplementation(libs.androidx.test.core)
 }

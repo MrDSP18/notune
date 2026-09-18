@@ -178,9 +178,11 @@ class PlayerConnection(
     val isCrossfading: kotlinx.coroutines.flow.StateFlow<Boolean> = service.isCrossfading
     val isAutomixing: kotlinx.coroutines.flow.StateFlow<Boolean> = service.isAutomixing
     val automixDebugInfo: kotlinx.coroutines.flow.StateFlow<MusicService.AutomixDebugInfo?> = service.automixDebugInfo
+    val aiDjCommentary: kotlinx.coroutines.flow.StateFlow<String?> = service.aiDjCommentary
     val technicalTelemetry: kotlinx.coroutines.flow.StateFlow<echo.music.iad1tya.models.TechnicalTelemetry> = service.technicalTelemetry
 
-    
+    val audioFormat = MutableStateFlow<androidx.media3.common.Format?>(null)
+
     var shouldBlockPlaybackChanges: (() -> Boolean)? = null
     
     
@@ -236,6 +238,9 @@ class PlayerConnection(
         shuffleModeEnabled.value = newPlayer.shuffleModeEnabled
         repeatMode.value = newPlayer.repeatMode
         
+        val audioTrack = newPlayer.currentTracks.groups.firstOrNull { it.type == androidx.media3.common.C.TRACK_TYPE_AUDIO && it.isSelected }
+        audioFormat.value = audioTrack?.getTrackFormat(0)
+
         Timber.tag(TAG).d("Attached to new player instance: $newPlayer")
         
         startSponsorBlockPolling()
@@ -486,6 +491,11 @@ class PlayerConnection(
     override fun onRepeatModeChanged(mode: Int) {
         repeatMode.value = mode
         updateCanSkipPreviousAndNext()
+    }
+
+    override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
+        val audioTrack = tracks.groups.firstOrNull { it.type == androidx.media3.common.C.TRACK_TYPE_AUDIO && it.isSelected }
+        audioFormat.value = audioTrack?.getTrackFormat(0)
     }
 
     override fun onPlayerErrorChanged(playbackError: PlaybackException?) {

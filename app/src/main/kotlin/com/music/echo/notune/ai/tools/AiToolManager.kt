@@ -18,14 +18,35 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.datastore.preferences.core.edit
 import echo.music.iad1tya.utils.dataStore
+import echo.music.iad1tya.repository.RoomRepository
+import echo.music.iad1tya.repository.SocialRepository
+import echo.music.iad1tya.repository.LocalMediaRepository
+import echo.music.iad1tya.repository.MessagingRepository
+import echo.music.iad1tya.models.RoomType
+import echo.music.iad1tya.models.MessageType
+import echo.music.iad1tya.playback.PlayerConnectionManager
+import echo.music.iad1tya.models.MediaMetadata
+import com.music.echo.notune.identity.NotuneAccountRepository
 
 @Singleton
 class AiToolManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val database: MusicDatabase,
-    private val aiSuiteManager: echo.music.iad1tya.notune.ai.suite.AiSuiteManager
+    private val aiSuiteManager: echo.music.iad1tya.notune.ai.suite.AiSuiteManager,
+    private val roomRepository: RoomRepository,
+    private val socialRepository: SocialRepository,
+    private val localMediaRepository: LocalMediaRepository,
+    private val messagingRepository: MessagingRepository,
+    private val playerConnectionManager: PlayerConnectionManager,
+    private val accountRepository: NotuneAccountRepository
 ) {
-    var playerConnection: PlayerConnection? = null
+    // Injectable player connection access via manager
+    private var _playerConnection: PlayerConnection? = null
+    var playerConnection: PlayerConnection?
+        get() = _playerConnection ?: playerConnectionManager.playerConnection.value
+        set(value) {
+            _playerConnection = value
+        }
 
     suspend fun executeTool(toolCall: ToolCall): String {
         Timber.d("AI_TOOL: Executing ${toolCall.functionName} with ${toolCall.arguments}")
@@ -166,6 +187,91 @@ class AiToolManager @Inject constructor(
             }
             "get_couple_compatibility" -> {
                 "Couple Mode Compatibility: 88% Music DNA overlap."
+            }
+            "get_friends" -> {
+                val friends = socialRepository.getFriends().first()
+                if (friends.isEmpty()) "You don't have any friends added yet."
+                else "Your friends are: " + friends.joinToString { "${it.displayName} (@${it.username}) [Status: ${it.presence?.state ?: "OFFLINE"}]" }
+            }
+            "create_room" -> {
+                val name = toolCall.arguments["name"] ?: "NØTUNE Lounge"
+                val type = when(toolCall.arguments["type"]?.uppercase()) {
+                    "PRIVATE" -> RoomType.PRIVATE
+                    else -> RoomType.PUBLIC
+                }
+                val result = roomRepository.createRoom(name, type)
+                result.fold(
+                    onSuccess = { "Room '$name' created successfully. Room code: ${it.roomId}. You are now the host." },
+                    onFailure = { "Failed to create room: ${it.message}" }
+                )
+            }
+            "join_room" -> {
+                val code = toolCall.arguments["code"] ?: return "Error: Missing room code."
+                val result = roomRepository.joinRoom(code)
+                result.fold(
+                    onSuccess = { "Joined room '${it.name}' (Code: $code). Real-time sync active." },
+                    onFailure = { "Failed to join room $code: ${it.message}" }
+                )
+            }
+            "leave_room" -> {
+                roomRepository.leaveRoom()
+                "You have left the room."
+            }
+            "get_room_status" -> {
+                val room = roomRepository.currentRoom.value
+                if (room == null) "You are not currently in any room."
+                else {
+                    val myId = accountRepository.account.value.userId
+                    val myRole = room.members.find { it.userId == myId }?.role ?: "MEMBER"
+                    "Currently in room: ${room.name} (Code: ${room.roomId}). Role: $myRole. Members: ${room.members.size}."
+                }
+            }
+            "search_library" -> {
+                val query = toolCall.arguments["query"] ?: return "Error: Missing query"
+                val songs = localMediaRepository.getSongs().first().filter { 
+                    it.title.contains(query, ignoreCase = true) || it.artists.any { a -> a.contains(query, ignoreCase = true) }
+                }
+                if (songs.isEmpty()) "No matching songs found in your local library."
+                else "Found in library: " + songs.take(5).joinToString { "${it.title} by ${it.artists.joinToString()}" }
+            }
+            "invite_friend" -> {
+                val handle = toolCall.arguments["handle"] ?: return "Error: Missing friend handle."
+                val room = roomRepository.currentRoom.value ?: return "Error: You must be in a room to invite someone."
+                val friends = socialRepository.getFriends().first()
+                val friend = friends.find { it.username.equals(handle, ignoreCase = true) || it.displayName.equals(handle, ignoreCase = true) }
+                    ?: return "Error: Could not find friend '$handle'."
+                
+                messagingRepository.sendMessage(
+                    userId = friend.id,
+                    type = MessageType.ROOM_INVITE,
+                    content = "Hey! Join my NØTUNE room: ${room.roomId}"
+                )
+                "Invitation sent to ${friend.displayName}."
+            }
+            "change_font" -> {
+                val font = toolCall.arguments["font"] ?: "TECHNICAL"
+                context.dataStore.edit { it[echo.music.iad1tya.constants.FontFamilyStyleKey] = font.uppercase() }
+                "Font style updated to '$font'."
+            }
+            "change_player_style" -> {
+                val style = toolCall.arguments["style"] ?: "STITCH"
+                context.dataStore.edit { it[echo.music.iad1tya.constants.PlayerStyleKey] = style.uppercase() }
+                "Player style updated to '$style'."
+            }
+            "change_navigation_style" -> {
+                val style = toolCall.arguments["style"] ?: "BOTTOM_BAR"
+                context.dataStore.edit { it[echo.music.iad1tya.constants.NavigationStyleKey] = style.uppercase() }
+                "Navigation style updated to '$style'."
+            }
+            "change_mini_player_style" -> {
+                val style = toolCall.arguments["style"] ?: "FLOATING"
+                context.dataStore.edit { it[echo.music.iad1tya.constants.MiniPlayerStyleKey] = style.uppercase() }
+                "Mini-player style updated to '$style'."
+            }
+            "change_appearance_mode" -> {
+                val mode = toolCall.arguments["mode"] ?: "DARK"
+                context.dataStore.edit { it[echo.music.iad1tya.constants.AppearanceModeKey] = mode.uppercase() }
+                "Appearance mode set to '$mode'."
             }
             else -> "NØTUNE AI Tool '${toolCall.functionName}' executed successfully."
         }

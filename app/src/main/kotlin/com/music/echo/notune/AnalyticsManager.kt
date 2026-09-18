@@ -18,12 +18,18 @@ class AnalyticsManager @Inject constructor(
     private val database: MusicDatabase,
     @echo.music.iad1tya.di.ApplicationScope private val scope: CoroutineScope
 ) {
+    private var collectionJob: kotlinx.coroutines.Job? = null
+
     init {
-        scope.launch {
+        collectionJob = scope.launch {
             eventRepository.events.collect { event ->
                 handleEvent(event)
             }
         }
+    }
+
+    fun release() {
+        collectionJob?.cancel()
     }
 
     private fun handleEvent(event: AppEvent) {

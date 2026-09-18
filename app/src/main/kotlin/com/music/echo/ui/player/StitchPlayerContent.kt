@@ -1,7 +1,9 @@
 package com.music.echo.ui.player
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -27,19 +30,20 @@ import com.music.echo.notune.theme.NoTuneTelemetryHeader
 import com.music.echo.notune.theme.NothingRed
 import echo.music.iad1tya.models.MediaMetadata
 import echo.music.iad1tya.models.TechnicalTelemetry
+import echo.music.iad1tya.models.PlaybackState
 import echo.music.iad1tya.R
 import echo.music.iad1tya.ui.theme.NothingFont
+import echo.music.iad1tya.notune.audio.ProceduralVisualizerEngine
+import echo.music.iad1tya.utils.rememberEnumPreference
+import echo.music.iad1tya.constants.AnimationLevelKey
+import echo.music.iad1tya.constants.AnimationLevel
 
 @Composable
 fun StitchPlayerContent(
-    mediaMetadata: MediaMetadata,
-    telemetry: () -> TechnicalTelemetry,
-    isPlaying: Boolean,
+    playbackState: PlaybackState,
     onPlayPauseClick: () -> Unit,
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
-    position: () -> Long,
-    duration: () -> Long,
     onSeek: (Long) -> Unit,
     onLyricsClick: () -> Unit = {},
     onQueueClick: () -> Unit = {},
@@ -47,6 +51,16 @@ fun StitchPlayerContent(
     onShareClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    val mediaMetadata = playbackState.currentSong ?: return
+    val telemetry = playbackState.telemetry
+    val isPlaying = playbackState.isPlaying
+    val position = playbackState.position
+    val duration = playbackState.duration
+
+    val animationLevel by rememberEnumPreference(AnimationLevelKey, AnimationLevel.FULL)
+    val visualizerEngine = remember { ProceduralVisualizerEngine() }
+    val waveformFrame = visualizerEngine.rememberWaveformFrame(playbackState, animationLevel)
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -56,15 +70,15 @@ fun StitchPlayerContent(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // Top Telemetry Bar
-        NoTuneTelemetryHeader(section = "AUDIO_ENGINE", status = telemetry().bufferState)
+        NoTuneTelemetryHeader(section = "AUDIO_ENGINE", status = telemetry.bufferState)
         
         Spacer(Modifier.height(24.dp))
 
-        // Technical Album Art Container
+        // Technical Album Art Container with Waveform
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1f)
+                .aspectRatio(1.2f)
                 .border(1.dp, Color(0xFF27272A), RoundedCornerShape(4.dp))
                 .padding(12.dp)
         ) {
@@ -74,16 +88,38 @@ fun StitchPlayerContent(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(2.dp)),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                alpha = 0.4f // Dimmed for waveform visibility
             )
             
-            // Overlay technical info
+            // Procedural Waveform Overlay
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val width = size.width
+                val height = size.height
+                val barWidth = width / waveformFrame.size
+                
+                waveformFrame.forEachIndexed { i, bar ->
+                    val barHeight = height * 0.6f * bar.heightFactor
+                    drawRect(
+                        color = NothingRed.copy(alpha = bar.opacity),
+                        topLeft = Offset(i * barWidth + 2f, height / 2 - barHeight / 2),
+                        size = androidx.compose.ui.geometry.Size(barWidth - 4f, barHeight)
+                    )
+                }
+            }
+            
+            // Truthful Audio Labels
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(8.dp)
             ) {
-                AudioResolutionBadge(format = telemetry().bitrate)
+                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    AudioResolutionBadge(format = telemetry.codec)
+                    telemetry.sampleRate?.let { sampleRate ->
+                         BadgeNode(text = "${sampleRate / 1000f}kHz")
+                    }
+                }
             }
             
             Box(
@@ -95,20 +131,20 @@ fun StitchPlayerContent(
                     .padding(horizontal = 6.dp, vertical = 2.dp)
             ) {
                 Text(
-                    text = "NODE_ID: ${mediaMetadata.id.hashCode().toString(16).uppercase()}",
+                    text = "VISUALIZER: PROCEDURAL",
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontFamily = NothingFont,
-                        color = Color.White,
-                        fontSize = 8.sp,
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 7.sp,
                         letterSpacing = 1.sp
                     )
                 )
             }
 
             // Buffer Progress Overlay
-            if (telemetry().bufferPercent < 100) {
+            if (telemetry.bufferPercent < 100) {
                 LinearProgressIndicator(
-                    progress = { telemetry().bufferPercent / 100f },
+                    progress = { telemetry.bufferPercent / 100f },
                     modifier = Modifier.fillMaxWidth().height(1.dp).align(Alignment.BottomCenter),
                     color = NothingRed.copy(alpha = 0.5f),
                     trackColor = Color.Transparent
@@ -116,13 +152,26 @@ fun StitchPlayerContent(
             }
         }
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(24.dp))
 
         // Metadata section
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.Start
         ) {
+            playbackState.aiDjCommentary?.let { commentary ->
+                Text(
+                    text = commentary.uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = NothingFont,
+                        color = NothingRed,
+                        fontSize = 10.sp,
+                        letterSpacing = 1.sp
+                    ),
+                    modifier = Modifier.padding(bottom = 4.dp).basicMarquee()
+                )
+            }
+
             Text(
                 text = mediaMetadata.title.uppercase(),
                 style = MaterialTheme.typography.headlineMedium.copy(
@@ -149,7 +198,7 @@ fun StitchPlayerContent(
             )
         }
 
-        Spacer(Modifier.height(40.dp))
+        Spacer(Modifier.height(32.dp))
 
         // Seek Bar (Industrial Style)
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -158,18 +207,18 @@ fun StitchPlayerContent(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = formatDuration(position()),
+                    text = formatDuration(position),
                     style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, color = Color.White.copy(alpha = 0.5f))
                 )
                 Text(
-                    text = formatDuration(duration()),
+                    text = formatDuration(duration),
                     style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, color = Color.White.copy(alpha = 0.5f))
                 )
             }
             
             Slider(
-                value = if (duration() > 0) position().toFloat() / duration() else 0f,
-                onValueChange = { onSeek((it * duration()).toLong()) },
+                value = if (duration > 0) position.toFloat() / duration else 0f,
+                onValueChange = { onSeek((it * duration).toLong()) },
                 colors = SliderDefaults.colors(
                     thumbColor = NothingRed,
                     activeTrackColor = NothingRed,
@@ -230,7 +279,7 @@ fun StitchPlayerContent(
 
         Spacer(Modifier.height(32.dp))
 
-        // Technical Log / Telemetry Data
+        // Technical Log / Telemetry Data (Truthful)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -238,10 +287,11 @@ fun StitchPlayerContent(
                 .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(2.dp))
                 .padding(12.dp)
         ) {
-            TechnicalLogItem(label = "BUFFER_STATE", value = telemetry().bufferState)
-            TechnicalLogItem(label = "MEMORY_LOAD", value = telemetry().memoryUsage)
-            TechnicalLogItem(label = "NETWORK_MODE", value = telemetry().networkStatus)
-            TechnicalLogItem(label = "SYNC_DRIFT", value = telemetry().syncDrift)
+            TechnicalLogItem(label = "BITRATE", value = telemetry.bitrate?.let { "${it / 1000} KBPS" } ?: "UNKNOWN")
+            TechnicalLogItem(label = "SAMPLING", value = telemetry.sampleRate?.let { "${it / 1000f} KHZ" } ?: "UNKNOWN")
+            TechnicalLogItem(label = "CHANNELS", value = telemetry.channelCount?.toString() ?: "UNKNOWN")
+            TechnicalLogItem(label = "OUTPUT", value = (playbackState.audioDevice ?: "INTERNAL_SPEAKER").uppercase())
+            TechnicalLogItem(label = "IO_SYNC", value = telemetry.syncDrift)
         }
 
         Spacer(Modifier.height(32.dp))
@@ -272,6 +322,26 @@ fun StitchPlayerContent(
                 )
             )
         }
+    }
+}
+
+@Composable
+private fun BadgeNode(text: String) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(2.dp))
+            .background(Color(0xFF18181B))
+            .padding(horizontal = 4.dp, vertical = 2.dp)
+    ) {
+        Text(
+            text = text.uppercase(),
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontFamily = NothingFont,
+                color = Color(0xFF69D6E2),
+                fontSize = 8.sp,
+                letterSpacing = 1.sp
+            )
+        )
     }
 }
 

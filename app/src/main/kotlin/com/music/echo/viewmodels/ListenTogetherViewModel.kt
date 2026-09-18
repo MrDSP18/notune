@@ -1,89 +1,80 @@
-
-
 package echo.music.iad1tya.viewmodels
 
 import androidx.lifecycle.ViewModel
-import echo.music.iad1tya.listentogether.ListenTogetherManager
+import androidx.lifecycle.viewModelScope
+import echo.music.iad1tya.models.RoomType
+import echo.music.iad1tya.models.Room
+import echo.music.iad1tya.repository.RoomRepository
+import echo.music.iad1tya.listentogether.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ListenTogetherViewModel @Inject constructor(
-    private val manager: ListenTogetherManager
+    private val roomRepository: RoomRepository
 ) : ViewModel() {
 
-    val connectionState = manager.connectionState
-    val roomState = manager.roomState
-    val role = manager.role
-    val userId = manager.userId
-    val pendingJoinRequests = manager.pendingJoinRequests
-    val bufferingUsers = manager.bufferingUsers
-    val logs = manager.logs
-    val events = manager.events
-    val hasPersistedSession = manager.hasPersistedSession
-    val blockedUsernames = manager.blockedUsernames
+    val connectionState = roomRepository.connectionState
+    val currentRoom = roomRepository.currentRoom
+    val syncState = roomRepository.syncState
+    
+    val roomState: StateFlow<Room?> = roomRepository.currentRoom
+    val role: StateFlow<RoomRole> = MutableStateFlow(RoomRole.NONE)
+    val pendingJoinRequests: StateFlow<List<JoinRequestPayload>> = MutableStateFlow(emptyList())
+    val logs: StateFlow<List<LogEntry>> = MutableStateFlow(emptyList())
+    val blockedUsernames: StateFlow<Set<String>> = MutableStateFlow(emptySet())
+    val events: SharedFlow<ListenTogetherEvent> = MutableSharedFlow<ListenTogetherEvent>().asSharedFlow()
 
-    init {
-        manager.initialize()
+    fun createRoom(name: String) {
+        viewModelScope.launch {
+            roomRepository.createRoom(name, RoomType.PUBLIC)
+        }
     }
 
-    fun connect() {
-        manager.connect()
+    fun joinRoom(roomCode: String) {
+        viewModelScope.launch {
+            roomRepository.joinRoom(roomCode)
+        }
     }
-
-    fun disconnect() {
-        manager.disconnect()
-    }
-
-    fun createRoom(username: String) {
-        manager.createRoom(username)
-    }
-
+    
     fun joinRoom(roomCode: String, username: String) {
-        manager.joinRoom(roomCode, username)
+        viewModelScope.launch {
+            roomRepository.joinRoom(roomCode)
+        }
     }
 
     fun leaveRoom() {
-        manager.leaveRoom()
+        viewModelScope.launch {
+            roomRepository.leaveRoom()
+        }
     }
 
-    fun approveJoin(userId: String) {
-        manager.approveJoin(userId)
+    fun play() {
+        viewModelScope.launch { roomRepository.play() }
     }
 
-    fun rejectJoin(userId: String, reason: String? = null) {
-        manager.rejectJoin(userId, reason)
+    fun pause() {
+        viewModelScope.launch { roomRepository.pause() }
     }
 
-    fun kickUser(userId: String, reason: String? = null) {
-        manager.kickUser(userId, reason)
+    fun seekTo(positionMs: Long) {
+        viewModelScope.launch { roomRepository.seekTo(positionMs) }
     }
 
-    fun blockUser(username: String) {
-        manager.blockUser(username)
+    fun next() {
+        viewModelScope.launch { roomRepository.next() }
     }
 
-    fun unblockUser(username: String) {
-        manager.unblockUser(username)
+    fun previous() {
+        viewModelScope.launch { roomRepository.previous() }
     }
 
-    fun clearLogs() {
-        manager.clearLogs()
-    }
-
-    fun forceReconnect() {
-        manager.forceReconnect()
+    fun sendChatMessage(message: String) {
+        viewModelScope.launch { roomRepository.sendChatMessage(message) }
     }
     
-    fun reconnect() {
-        manager.forceReconnect()
-    }
-    
-    fun getPersistedRoomCode(): String? = manager.getPersistedRoomCode()
-    
-    fun getSessionAge(): Long = manager.getSessionAge()
-
-    fun updateRoomSettings(allowParticipantControl: Boolean) {
-        manager.updateRoomSettings(allowParticipantControl)
-    }
+    fun clearLogs() {}
+    fun unblockUser(username: String) {}
 }

@@ -3,6 +3,7 @@ package com.music.echo.notune.social.ui
 import android.content.Intent
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,38 +23,39 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import echo.music.iad1tya.R
-import com.music.echo.notune.social.model.SocialFriend
-import com.music.echo.notune.social.model.SocialPost
-import com.music.echo.notune.social.repository.SocialRepository
+import echo.music.iad1tya.models.*
+import echo.music.iad1tya.ui.theme.NothingFont
 import com.music.echo.notune.theme.NoTuneAmbientCanvas
 import com.music.echo.notune.theme.NoTuneSurfaceCard
+import com.music.echo.viewmodels.FriendsViewModel
+import com.music.echo.viewmodels.SocialFeedViewModel
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.constants.CardStyleVariant
-import echo.music.iad1tya.models.MediaMetadata
 import echo.music.iad1tya.playback.queues.YouTubeQueue
 
 @Composable
 fun SocialHubScreen(
-    socialRepository: SocialRepository = remember { SocialRepository() },
+    feedViewModel: SocialFeedViewModel = hiltViewModel(),
+    friendsViewModel: FriendsViewModel = hiltViewModel(),
     onNavigateToListenTogether: (String?) -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val playerConnection = LocalPlayerConnection.current
-    val friends by socialRepository.friends.collectAsState()
-    val posts by socialRepository.posts.collectAsState()
+    val friends by friendsViewModel.friends.collectAsState()
+    val posts by feedViewModel.feed.collectAsState()
 
     var selectedTab by remember { mutableIntStateOf(0) } // 0: Feed, 1: Friends
     var showCreatePostModal by remember { mutableStateOf(false) }
-    var showSendSongModalForFriend by remember { mutableStateOf<SocialFriend?>(null) }
-    var showAddFriendModal by remember { mutableStateOf(false) }
+    var showSendSongModalForFriend by remember { mutableStateOf<SocialUser?>(null) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(Color.Black)
     ) {
         NoTuneAmbientCanvas(modifier = Modifier.fillMaxSize())
 
@@ -70,26 +72,26 @@ fun SocialHubScreen(
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 IconButton(onClick = onDismiss) {
-                    Text("✕", fontSize = 20.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Icon(painterResource(R.drawable.arrow_back), contentDescription = null, tint = Color.White)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "COMMUNITY & FRIENDS",
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp),
-                        color = MaterialTheme.colorScheme.primary
+                        text = "COMMUNITY // FRIENDS",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, color = Color(0xFFFF0031), letterSpacing = 1.5.sp)
                     )
                     Text(
-                        text = "NØTUNE Social Music Hub",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black)
+                        text = "NØTUNE Social OS",
+                        style = MaterialTheme.typography.titleMedium.copy(fontFamily = NothingFont, fontWeight = FontWeight.Bold, color = Color.White)
                     )
                 }
 
                 FilledTonalButton(
                     onClick = { showCreatePostModal = true },
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(2.dp),
+                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color.White.copy(alpha = 0.1f), contentColor = Color.White)
                 ) {
-                    Text("➕ POST SONG", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("POST_SONG", style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont))
                 }
             }
 
@@ -98,40 +100,36 @@ fun SocialHubScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                    .padding(4.dp)
+                    .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(2.dp))
+                    .padding(2.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (selectedTab == 0) MaterialTheme.colorScheme.primary else Color.Transparent)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(if (selectedTab == 0) Color(0xFFFF0031) else Color.Transparent)
                         .clickable { selectedTab = 0 }
                         .padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "🔥 MUSIC FEED (${posts.size})",
-                        fontWeight = FontWeight.Bold,
-                        color = if (selectedTab == 0) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "NETWORK_FEED",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, fontWeight = FontWeight.Bold, color = if (selectedTab == 0) Color.White else Color.White.copy(alpha = 0.6f))
                     )
                 }
 
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (selectedTab == 1) MaterialTheme.colorScheme.primary else Color.Transparent)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(if (selectedTab == 1) Color(0xFFFF0031) else Color.Transparent)
                         .clickable { selectedTab = 1 }
                         .padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    val onlineCount = friends.count { it.isOnline }
                     Text(
-                        text = "👥 FRIENDS (🟢 $onlineCount)",
-                        fontWeight = FontWeight.Bold,
-                        color = if (selectedTab == 1) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "FRIEND_NODES",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, fontWeight = FontWeight.Bold, color = if (selectedTab == 1) Color.White else Color.White.copy(alpha = 0.6f))
                     )
                 }
             }
@@ -140,7 +138,6 @@ fun SocialHubScreen(
 
             // Main Content Area
             if (selectedTab == 0) {
-                // Social Feed View
                 LazyColumn(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -149,54 +146,18 @@ fun SocialHubScreen(
                     items(posts, key = { it.id }) { post ->
                         SocialPostCard(
                             post = post,
-                            onLike = { socialRepository.toggleLikePost(post.id) },
-                            onAddComment = { comment -> socialRepository.addCommentToPost(post.id, comment) },
+                            onLike = { feedViewModel.likePost(post.id) },
                             onPlaySong = {
-                                post.songId?.let { sId ->
-                                    val meta = MediaMetadata(
-                                        id = sId,
-                                        title = post.songTitle,
-                                        artists = listOf(MediaMetadata.Artist(name = post.artistName, id = null)),
-                                        duration = -1,
-                                        thumbnailUrl = post.thumbnailUrl
-                                    )
-                                    playerConnection?.playQueue(YouTubeQueue.radio(meta))
+                                val content = post.content
+                                if (content is PostContent.Song) {
+                                    playerConnection?.playQueue(YouTubeQueue.radio(content.metadata))
                                 }
-                            },
-                            onShare = {
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(
-                                        Intent.EXTRA_TEXT,
-                                        "🎵 Check out '${post.songTitle}' shared by ${post.authorName} on NØTUNE!\nhttps://music.youtube.com/watch?v=${post.songId}"
-                                    )
-                                }
-                                context.startActivity(Intent.createChooser(shareIntent, "Share Music Post"))
                             }
                         )
                     }
                 }
             } else {
-                // Friends Network View
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "FRIEND NETWORK",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold
-                        )
-                        TextButton(onClick = { showAddFriendModal = true }) {
-                            Text("➕ Add Friend", fontWeight = FontWeight.Bold)
-                        }
-                    }
-
                     LazyColumn(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -213,50 +174,6 @@ fun SocialHubScreen(
                 }
             }
         }
-
-        // Modals
-        if (showCreatePostModal) {
-            CreatePostDialog(
-                onDismiss = { showCreatePostModal = false },
-                onPostSubmitted = { songId, title, artist, caption ->
-                    socialRepository.createPost(
-                        songId = songId,
-                        title = title,
-                        artist = artist,
-                        caption = caption
-                    )
-                    showCreatePostModal = false
-                }
-            )
-        }
-
-        if (showSendSongModalForFriend != null) {
-            val friend = showSendSongModalForFriend!!
-            SendSongDialog(
-                friend = friend,
-                onDismiss = { showSendSongModalForFriend = null },
-                onSend = { songId, title, artist, note ->
-                    socialRepository.sendSongToFriend(
-                        friendId = friend.id,
-                        songId = songId,
-                        title = title,
-                        artist = artist,
-                        message = note
-                    )
-                    showSendSongModalForFriend = null
-                }
-            )
-        }
-
-        if (showAddFriendModal) {
-            AddFriendDialog(
-                onDismiss = { showAddFriendModal = false },
-                onAdd = { name ->
-                    socialRepository.addFriend(name)
-                    showAddFriendModal = false
-                }
-            )
-        }
     }
 }
 
@@ -264,150 +181,75 @@ fun SocialHubScreen(
 private fun SocialPostCard(
     post: SocialPost,
     onLike: () -> Unit,
-    onAddComment: (String) -> Unit,
-    onPlaySong: () -> Unit,
-    onShare: () -> Unit
+    onPlaySong: () -> Unit
 ) {
-    var expandedComments by remember { mutableStateOf(false) }
-    var commentInput by remember { mutableStateOf("") }
-
     NoTuneSurfaceCard(
         cardStyle = CardStyleVariant.GLASS,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column {
-            // Author Row
+        Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(Color(0xFF00C6FF), Color(0xFF0072FF)))),
+                        .size(32.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color.White.copy(alpha = 0.1f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(post.authorName.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(post.author.displayName.take(1).uppercase(), color = Color.White, style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont))
                 }
                 Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(post.authorName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(post.timestampText, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column {
+                    Text(post.author.displayName.uppercase(), style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, fontWeight = FontWeight.Bold, color = Color.White))
+                    Text(post.createdAt.toString(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp, color = Color.White.copy(alpha = 0.4f)))
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Caption
             if (post.caption.isNotBlank()) {
                 Text(
                     text = post.caption,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(bottom = 10.dp)
+                    style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.8f)),
+                    modifier = Modifier.padding(bottom = 12.dp)
                 )
             }
 
-            // Song Card Container
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
-                    .clickable { onPlaySong() }
-                    .padding(10.dp)
-            ) {
-                if (!post.thumbnailUrl.isNullOrBlank()) {
-                    AsyncImage(
-                        model = post.thumbnailUrl,
-                        contentDescription = post.songTitle,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(50.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(50.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("🎵", fontSize = 22.sp)
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(post.songTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1)
-                    Text(post.artistName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-                }
-
-                FilledIconButton(
-                    onClick = onPlaySong,
-                    modifier = Modifier.size(36.dp),
-                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.primary)
+            // Song Content
+            val content = post.content
+            if (content is PostContent.Song) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White.copy(alpha = 0.03f), RoundedCornerShape(2.dp))
+                        .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(2.dp))
+                        .clickable { onPlaySong() }
+                        .padding(8.dp)
                 ) {
-                    Text("▶", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                    AsyncImage(
+                        model = content.metadata.thumbnailUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(40.dp).clip(RoundedCornerShape(2.dp))
+                    )
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(content.metadata.title.uppercase(), style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, fontWeight = FontWeight.Bold, color = Color.White), maxLines = 1)
+                        Text(content.metadata.artists.firstOrNull()?.name?.uppercase() ?: "UNKNOWN", style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, fontSize = 9.sp, color = Color(0xFFFF0031)), maxLines = 1)
+                    }
+
+                    Icon(painterResource(R.drawable.play), contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Social Action Buttons
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                TextButton(onClick = onLike) {
-                    Text(if (post.isLikedByMe) "❤️ ${post.likesCount}" else "🤍 ${post.likesCount}", fontWeight = FontWeight.Bold)
-                }
-
-                TextButton(onClick = { expandedComments = !expandedComments }) {
-                    Text("💬 ${post.comments.size} Comments", fontWeight = FontWeight.Bold)
-                }
-
-                TextButton(onClick = onShare) {
-                    Text("🔗 Share", fontWeight = FontWeight.Bold)
-                }
-            }
-
-            // Comments Section
-            AnimatedVisibility(visible = expandedComments) {
-                Column(modifier = Modifier.padding(top = 10.dp)) {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
-                    post.comments.forEach { comment ->
-                        Row(modifier = Modifier.padding(vertical = 4.dp)) {
-                            Text("${comment.authorName}: ", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
-                            Text(comment.text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = commentInput,
-                            onValueChange = { commentInput = it },
-                            placeholder = { Text("Write a comment...", fontSize = 12.sp) },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f).height(46.dp),
-                            shape = RoundedCornerShape(10.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        IconButton(
-                            onClick = {
-                                if (commentInput.isNotBlank()) {
-                                    onAddComment(commentInput)
-                                    commentInput = ""
-                                }
-                            }
-                        ) {
-                            Text("📤", fontSize = 18.sp)
-                        }
-                    }
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                TextButton(onClick = onLike, contentPadding = PaddingValues(0.dp)) {
+                    Text(text = if (post.isLiked) "❤️ ${post.likesCount}" else "🤍 ${post.likesCount}", style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, color = Color.White))
                 }
             }
         }
@@ -416,7 +258,7 @@ private fun SocialPostCard(
 
 @Composable
 private fun FriendCard(
-    friend: SocialFriend,
+    friend: SocialUser,
     onInviteToRoom: () -> Unit,
     onSendSong: () -> Unit
 ) {
@@ -424,24 +266,23 @@ private fun FriendCard(
         cardStyle = CardStyleVariant.GLASS,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(12.dp)) {
             Box {
                 Box(
                     modifier = Modifier
-                        .size(46.dp)
-                        .clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(Color(0xFFFF007A), Color(0xFF9600FF)))),
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color.White.copy(alpha = 0.1f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(friend.username.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(friend.displayName.take(1).uppercase(), color = Color.White, style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont))
                 }
 
-                // Presence Dot
                 Box(
                     modifier = Modifier
-                        .size(14.dp)
+                        .size(10.dp)
                         .clip(CircleShape)
-                        .background(if (friend.isOnline) Color(0xFF00E676) else Color(0xFF9E9E9E))
+                        .background(if (friend.presence?.state == PresenceState.ONLINE || friend.presence?.state == PresenceState.LISTENING) Color(0xFF00E676) else Color.Gray)
                         .align(Alignment.BottomEnd)
                 )
             }
@@ -449,201 +290,29 @@ private fun FriendCard(
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(friend.username, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.width(6.dp))
+                Text(friend.displayName.uppercase(), style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, fontWeight = FontWeight.Bold, color = Color.White))
+                if (friend.presence?.state == PresenceState.LISTENING && friend.presence?.currentSong != null) {
                     Text(
-                        text = if (friend.isOnline) "🟢 Online" else "⚪ ${friend.lastActiveText}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (friend.isOnline) Color(0xFF00E676) else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                if (friend.currentTrackTitle != null) {
-                    Text(
-                        text = "🎧 ${friend.currentTrackTitle} • ${friend.currentTrackArtist}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
+                        text = "LISTENING: ${friend.presence?.currentSong?.title?.uppercase()}",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, fontSize = 8.sp, color = Color(0xFFFF0031)),
                         maxLines = 1
+                    )
+                } else {
+                    Text(
+                        text = friend.presence?.state?.name ?: "OFFLINE",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, fontSize = 8.sp, color = Color.White.copy(alpha = 0.4f))
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Column {
-                if (friend.isOnline) {
-                    Button(
-                        onClick = onInviteToRoom,
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.height(32.dp)
-                    ) {
-                        Text("📻 Room", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                IconButton(onClick = onInviteToRoom, modifier = Modifier.size(32.dp)) {
+                    Icon(painterResource(R.drawable.radio), contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                 }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                OutlinedButton(
-                    onClick = onSendSong,
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.height(32.dp)
-                ) {
-                    Text("🎵 Send", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                IconButton(onClick = onSendSong, modifier = Modifier.size(32.dp)) {
+                    Icon(painterResource(R.drawable.send_chat), contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                 }
             }
         }
     }
-}
-
-@Composable
-private fun CreatePostDialog(
-    onDismiss: () -> Unit,
-    onPostSubmitted: (songId: String, title: String, artist: String, caption: String) -> Unit
-) {
-    var songId by remember { mutableStateOf("BddP6PYo2gs") }
-    var title by remember { mutableStateOf("Kesariya") }
-    var artist by remember { mutableStateOf("Arijit Singh") }
-    var caption by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Share Music to Feed", fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Song Title") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = artist,
-                    onValueChange = { artist = it },
-                    label = { Text("Artist Name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = caption,
-                    onValueChange = { caption = it },
-                    label = { Text("Add a Caption...") },
-                    modifier = Modifier.fillMaxWidth().height(100.dp)
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (title.isNotBlank()) {
-                        onPostSubmitted(songId, title, artist, caption)
-                    }
-                }
-            ) {
-                Text("Publish Post", fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
-
-@Composable
-private fun SendSongDialog(
-    friend: SocialFriend,
-    onDismiss: () -> Unit,
-    onSend: (songId: String, title: String, artist: String, note: String) -> Unit
-) {
-    var title by remember { mutableStateOf("Starboy") }
-    var artist by remember { mutableStateOf("The Weeknd") }
-    var note by remember { mutableStateOf("Listen to this awesome track!") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Send Song to ${friend.username}", fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Song Title") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = artist,
-                    onValueChange = { artist = it },
-                    label = { Text("Artist Name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = note,
-                    onValueChange = { note = it },
-                    label = { Text("Message Note") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (title.isNotBlank()) {
-                        onSend("34Na4j8AVgA", title, artist, note)
-                    }
-                }
-            ) {
-                Text("Send Suggestion", fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
-
-@Composable
-private fun AddFriendDialog(
-    onDismiss: () -> Unit,
-    onAdd: (username: String) -> Unit
-) {
-    var name by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Add Friend", fontWeight = FontWeight.Bold) },
-        text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Friend Username") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (name.isNotBlank()) {
-                        onAdd(name)
-                    }
-                }
-            ) {
-                Text("Add", fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
 }

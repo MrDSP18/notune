@@ -104,6 +104,9 @@ class App : Application(), SingletonImageLoader.Factory, Configuration.Provider 
     @Inject
     lateinit var presenceManager: com.music.echo.notune.social.presence.PresenceManager
 
+    @Inject
+    lateinit var roomSyncEngine: com.music.echo.notune.rooms.sync.RoomSyncEngine
+
     override fun onCreate() {
         super.onCreate()
 

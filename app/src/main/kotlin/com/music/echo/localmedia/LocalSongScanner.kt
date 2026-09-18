@@ -232,8 +232,8 @@ constructor(
             .flatMap { chunk -> database.getAlbumEntitiesByIds(chunk) }
             .associateBy { item -> item.id }
 
-    @Suppress("DEPRECATION")
-    private fun queryTracks(scanConfig: LocalSongScanConfig): LocalScanSnapshot {
+    @androidx.annotation.VisibleForTesting
+    internal fun queryTracks(scanConfig: LocalSongScanConfig): LocalScanSnapshot {
         val sanitizedMinimumDurationMs = scanConfig.sanitizedMinimumDurationSeconds.toLong() * 1000L
         val sanitizedExcludedFolders = scanConfig.sanitizedExcludedFolders
             .map { it.lowercase(Locale.ROOT) }
@@ -471,13 +471,13 @@ constructor(
         return if (columnIndex >= 0 && !isNull(columnIndex)) getString(columnIndex) else null
     }
 
-    private data class LocalScanSnapshot(
+    internal data class LocalScanSnapshot(
         val tracks: List<LocalTrackRecord>,
         val artists: List<LocalArtistRecord>,
         val albums: List<LocalAlbumRecord>,
     )
 
-    private data class LocalTrackRecord(
+    internal data class LocalTrackRecord(
         val id: String,
         val title: String,
         val artists: List<LocalArtistRecord>,
@@ -491,12 +491,12 @@ constructor(
         val thumbnailUrl: String?,
     )
 
-    private data class LocalArtistRecord(
+    internal data class LocalArtistRecord(
         val id: String,
         val name: String,
     )
 
-    private data class LocalAlbumRecord(
+    internal data class LocalAlbumRecord(
         val id: String,
         val title: String,
         val year: Int?,
@@ -507,7 +507,7 @@ constructor(
     )
 
     private companion object {
-        val AlbumArtUri: Uri = Uri.parse("content://media/external/audio/albumart")
+        val AlbumArtUri: Uri by lazy { Uri.parse("content://media/external/audio/albumart") }
         val ArtistSeparators = Regex("[,;/&]")
         const val SqlBatchSize = 900
     }

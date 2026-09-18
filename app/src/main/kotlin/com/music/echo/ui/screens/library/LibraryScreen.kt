@@ -144,8 +144,7 @@ fun LibraryScreen(navController: NavController) {
 
                 LibraryFilter.LOCAL -> LocalSongScreen(
                     navController,
-                    { filterType = LibraryFilter.LIBRARY },
-                    isEmbedded = true
+                    { filterType = LibraryFilter.LIBRARY }
                 )
             }
 

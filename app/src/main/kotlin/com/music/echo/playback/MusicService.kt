@@ -2138,6 +2138,20 @@ class MusicService :
 
     private var previousMediaItemIndex = C.INDEX_UNSET
 
+    override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
+        super.onTracksChanged(tracks)
+        val audioTrack = tracks.groups.firstOrNull { it.type == androidx.media3.common.C.TRACK_TYPE_AUDIO && it.isSelected }
+        val format = audioTrack?.getTrackFormat(0)
+        
+        technicalTelemetry.value = technicalTelemetry.value.copy(
+            bitrate = if (format?.bitrate != androidx.media3.common.Format.NO_VALUE) format?.bitrate else null,
+            sampleRate = if (format?.sampleRate != androidx.media3.common.Format.NO_VALUE) format?.sampleRate else null,
+            codec = format?.sampleMimeType?.substringAfter("audio/")?.uppercase(),
+            mimeType = format?.sampleMimeType,
+            channelCount = if (format?.channelCount != androidx.media3.common.Format.NO_VALUE) format?.channelCount else null
+        )
+    }
+
     override fun onMediaItemTransition(
         mediaItem: MediaItem?,
         reason: Int,
@@ -4419,6 +4433,10 @@ class MusicService :
 }
     private fun startTelemetryJob() {
         scope.launch {
+            var lastThermalCheck = 0L
+            var cachedTemp = 0f
+            var cachedThermalState = "OPTIMAL"
+            
             technicalTelemetry.subscriptionCount
                 .map { it > 0 }
                 .distinctUntilChanged()
@@ -4438,23 +4456,32 @@ class MusicService :
                                 val runtime = Runtime.getRuntime()
                                 val usedMem = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
                                 
-                                val currentAudioFormat = p.audioFormat
+                                val tracks = p.currentTracks
+                                val currentAudioFormat = tracks.groups
+                                    .firstOrNull { it.type == androidx.media3.common.C.TRACK_TYPE_AUDIO && it.isSelected }
+                                    ?.getTrackFormat(0)
+                                
                                 val bitrateVal = if (currentAudioFormat != null && currentAudioFormat.bitrate != androidx.media3.common.Format.NO_VALUE) {
-                                    "${currentAudioFormat.bitrate / 1000} KBPS"
-                                } else "--- KBPS"
+                                    currentAudioFormat.bitrate
+                                } else null
 
                                 val network = if (isNetworkConnected.value) "ONLINE" else "OFFLINE"
                                 
-                                // Real-time System Thermal Data
-                                val batteryStatus: android.content.Intent? = IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED).let { filter ->
-                                    registerReceiver(null, filter)
-                                }
-                                val temp = batteryStatus?.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, 0)?.let { it / 10f } ?: 0f
-                                val thermalState = when {
-                                    temp > 45 -> "CRITICAL"
-                                    temp > 40 -> "HIGH"
-                                    temp > 35 -> "WARM"
-                                    else -> "OPTIMAL"
+                                // Thermal Data (Slow update for efficiency)
+                                val now = System.currentTimeMillis()
+                                if (now - lastThermalCheck > 10000) {
+                                    lastThermalCheck = now
+                                    val batteryStatus: android.content.Intent? = try {
+                                        registerReceiver(null, IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
+                                    } catch (e: Exception) { null }
+                                    
+                                    cachedTemp = batteryStatus?.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, 0)?.let { it / 10f } ?: 0f
+                                    cachedThermalState = when {
+                                        cachedTemp > 45 -> "CRITICAL"
+                                        cachedTemp > 40 -> "HIGH"
+                                        cachedTemp > 35 -> "WARM"
+                                        else -> "OPTIMAL"
+                                    }
                                 }
 
                                 // Real-time Sync Drift (Calculated from playback positions)
@@ -4469,10 +4496,14 @@ class MusicService :
                                     bufferState = state,
                                     bufferPercent = p.bufferedPercentage,
                                     bitrate = bitrateVal,
+                                    sampleRate = if (currentAudioFormat?.sampleRate != androidx.media3.common.Format.NO_VALUE) currentAudioFormat?.sampleRate else null,
+                                    codec = currentAudioFormat?.sampleMimeType?.substringAfter("audio/")?.uppercase(),
+                                    channelCount = if (currentAudioFormat?.channelCount != androidx.media3.common.Format.NO_VALUE) currentAudioFormat?.channelCount else null,
+                                    audioSessionId = p.audioSessionId.takeIf { it != androidx.media3.common.C.AUDIO_SESSION_ID_UNSET },
                                     memoryUsage = "$usedMem MB",
                                     networkStatus = network,
                                     syncDrift = drift,
-                                    coreTemp = "$thermalState (${temp}°C)"
+                                    coreTemp = "$cachedThermalState (${cachedTemp}°C)"
                                 )
                             }
                         } catch (e: Exception) { }

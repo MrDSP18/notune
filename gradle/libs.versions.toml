@@ -13,6 +13,7 @@ media3 = "1.7.1"
 mediarouter = "1.8.1"
 castFramework = "22.3.1"
 room = "2.8.4"
+roomTesting = "2.8.4"
 hilt = "2.59.1"
 ktor = "3.4.0"
 ksp = "2.3.5"
@@ -54,6 +55,12 @@ playServicesLocation = "21.4.0"
 googleApiClient = "2.9.0"
 googleDriveApi = "v3-rev20260428-2.0.0"
 browser = "1.8.0"
+androidxTestMonitor = "1.7.2"
+androidxTestCore = "1.6.1"
+androidxTestExtJunit = "1.2.1"
+robolectric = "4.12.1"
+mockk = "1.13.12"
+coroutinesTest = "1.10.2"
 
 [libraries]
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
@@ -111,6 +118,7 @@ cast-framework = { module = "com.google.android.gms:play-services-cast-framework
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+room-testing = { module = "androidx.room:room-testing", version.ref = "roomTesting" }
 
 apache-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "apacheLang3" }
 
@@ -160,6 +168,12 @@ play-services-location = { module = "com.google.android.gms:play-services-locati
 google-api-client-android = { module = "com.google.api-client:google-api-client-android", version.ref = "googleApiClient" }
 google-api-services-drive = { module = "com.google.apis:google-api-services-drive", version.ref = "googleDriveApi" }
 androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
+androidx-test-monitor = { module = "androidx.test:monitor", version.ref = "androidxTestMonitor" }
+androidx-test-core = { module = "androidx.test:core", version.ref = "androidxTestCore" }
+androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidxTestExtJunit" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 
 [plugins]
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

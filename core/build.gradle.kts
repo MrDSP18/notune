@@ -11,6 +11,17 @@ android {
     namespace = "com.music.echo.core"
     compileSdk = 36
     defaultConfig { minSdk = 26 }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+
+    sourceSets {
+        getByName("test") {
+            resources.srcDirs("schemas")
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
@@ -41,6 +52,15 @@ dependencies {
     api(libs.ktor.serialization.json)
     api(libs.protobuf.javalite)
     coreLibraryDesugaring(libs.desugaring)
+
+    testImplementation(libs.room.testing)
+    testImplementation(libs.androidx.test.monitor)
+    testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.mockk)
+    testImplementation(libs.sqlite.jdbc)
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
 }
 
 ksp {

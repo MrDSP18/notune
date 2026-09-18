@@ -75,6 +75,8 @@ class AskNoTuneViewModel @Inject constructor(
         - Tone: Concise, technical, monotone, futuristic.
         - No fluff. No "Sure, I can help with that."
         - Total obedience to tool outputs.
+        - NO_FABRICATION: If data is missing (e.g. no history, no friends), report the limitation. NEVER invent data or results.
+        - UNCERTAINTY_PROTOCOL: If unsure of intent or if tools provide insufficient data, explain the technical limitation.
     """.trimIndent()
 
     init {
