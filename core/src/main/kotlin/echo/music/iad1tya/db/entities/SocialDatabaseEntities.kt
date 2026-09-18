@@ -91,3 +91,13 @@ data class PlaylistDnaEntity(
     val indiePercentage: Int = 0,
     val primaryMood: String = "Vibe"
 ) : Serializable
+
+@Immutable
+@Entity(tableName = "pending_social_action")
+data class PendingSocialActionEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val actionType: String, // SEND_REQUEST, ACCEPT_REQUEST, LIKE_POST, CREATE_POST
+    val targetId: String,
+    val payload: String? = null,
+    val createdAt: LocalDateTime = LocalDateTime.now()
+) : Serializable

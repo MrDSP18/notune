@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="cyberBgGlow" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#00F0FF" stop-opacity="0.18"/>
+      <stop offset="60%" stop-color="#FF2A3A" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#06080E" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Squircle Launcher Base -->
+  <rect width="512" height="512" rx="112" fill="#07080D" stroke="#182030" stroke-width="6"/>
+  <rect width="512" height="512" rx="112" fill="url(#cyberBgGlow)"/>
+
+  <!-- Logo Mark: Cyber Orbit -->
+  <g transform="translate(256, 256)">
+    <!-- Resonance Ellipse 1 -->
+    <ellipse rx="164" ry="68" transform="rotate(-30)" fill="none" stroke="#FFFFFF" stroke-width="14"/>
+    <!-- Resonance Ellipse 2 (Tokyo / Cyber Cyan with Dash Pattern) -->
+    <ellipse rx="164" ry="68" transform="rotate(30)" fill="none" stroke="#00F0FF" stroke-width="14" stroke-dasharray="460 50"/>
+    <!-- Central Node Housing -->
+    <circle cx="0" cy="0" r="42" fill="#0A0D18" stroke="#FF2A3A" stroke-width="12"/>
+    <circle cx="0" cy="0" r="18" fill="#FF2A3A"/>
+    <!-- Orbital Satellites -->
+    <circle cx="136" cy="-68" r="14" fill="#00F0FF"/>
+    <circle cx="-136" cy="68" r="14" fill="#FFFFFF"/>
+  </g>
+</svg>

@@ -40,3 +40,38 @@ Examples:
 
 ---
 **NØTUNE — Music Understood.**
+
+```<state_snapshot>
+    <overall_goal>
+        Transform NØTUNE into a futuristic, zero-configuration "Music Operating Environment" with an industrial "Stitch &amp; Tune" aesthetic, integrated real-time technical telemetry, and DNA-driven AI personalization.
+    </overall_goal>
+
+    <key_knowledge>
+         - Architecture: Presentation -> Repository -> Domain (Single Source of Truth).
+         - Playback Engine: Authored by `PlaybackRepository` with real-time Media3 telemetry.
+         - Event Pipeline: Centralized `AppEvent` system driving `AnalyticsManager` and Music DNA.
+         - Social & Messaging: Offline-first architecture with `PendingSocialAction` outbox and presence state machine.
+    </key_knowledge>
+
+    <file_system_state>
+         - CREATED: `core/src/main/kotlin/echo/music/iad1tya/models/SocialModels.kt` - Domain models for social/messaging.
+         - CREATED: `core/src/main/kotlin/echo/music/iad1tya/repository/SocialRepository.kt` - Social domain interface.
+         - CREATED: `app/src/main/kotlin/com/music/echo/repository/SocialRepositoryImpl.kt` - Social implementation with outbox.
+         - CREATED: `app/src/main/kotlin/com/music/echo/notune/social/sync/SocialSyncEngine.kt` - Outbox processing logic.
+         - MODIFIED: `core/src/main/kotlin/echo/music/iad1tya/db/MusicDatabase.kt` - Added `SocialDao` and social entities.
+    </file_system_state>
+
+    <recent_actions>
+         - Implemented Vertical Slice 1 (Local Media & Analytics).
+         - Established Vertical Slice 2 infrastructure (Social, Messaging, Profiles).
+         - Pushed unified repository layers for Playback, Events, and Social.
+         - Verified full build stabilization on main branch.
+    </recent_actions>
+
+    <current_plan>
+         1. [DONE] Vertical Slice 1: Local Engine & Intelligence foundation.
+         2. [IN_PROGRESS] Vertical Slice 2: Social & Messaging (Implementing UI bindings and real-time WebSocket presence).
+         3. [TODO] Vertical Slice 3: Listen Together (Room state machine and authoritative synchronization).
+         4. [TODO] Vertical Slice 4: Controlled AI (Application tool execution layer).
+    </current_plan>
+</state_snapshot>

@@ -98,6 +98,12 @@ class App : Application(), SingletonImageLoader.Factory, Configuration.Provider 
     @Inject
     lateinit var aiEngine: echo.music.iad1tya.notune.ai.AiEngine
 
+    @Inject
+    lateinit var socialSyncEngine: com.music.echo.notune.social.sync.SocialSyncEngine
+
+    @Inject
+    lateinit var presenceManager: com.music.echo.notune.social.presence.PresenceManager
+
     override fun onCreate() {
         super.onCreate()
 

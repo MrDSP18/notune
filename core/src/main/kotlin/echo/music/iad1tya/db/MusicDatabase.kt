@@ -47,6 +47,12 @@ import echo.music.iad1tya.db.entities.CoupleReactionEntity
 import echo.music.iad1tya.db.entities.RoomEntity
 import echo.music.iad1tya.db.entities.RoomMessageEntity
 import echo.music.iad1tya.db.entities.RoomMemberEntity
+import echo.music.iad1tya.db.entities.SocialUserEntity
+import echo.music.iad1tya.db.entities.FriendshipEntity
+import echo.music.iad1tya.db.entities.UserPresenceEntity
+import echo.music.iad1tya.db.entities.SocialPostEntity
+import echo.music.iad1tya.db.entities.MusicMessageEntity
+import echo.music.iad1tya.db.entities.PendingSocialActionEntity
 import echo.music.iad1tya.db.daos.CoupleDao
 import echo.music.iad1tya.db.daos.RoomDao
 import echo.music.iad1tya.extensions.toSQLiteQuery
@@ -67,6 +73,9 @@ class MusicDatabase(
 
     val roomDao: RoomDao
         get() = delegate.roomDao
+
+    val socialDao: echo.music.iad1tya.db.daos.SocialDao
+        get() = delegate.socialDao
 
     val openHelper: SupportSQLiteOpenHelper
         get() = delegate.openHelper
@@ -130,13 +139,19 @@ class MusicDatabase(
         RoomEntity::class,
         RoomMessageEntity::class,
         RoomMemberEntity::class,
+        SocialUserEntity::class,
+        FriendshipEntity::class,
+        UserPresenceEntity::class,
+        SocialPostEntity::class,
+        MusicMessageEntity::class,
+        PendingSocialActionEntity::class,
     ],
     views = [
         SortedSongArtistMap::class,
         SortedSongAlbumMap::class,
         PlaylistSongMapPreview::class,
     ],
-    version = 48,
+    version = 49,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
@@ -172,6 +187,7 @@ class MusicDatabase(
         AutoMigration(from = 35, to = 36),
         AutoMigration(from = 36, to = 37, spec = Migration36To37Spec::class),
         AutoMigration(from = 41, to = 42, spec = Migration41To42::class),
+        AutoMigration(from = 48, to = 49),
     ],
 )
 @TypeConverters(Converters::class)
@@ -180,6 +196,7 @@ abstract class InternalDatabase : RoomDatabase() {
     abstract val speedDialDao: SpeedDialDao
     abstract val coupleDao: CoupleDao
     abstract val roomDao: RoomDao
+    abstract val socialDao: echo.music.iad1tya.db.daos.SocialDao
 
 
     companion object {

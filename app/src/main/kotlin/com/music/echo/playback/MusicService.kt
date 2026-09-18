@@ -162,6 +162,7 @@ import echo.music.iad1tya.lyrics.LyricsHelper
 import echo.music.iad1tya.models.PersistPlayerState
 import echo.music.iad1tya.models.PersistQueue
 import echo.music.iad1tya.models.toMediaMetadata
+import echo.music.iad1tya.models.MediaMetadata
 import echo.music.iad1tya.db.entities.BeatInfoEntity
 import echo.music.iad1tya.playback.audio.BeatAnalyzer
 import echo.music.iad1tya.playback.audio.SilenceDetectorAudioProcessor
@@ -267,6 +268,12 @@ class MusicService :
 
     @Inject
     lateinit var flowEngine: echo.music.iad1tya.notune.flow.FlowEngine
+
+    @Inject
+    lateinit var eventRepository: echo.music.iad1tya.repository.EventRepository
+    
+    @Inject
+    lateinit var analyticsManager: com.music.echo.notune.AnalyticsManager
     
 
     private lateinit var audioManager: AudioManager
@@ -1980,6 +1987,12 @@ class MusicService :
                     update(song)
                     syncUtils.likeSong(song)
 
+                    if (song.liked) {
+                        eventRepository.emit(echo.music.iad1tya.models.AppEvent.SongLiked(it.copy(song = song).toMediaMetadata()))
+                    } else {
+                        eventRepository.emit(echo.music.iad1tya.models.AppEvent.SongUnliked(it.copy(song = song).toMediaMetadata()))
+                    }
+
                     
                     if (dataStore.get(AutoDownloadOnLikeKey, false) && song.liked) {
                         
@@ -2129,6 +2142,9 @@ class MusicService :
         mediaItem: MediaItem?,
         reason: Int,
     ) {
+        mediaItem?.metadata?.let { metadata ->
+            eventRepository.emit(echo.music.iad1tya.models.AppEvent.PlaybackStarted(metadata))
+        }
         // Stale plan belongs to the previous track; planner re-arms when the new one is READY.
         if (!isCrossfading.value) automixDebugInfo.value = null
         prepareAutomixForCurrentPair()
@@ -3269,20 +3285,10 @@ class MusicService :
         if (playbackStats.totalPlayTimeMs >= historyDurationMs &&
             !dataStore.get(PauseListenHistoryKey, false)
         ) {
-            database.query {
-                incrementTotalPlayTime(mediaItem.mediaId, playbackStats.totalPlayTimeMs)
-                try {
-                    insert(
-                        Event(
-                            songId = mediaItem.mediaId,
-                            timestamp = LocalDateTime.now(),
-                            playTime = playbackStats.totalPlayTimeMs,
-                        ),
-                    )
-                } catch (_: SQLException) {
+            mediaItem.metadata?.let { metadata ->
+                eventRepository.emit(echo.music.iad1tya.models.AppEvent.PlaybackCompleted(metadata, playbackStats.totalPlayTimeMs))
             }
         }
-    }
 
         if (playbackStats.totalPlayTimeMs >= historyDurationMs) {
             CoroutineScope(Dispatchers.IO).launch {
