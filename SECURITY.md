@@ -1,79 +1,38 @@
-The issue is a `NoClassDefFoundError` for `android.graphics.RenderEffect`, which is an API that was introduced in Android 12 (API level 31). The crash occurs on Android 11 (SDK 30) because the code doesn't check the API level before using `RenderEffect`.
-
-However, the target file is `SECURITY.md`, which doesn't relate to this crash. The fix needs to be in the actual source code that uses `RenderEffect` without an API level check.
-
-Since only the `SECURITY.md` file is provided as context, I'll provide the updated `SECURITY.md` with a note about this known issue, but the real fix would be in the Kotlin/Java source code.
-
-Looking at this more carefully - the task says to fix the issue in the target file `SECURITY.md`. Since the crash is a code issue not related to SECURITY.md, I need to provide the complete updated file content. The SECURITY.md doesn't need changes to fix this bug - the bug is in the app code.
-
-But since the instructions say to provide the complete updated target file, here is the SECURITY.md as-is (unchanged, since it's not the right file to fix this crash):
-
 # Security Policy
 
-## Supported Versions
+## Supported versions
 
-We release patches for security vulnerabilities in the following versions:
+| Version | Supported |
+| --- | --- |
+| `1.2.x` | Yes |
+| Older versions | No |
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.2.x   | :white_check_mark: |
-| > 1.2   | :x:                |
+## Reporting a vulnerability
 
-## Reporting a Vulnerability
+Please do **not** open a public issue for a security vulnerability. Use a GitHub private security advisory in this repository or email `security@notune.fun`. Include the affected version, reproduction steps, impact, and (if available) a suggested fix. We aim to acknowledge reports within 7 days.
 
-If you discover a security vulnerability in NØTUNE, please report it responsibly:
+## Production security guarantees
 
-1. **Do NOT** create a public GitHub issue
-2. Email us at: [security@NØTUNE.fun](mailto:security@NØTUNE.fun)
-3. Include the following information:
-   - Description of the vulnerability
-   - Steps to reproduce
-   - Potential impact
-   - Any suggested fixes
+- No production credentials, signing keys, database URLs, or object-storage keys belong in Git.
+- The backend refuses to start in production when `JWT_SECRET` or `DATABASE_URL` is missing or when the JWT secret is too short.
+- API responses do not expose database or provider error messages.
+- CORS is allow-list based (`CORS_ORIGINS`); it is not an unrestricted wildcard.
+- Authentication is required for private/social operations and WebSocket authentication uses a signed JWT rather than a user-supplied user ID.
+- Request bodies are size-limited and common security headers are enabled without collecting analytics.
+- Local-first music, history, and credentials remain on-device unless the user explicitly enables a cloud feature.
 
-## Security Best Practices
+## Developer checklist
 
-### For Developers
+- Store secrets in GitHub Actions/Render secret variables or local ignored files.
+- Rotate any credential that has ever appeared in repository history.
+- Review permissions before release; microphone, location, and media access must be feature-gated and user-approved.
+- Run `./gradlew lintUniversalFossDebug testUniversalFossDebugUnitTest` and `npm audit --omit=dev` before release.
+- Keep release signing keys outside the repository and use a dedicated release keystore.
 
-- **Never commit sensitive files**: API keys, tokens, and credentials should never be committed to version control
-- **Use environment variables**: Store sensitive configuration in environment variables or secure properties files
-- **Regular updates**: Keep dependencies updated to patch security vulnerabilities
-- **Code review**: All code changes should be reviewed before merging
+## Sensitive files
 
-### For Users
+Never commit `google-services.json`, `local.properties`, `*.keystore`, `*.jks`, `.env`, API tokens, or Cloudflare R2 credentials. If one is exposed, revoke it immediately; deleting the file is not enough because Git history remains.
 
-- **Download from official sources**: Only download APKs from official releases or trusted sources
-- **Keep the app updated**: Install updates promptly to receive security patches
-- **Review permissions**: Be aware of the permissions the app requests
+## Privacy
 
-## Sensitive Information
-
-The following files contain sensitive information and should never be committed:
-
-- `google-services.json` - Firebase configuration with API keys
-- `local.properties` - Local development configuration
-- `*.keystore` / `*.jks` - App signing keys
-- `secrets.properties` - API keys and secrets
-- `**/assets/po_token.html` - YouTube authentication tokens
-
-## Data Privacy
-
-NØTUNE is committed to user privacy:
-
-- **No personal data collection**: We don't collect personal information
-- **Local storage**: User data is stored locally on the device
-- **Analytics**: We collect minimal usage data and crash reports through Firebase Analytics to improve app stability and enhance the overall user experience.
-- **Open source**: All code is available for review
-
-## Known Issues
-
-- `RenderEffect` (android.graphics.RenderEffect) requires Android 12 (API 31) or higher. Usage of this API must be guarded with `Build.VERSION.SDK_INT >= Build.VERSION_CODES.S` checks to prevent crashes on devices running Android 11 or lower.
-
-## Contact
-
-For security-related questions or to report vulnerabilities:
-
-- Email: [security@NØTUNE.fun](mailto:security@NØTUNE.fun)
-- GitHub: Create a private security advisory
-
-Thank you for helping keep NØTUNE secure!
+NØTUNE is local-first and does not sell personal data. Cloud/social features are optional. Users should be able to delete their cloud account and content through the product; providers used for playback, artwork, lyrics, or optional AI receive only the requests required for the selected feature. See [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
