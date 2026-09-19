@@ -791,7 +791,7 @@ fun BottomSheetPlayer(
                 TextButton(
                     onClick = {
                         showSleepTimerDialog = false
-                        playerConnection.service.sleepTimer.start(sleepTimerValue.roundToInt())
+                        playerConnection.service.startSleepTimerWithFade(sleepTimerValue.roundToInt())
                     },
                 ) {
                     Text(stringResource(android.R.string.ok))

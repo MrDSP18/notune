@@ -93,12 +93,36 @@ fun LabSettingsScreen(
                 onCheckedChange = onExperimentalAnimationsChange
             )
             
-            PreferenceGroupTitle(title = "Coming Soon")
+            PreferenceGroupTitle(title = "Experimental Features")
             
             PreferenceEntry(
                 title = { Text("NØTUNE Neural Map") },
                 description = "Visualization of your personal music taste and history.",
                 onClick = { navController.navigate("notune/neural_map") }
+            )
+
+            PreferenceEntry(
+                title = { Text("NØTUNE Replay & Time Machine") },
+                description = "4-tab listening statistics, forgotten gems, and memories.",
+                onClick = { navController.navigate("notune/replay") }
+            )
+
+            PreferenceEntry(
+                title = { Text("Listening Achievements & Fandom Badges") },
+                description = "Track listening level, active streak, and unlocked badges.",
+                onClick = { navController.navigate("notune/achievements") }
+            )
+
+            PreferenceEntry(
+                title = { Text("Mood Journey Engine") },
+                description = "Dynamic emotional audio transition architecture.",
+                onClick = { navController.navigate("notune/mood_journey") }
+            )
+
+            PreferenceEntry(
+                title = { Text("Global Neural Search & Hum-To-Search") },
+                description = "AI voice, lyrics, and melody recognition search hub.",
+                onClick = { navController.navigate("notune/neural_search") }
             )
         }
     }

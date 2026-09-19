@@ -566,6 +566,18 @@ fun NavGraphBuilder.navigationBuilder(
         ReplayScreen(navController)
     }
 
+    composable("notune/achievements") {
+        com.music.echo.notune.gamification.MusicMilestoneManager(onBackClick = { navController.navigateUp() })
+    }
+
+    composable("notune/mood_journey") {
+        com.music.echo.notune.flow.MoodJourneyScreen(onBackClick = { navController.navigateUp() })
+    }
+
+    composable("notune/neural_search") {
+        com.music.echo.notune.search.GlobalNeuralSearchHub(onBackClick = { navController.navigateUp() })
+    }
+
     composable("notune/lab/playground") {
         AiPlaygroundScreen(navController)
     }

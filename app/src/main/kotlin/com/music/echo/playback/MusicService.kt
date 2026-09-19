@@ -274,7 +274,9 @@ class MusicService :
     
     @Inject
     lateinit var analyticsManager: com.music.echo.notune.AnalyticsManager
-    
+
+    @Inject
+    lateinit var sleepFlowManager: com.music.echo.notune.flow.SleepFlowManager
 
     private lateinit var audioManager: AudioManager
     // Wi-Fi Lock: Prevents modern Wi-Fi 6/7 routers from putting the Wi-Fi chip into
@@ -442,6 +444,9 @@ class MusicService :
 
 
     lateinit var sleepTimer: SleepTimer
+
+    /** Coroutine job that applies minute-by-minute volume fade while the sleep timer is active. */
+    private var sleepFadeJob: kotlinx.coroutines.Job? = null
 
     @Inject
     @PlayerCache
@@ -3405,6 +3410,49 @@ class MusicService :
             reportException(e)
     }
 }
+
+    /**
+     * Starts the sleep timer and, for minute-based timers, also kicks off the
+     * [SleepFlowManager] coroutine that progressively reduces player volume minute-by-minute
+     * across the full countdown, culminating in [echo.music.iad1tya.playback.SleepTimer]'s
+     * existing 3-second final fade-out.
+     *
+     * @param minutes Countdown duration in minutes, or -1 for "pause when current song ends."
+     */
+    fun startSleepTimerWithFade(minutes: Int) {
+        sleepTimer.start(minutes)
+        sleepFadeJob?.cancel()
+        sleepFadeJob = null
+
+        if (minutes <= 0) return // "pause when song ends" — no progressive fade needed
+
+        val startMs = System.currentTimeMillis()
+        sleepFlowManager.startSleepTimer(minutes)
+
+        sleepFadeJob = scope.launch {
+            while (isActive && sleepTimer.isActive) {
+                val elapsedMinutes = ((System.currentTimeMillis() - startMs) / 60_000L).toInt()
+                val fadeState = sleepFlowManager.updateProgress(elapsedMinutes)
+                // Apply the gradual factor only when unmuted; mute state is already handled separately
+                if (!isMuted.value && fadeState.currentVolumeFactor < 1f) {
+                    player.volume = playerVolume.value * fadeState.currentVolumeFactor
+                }
+                kotlinx.coroutines.delay(60_000L) // update once per minute
+            }
+            // Restore the base volume once the sleep timer fires (SleepTimer handles the final fade)
+            sleepFlowManager.cancelSleepTimer()
+            if (!isMuted.value) player.volume = playerVolume.value
+        }
+    }
+
+    /** Cancels the sleep timer and clears the progressive fade job. */
+    fun cancelSleepTimerWithFade() {
+        sleepTimer.clear()
+        sleepFadeJob?.cancel()
+        sleepFadeJob = null
+        sleepFlowManager.cancelSleepTimer()
+        if (!isMuted.value) player.volume = playerVolume.value
+    }
 
     override fun onDestroy() {
         isRunning = false
