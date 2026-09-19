@@ -9,6 +9,7 @@ if (localPropertiesFile.exists()) {
 }
 val sqliteTmpDir = layout.buildDirectory.dir("tmp").get().asFile.apply { mkdirs() }
 System.setProperty("org.sqlite.tmpdir", sqliteTmpDir.absolutePath)
+System.setProperty("org.conscrypt.native.workdir", sqliteTmpDir.absolutePath)
 
 plugins {
     id("com.android.application")

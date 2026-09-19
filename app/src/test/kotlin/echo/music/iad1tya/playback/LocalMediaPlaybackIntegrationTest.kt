@@ -10,8 +10,20 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class LocalMediaPlaybackIntegrationTest {
+
+    companion object {
+        @org.junit.BeforeClass
+        @JvmStatic
+        fun setupConscryptWorkdir() {
+            val workdir = java.io.File("build/tmp/conscrypt").apply { mkdirs() }
+            System.setProperty("org.conscrypt.native.workdir", workdir.absolutePath)
+        }
+    }
 
     @Before
     fun setUp() {

@@ -66,5 +66,6 @@ bin/
 stitch_n_tune_music_os/**/*.png
 releases/
 *.apk
+android-sdk/
 
 

@@ -57,7 +57,6 @@ dependencies {
     testImplementation(libs.androidx.test.monitor)
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(libs.robolectric)
-    testImplementation(libs.mockk)
     testImplementation(libs.sqlite.jdbc)
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlin:kotlin-test")

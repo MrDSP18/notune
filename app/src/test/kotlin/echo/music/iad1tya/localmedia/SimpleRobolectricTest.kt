@@ -9,9 +9,20 @@ import android.content.Context
 
 @RunWith(RobolectricTestRunner::class)
 class SimpleRobolectricTest {
+
+    companion object {
+        @org.junit.BeforeClass
+        @JvmStatic
+        fun setupConscryptWorkdir() {
+            val workdir = java.io.File("build/tmp/conscrypt").apply { mkdirs() }
+            System.setProperty("org.conscrypt.native.workdir", workdir.absolutePath)
+        }
+    }
+
     @Test
     fun testContext() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         assertNotNull(context)
     }
 }
+

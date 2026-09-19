@@ -30,6 +30,7 @@ class AiToolExecutionTest {
     private val messagingRepository = mockk<MessagingRepository>()
     private val playerConnectionManager = mockk<PlayerConnectionManager>()
     private val accountRepository = mockk<NotuneAccountRepository>()
+    private val lyricsHelper = mockk<echo.music.iad1tya.lyrics.LyricsHelper>(relaxed = true)
     private val playerConnection = mockk<PlayerConnection>()
 
     private lateinit var toolManager: AiToolManager
@@ -43,6 +44,7 @@ class AiToolExecutionTest {
         )
         toolManager.playerConnection = playerConnection
     }
+
 
     @Test
     fun `test pause_music tool execution`() = runTest {
