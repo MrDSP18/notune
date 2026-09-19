@@ -47,6 +47,7 @@ enum class ItemSource {
 enum class FlowReasonType {
     SIMILAR_ARTIST,
     GENRE_MATCH,
+    LANGUAGE_MATCH,
     FAVORITE_ARTIST,
     DISCOVERY,
     MOOD_MATCH,
@@ -65,7 +66,8 @@ data class FlowCandidate(
     val mediaMetadata: MediaMetadata,
     val candidateSource: String,
     val isLocal: Boolean = true,
-    val isDownloaded: Boolean = false
+    val isDownloaded: Boolean = false,
+    val language: String? = null
 )
 
 data class FlowScore(
@@ -73,6 +75,7 @@ data class FlowScore(
     val totalScore: Float,
     val artistAffinity: Float = 0f,
     val genreAffinity: Float = 0f,
+    val languageMatch: Float = 0f,
     val energyMatch: Float = 0f,
     val discoveryBonus: Float = 0f,
     val recentPlayPenalty: Float = 0f,

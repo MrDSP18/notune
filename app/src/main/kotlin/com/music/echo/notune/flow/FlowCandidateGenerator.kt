@@ -18,7 +18,8 @@ import com.music.echo.notune.personalization.repository.TasteProfileRepository
 class FlowCandidateGenerator @Inject constructor(
     private val database: MusicDatabase,
     private val musicDnaRepository: MusicDnaRepository,
-    private val tasteProfileRepository: TasteProfileRepository
+    private val tasteProfileRepository: TasteProfileRepository,
+    private val languageSessionTracker: LanguageSessionTracker
 ) {
 
     suspend fun generateCandidates(
@@ -29,17 +30,24 @@ class FlowCandidateGenerator @Inject constructor(
     ): List<FlowCandidate> = withContext(Dispatchers.IO) {
         val candidateMap = mutableMapOf<String, FlowCandidate>()
 
+        fun addCandidate(metadata: MediaMetadata, source: String) {
+            if (!candidateMap.containsKey(metadata.id)) {
+                val lang = languageSessionTracker.detectLanguage(metadata)
+                candidateMap[metadata.id] = FlowCandidate(
+                    mediaMetadata = metadata,
+                    candidateSource = source,
+                    isLocal = true,
+                    language = lang
+                )
+            }
+        }
+
         // 1. Current Artist / Related Track Candidates
         if (currentTrack != null) {
             try {
                 val relatedSongs = database.relatedSongs(currentTrack.id)
                 for (song in relatedSongs) {
-                    val metadata = song.toMediaMetadata()
-                    candidateMap[metadata.id] = FlowCandidate(
-                        mediaMetadata = metadata,
-                        candidateSource = "Related Track",
-                        isLocal = true
-                    )
+                    addCandidate(song.toMediaMetadata(), "Related Track")
                 }
             } catch (_: Exception) {}
 
@@ -50,12 +58,7 @@ class FlowCandidateGenerator @Inject constructor(
                     val artistSongs = database.artistSongs(currentArtistId, ArtistSongSortType.CREATE_DATE, true).first()
                     for (song in artistSongs.take(10)) {
                         if (song.id != currentTrack.id) {
-                            val metadata = song.toMediaMetadata()
-                            candidateMap[metadata.id] = FlowCandidate(
-                                mediaMetadata = metadata,
-                                candidateSource = "Same Artist",
-                                isLocal = true
-                            )
+                            addCandidate(song.toMediaMetadata(), "Same Artist")
                         }
                     }
                 }
@@ -66,14 +69,7 @@ class FlowCandidateGenerator @Inject constructor(
         try {
             val likedSongs = database.likedSongs(SongSortType.CREATE_DATE, true).first()
             for (song in likedSongs.take(25)) {
-                val metadata = song.toMediaMetadata()
-                if (!candidateMap.containsKey(metadata.id)) {
-                    candidateMap[metadata.id] = FlowCandidate(
-                        mediaMetadata = metadata,
-                        candidateSource = "Favorite Track",
-                        isLocal = true
-                    )
-                }
+                addCandidate(song.toMediaMetadata(), "Favorite Track")
             }
         } catch (_: Exception) {}
 
@@ -81,14 +77,7 @@ class FlowCandidateGenerator @Inject constructor(
         try {
             val topSongs = database.topSongs(40).first()
             for (song in topSongs) {
-                val metadata = song.toMediaMetadata()
-                if (!candidateMap.containsKey(metadata.id)) {
-                    candidateMap[metadata.id] = FlowCandidate(
-                        mediaMetadata = metadata,
-                        candidateSource = "Listening History",
-                        isLocal = true
-                    )
-                }
+                addCandidate(song.toMediaMetadata(), "Listening History")
             }
         } catch (_: Exception) {}
 
@@ -98,19 +87,20 @@ class FlowCandidateGenerator @Inject constructor(
             for (artistEntity in topArtists) {
                 val songs = database.artistSongs(artistEntity.id, ArtistSongSortType.CREATE_DATE, true).first()
                 for (song in songs.take(4)) {
-                    val metadata = song.toMediaMetadata()
-                    if (!candidateMap.containsKey(metadata.id)) {
-                        candidateMap[metadata.id] = FlowCandidate(
-                            mediaMetadata = metadata,
-                            candidateSource = "Favorite Artist",
-                            isLocal = true
-                        )
-                    }
+                    addCandidate(song.toMediaMetadata(), "Favorite Artist")
                 }
             }
         } catch (_: Exception) {}
 
-        // 5. Onboarding Taste Profile Signals (for initial discovery & new users)
+        // 5. Broad Library Songs Fallback
+        try {
+            val librarySongs = database.songsByCreateDateAsc().first()
+            for (song in librarySongs.take(30)) {
+                addCandidate(song.toMediaMetadata(), "Library Fallback")
+            }
+        } catch (_: Exception) {}
+
+        // 6. Onboarding Taste Profile Signals
         try {
             val tasteProfile = tasteProfileRepository.getTasteProfileOnce()
             if (tasteProfile.favoriteArtists.isNotEmpty()) {
@@ -120,14 +110,7 @@ class FlowCandidateGenerator @Inject constructor(
                     if (matchingArtist != null) {
                         val songs = database.artistSongs(matchingArtist.id, ArtistSongSortType.CREATE_DATE, true).first()
                         for (song in songs.take(5)) {
-                            val metadata = song.toMediaMetadata()
-                            if (!candidateMap.containsKey(metadata.id)) {
-                                candidateMap[metadata.id] = FlowCandidate(
-                                    mediaMetadata = metadata,
-                                    candidateSource = "Onboarding Favorite Artist (${selectedArtist.name})",
-                                    isLocal = true
-                                )
-                            }
+                            addCandidate(song.toMediaMetadata(), "Onboarding Favorite Artist (${selectedArtist.name})")
                         }
                     }
                 }
