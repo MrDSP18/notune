@@ -25,6 +25,7 @@ import echo.music.iad1tya.playback.MusicService.MusicBinder
 import echo.music.iad1tya.playback.queues.Queue
 import echo.music.iad1tya.utils.reportException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,6 +33,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import echo.music.iad1tya.constants.SponsorBlockEnabledKey
 import echo.music.iad1tya.utils.dataStore
@@ -159,7 +161,8 @@ class PlayerConnection(
     val position = kotlinx.coroutines.flow.flow {
         while (true) {
             if (isPlayerInitialized.value) {
-                emit(player.currentPosition)
+                val currentPos = withContext(Dispatchers.Main.immediate) { player.currentPosition }
+                emit(currentPos)
             }
             kotlinx.coroutines.delay(if (isPlaying.value) 1000L else 5000L)
         }
@@ -168,7 +171,8 @@ class PlayerConnection(
     val duration = kotlinx.coroutines.flow.flow {
         while (true) {
             if (isPlayerInitialized.value) {
-                emit(player.duration.coerceAtLeast(0L))
+                val currentDur = withContext(Dispatchers.Main.immediate) { player.duration.coerceAtLeast(0L) }
+                emit(currentDur)
             }
             kotlinx.coroutines.delay(if (isPlaying.value) 2000L else 10000L)
         }
@@ -201,7 +205,7 @@ class PlayerConnection(
     init {
         try {
             
-            scope.launch {
+            scope.launch(Dispatchers.Main.immediate) {
                 service.playerFlow.collect { newPlayer ->
                     if (newPlayer != null && newPlayer != attachedPlayer) {
                         updateAttachedPlayer(newPlayer)
@@ -524,10 +528,10 @@ class PlayerConnection(
 
     private fun startSponsorBlockPolling() {
         sponsorBlockJob?.cancel()
-        sponsorBlockJob = scope.launch {
+        sponsorBlockJob = scope.launch(Dispatchers.Main.immediate) {
             val sponsorBlockEnabledFlow = context.dataStore.data.map { (try { it[SponsorBlockEnabledKey] } catch(e: Exception) { null }) ?: false }
 
-            launch {
+            launch(Dispatchers.IO) {
                 combine(mediaMetadata, sponsorBlockEnabledFlow) { metadata, enabled ->
                     Pair(metadata, enabled)
                 }.collect { (metadata, enabled) ->
@@ -540,7 +544,7 @@ class PlayerConnection(
                 }
             }
 
-            launch {
+            launch(Dispatchers.Main.immediate) {
                 while (true) {
                     if (player.isPlaying) {
                         val currentSegments = sponsorBlockSegments.value
