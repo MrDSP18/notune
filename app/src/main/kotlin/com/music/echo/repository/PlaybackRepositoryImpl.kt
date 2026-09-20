@@ -4,10 +4,7 @@ import echo.music.iad1tya.models.PlaybackState
 import echo.music.iad1tya.repository.PlaybackRepository
 import echo.music.iad1tya.playback.PlayerConnectionManager
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import echo.music.iad1tya.extensions.metadata
@@ -45,19 +42,30 @@ class PlaybackRepositoryImpl @Inject constructor(
                 val format = array[7] as? androidx.media3.common.Format
                 val aiCommentary = array[8] as? String
 
-                val (audioSessionId, bufferedPosition, queueIndex, volume, queue) = withContext(Dispatchers.Main.immediate) {
-                    val p = connection.player
-                    val session = p.audioSessionId.takeIf { it != androidx.media3.common.C.AUDIO_SESSION_ID_UNSET }
-                    val bufPos = p.bufferedPosition
-                    val qIdx = p.currentMediaItemIndex
-                    val vol = p.volume
+                val audioSessionId = try {
+                    connection.player.audioSessionId.takeIf { it != androidx.media3.common.C.AUDIO_SESSION_ID_UNSET }
+                } catch (e: Throwable) { null }
+
+                val bufferedPosition = try {
+                    connection.player.bufferedPosition
+                } catch (e: Throwable) { 0L }
+
+                val queueIndex = try {
+                    connection.player.currentMediaItemIndex
+                } catch (e: Throwable) { -1 }
+
+                val volume = try {
+                    connection.player.volume
+                } catch (e: Throwable) { 1f }
+
+                val queue = try {
                     val qList = mutableListOf<MediaMetadata>()
-                    val timeline = p.currentTimeline
+                    val timeline = connection.player.currentTimeline
                     for (i in 0 until timeline.windowCount) {
                         timeline.getWindow(i, androidx.media3.common.Timeline.Window()).mediaItem.metadata?.let { qList.add(it) }
                     }
-                    Quint(session, bufPos, qIdx, vol, qList)
-                }
+                    qList
+                } catch (e: Throwable) { emptyList() }
 
                 val updatedTelemetry = if (format != null) {
                     telemetry.copy(
@@ -101,31 +109,17 @@ class PlaybackRepositoryImpl @Inject constructor(
 
     override fun setVolume(volume: Float) {
         val connection = connectionManager.playerConnection.value ?: return
-        scope.launch(Dispatchers.Main.immediate) {
-            connection.player.volume = volume
-        }
+        try { connection.player.volume = volume } catch (e: Throwable) {}
     }
 
     override fun setShuffleMode(enabled: Boolean) {
         val connection = connectionManager.playerConnection.value ?: return
-        scope.launch(Dispatchers.Main.immediate) {
-            connection.player.shuffleModeEnabled = enabled
-        }
+        try { connection.player.shuffleModeEnabled = enabled } catch (e: Throwable) {}
     }
 
     override fun setRepeatMode(mode: Int) {
         val connection = connectionManager.playerConnection.value ?: return
-        scope.launch(Dispatchers.Main.immediate) {
-            connection.player.repeatMode = mode
-        }
+        try { connection.player.repeatMode = mode } catch (e: Throwable) {}
     }
-
-    private data class Quint<A, B, C, D, E>(
-        val first: A,
-        val second: B,
-        val third: C,
-        val fourth: D,
-        val fifth: E
-    )
 }
 

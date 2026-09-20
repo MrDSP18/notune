@@ -337,10 +337,14 @@ class PlayerConnection(
 
     
     private inline fun <T> runOnMain(crossinline block: () -> T): T {
-        return if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+        return if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper() || android.os.Looper.getMainLooper() == null) {
             block()
         } else {
-            kotlinx.coroutines.runBlocking(Dispatchers.Main.immediate) {
+            try {
+                kotlinx.coroutines.runBlocking(Dispatchers.Main.immediate) {
+                    block()
+                }
+            } catch (e: Throwable) {
                 block()
             }
         }
