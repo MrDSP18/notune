@@ -336,118 +336,132 @@ class PlayerConnection(
     }
 
     
-    fun togglePlayPause() {
-        try {
-            val castHandler = service.castConnectionHandler
-            if (castHandler?.isCasting?.value == true) {
-                if (castHandler.castIsPlaying.value) {
-                    castHandler.pause()
-                } else {
-                    castHandler.play()
-                }
-            } else {
-                player.togglePlayPause()
+    private inline fun <T> runOnMain(crossinline block: () -> T): T {
+        return if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            block()
+        } else {
+            kotlinx.coroutines.runBlocking(Dispatchers.Main.immediate) {
+                block()
             }
-        } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Error in togglePlayPause")
-        }
-    }
-    
-    
-    fun play() {
-        try {
-            val castHandler = service.castConnectionHandler
-            if (castHandler?.isCasting?.value == true) {
-                castHandler.play()
-            } else {
-                if (player.playbackState == Player.STATE_IDLE) {
-                    player.prepare()
-                }
-                player.playWhenReady = true
-            }
-        } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Error in play")
-        }
-    }
-    
-    
-    fun pause() {
-        try {
-            val castHandler = service.castConnectionHandler
-            if (castHandler?.isCasting?.value == true) {
-                castHandler.pause()
-            } else {
-                player.playWhenReady = false
-            }
-        } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Error in pause")
         }
     }
 
-    
-    fun seekTo(position: Long) {
-        try {
-            val castHandler = service.castConnectionHandler
-            if (castHandler?.isCasting?.value == true) {
-                castHandler.seekTo(position)
-            } else {
-                player.seekTo(position)
+    fun togglePlayPause() {
+        runOnMain {
+            try {
+                val castHandler = service.castConnectionHandler
+                if (castHandler?.isCasting?.value == true) {
+                    if (castHandler.castIsPlaying.value) {
+                        castHandler.pause()
+                    } else {
+                        castHandler.play()
+                    }
+                } else {
+                    player.togglePlayPause()
+                }
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in togglePlayPause")
             }
-        } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Error in seekTo")
+        }
+    }
+    
+    fun play() {
+        runOnMain {
+            try {
+                val castHandler = service.castConnectionHandler
+                if (castHandler?.isCasting?.value == true) {
+                    castHandler.play()
+                } else {
+                    if (player.playbackState == Player.STATE_IDLE) {
+                        player.prepare()
+                    }
+                    player.playWhenReady = true
+                }
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in play")
+            }
+        }
+    }
+    
+    fun pause() {
+        runOnMain {
+            try {
+                val castHandler = service.castConnectionHandler
+                if (castHandler?.isCasting?.value == true) {
+                    castHandler.pause()
+                } else {
+                    player.playWhenReady = false
+                }
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in pause")
+            }
+        }
+    }
+
+    fun seekTo(position: Long) {
+        runOnMain {
+            try {
+                val castHandler = service.castConnectionHandler
+                if (castHandler?.isCasting?.value == true) {
+                    castHandler.seekTo(position)
+                } else {
+                    player.seekTo(position)
+                }
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in seekTo")
+            }
         }
     }
 
     fun seekToNext() {
-        try {
-            
-            val castHandler = service.castConnectionHandler
-            if (castHandler?.isCasting?.value == true) {
-                castHandler.skipToNext()
-                return
+        runOnMain {
+            try {
+                val castHandler = service.castConnectionHandler
+                if (castHandler?.isCasting?.value == true) {
+                    castHandler.skipToNext()
+                    return@runOnMain
+                }
+                player.seekToNext()
+                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+                    player.prepare()
+                }
+                player.playWhenReady = true
+                onSkipNext?.invoke()
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in seekToNext")
             }
-            player.seekToNext()
-            if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
-                player.prepare()
-            }
-            player.playWhenReady = true
-            onSkipNext?.invoke()
-        } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Error in seekToNext")
         }
     }
 
     var onRestartSong: (() -> Unit)? = null
 
     fun seekToPrevious() {
-        try {
-            
-            val castHandler = service.castConnectionHandler
-            if (castHandler?.isCasting?.value == true) {
-                castHandler.skipToPrevious()
-                return
-            }
+        runOnMain {
+            try {
+                val castHandler = service.castConnectionHandler
+                if (castHandler?.isCasting?.value == true) {
+                    castHandler.skipToPrevious()
+                    return@runOnMain
+                }
 
-            
-            
-            if (player.currentPosition > 3000 || !player.hasPreviousMediaItem()) {
-                player.seekTo(0)
-                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
-                    player.prepare()
+                if (player.currentPosition > 3000 || !player.hasPreviousMediaItem()) {
+                    player.seekTo(0)
+                    if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+                        player.prepare()
+                    }
+                    player.playWhenReady = true
+                    onRestartSong?.invoke()
+                } else {
+                    player.seekToPreviousMediaItem()
+                    if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+                        player.prepare()
+                    }
+                    player.playWhenReady = true
+                    onSkipPrevious?.invoke()
                 }
-                player.playWhenReady = true
-                onRestartSong?.invoke()
-            } else {
-                
-                player.seekToPreviousMediaItem()
-                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
-                    player.prepare()
-                }
-                player.playWhenReady = true
-                onSkipPrevious?.invoke()
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in seekToPrevious")
             }
-        } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Error in seekToPrevious")
         }
     }
 

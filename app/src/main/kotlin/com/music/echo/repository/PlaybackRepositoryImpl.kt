@@ -4,7 +4,10 @@ import echo.music.iad1tya.models.PlaybackState
 import echo.music.iad1tya.repository.PlaybackRepository
 import echo.music.iad1tya.playback.PlayerConnectionManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import echo.music.iad1tya.extensions.metadata
@@ -42,6 +45,20 @@ class PlaybackRepositoryImpl @Inject constructor(
                 val format = array[7] as? androidx.media3.common.Format
                 val aiCommentary = array[8] as? String
 
+                val (audioSessionId, bufferedPosition, queueIndex, volume, queue) = withContext(Dispatchers.Main.immediate) {
+                    val p = connection.player
+                    val session = p.audioSessionId.takeIf { it != androidx.media3.common.C.AUDIO_SESSION_ID_UNSET }
+                    val bufPos = p.bufferedPosition
+                    val qIdx = p.currentMediaItemIndex
+                    val vol = p.volume
+                    val qList = mutableListOf<MediaMetadata>()
+                    val timeline = p.currentTimeline
+                    for (i in 0 until timeline.windowCount) {
+                        timeline.getWindow(i, androidx.media3.common.Timeline.Window()).mediaItem.metadata?.let { qList.add(it) }
+                    }
+                    Quint(session, bufPos, qIdx, vol, qList)
+                }
+
                 val updatedTelemetry = if (format != null) {
                     telemetry.copy(
                         bitrate = if (format.bitrate != androidx.media3.common.Format.NO_VALUE) format.bitrate else null,
@@ -49,11 +66,11 @@ class PlaybackRepositoryImpl @Inject constructor(
                         codec = format.sampleMimeType?.substringAfter("audio/")?.uppercase(),
                         mimeType = format.sampleMimeType,
                         channelCount = if (format.channelCount != androidx.media3.common.Format.NO_VALUE) format.channelCount else null,
-                        audioSessionId = connection.player.audioSessionId.takeIf { it != androidx.media3.common.C.AUDIO_SESSION_ID_UNSET }
+                        audioSessionId = audioSessionId
                     )
                 } else {
                     telemetry.copy(
-                         audioSessionId = connection.player.audioSessionId.takeIf { it != androidx.media3.common.C.AUDIO_SESSION_ID_UNSET }
+                         audioSessionId = audioSessionId
                     )
                 }
 
@@ -62,20 +79,14 @@ class PlaybackRepositoryImpl @Inject constructor(
                     isPlaying = isPlaying,
                     position = pos,
                     duration = dur,
-                    bufferedPosition = connection.player.bufferedPosition,
-                    queue = connection.player.currentTimeline.let { timeline ->
-                        val list = mutableListOf<MediaMetadata>()
-                        for (i in 0 until timeline.windowCount) {
-                            timeline.getWindow(i, androidx.media3.common.Timeline.Window()).mediaItem.metadata?.let { list.add(it) }
-                        }
-                        list
-                    },
-                    queueIndex = connection.player.currentMediaItemIndex,
+                    bufferedPosition = bufferedPosition,
+                    queue = queue,
+                    queueIndex = queueIndex,
                     shuffleModeEnabled = shuffle,
                     repeatMode = repeat,
-                    volume = connection.player.volume,
+                    volume = volume,
                     isFavorite = metadata?.liked ?: false,
-                    lyricsAvailable = metadata?.id != null, // simplified for now
+                    lyricsAvailable = metadata?.id != null,
                     aiDjCommentary = aiCommentary,
                     telemetry = updatedTelemetry
                 )
@@ -87,13 +98,34 @@ class PlaybackRepositoryImpl @Inject constructor(
     override fun next() { connectionManager.playerConnection.value?.seekToNext() }
     override fun previous() { connectionManager.playerConnection.value?.seekToPrevious() }
     override fun seekTo(position: Long) { connectionManager.playerConnection.value?.seekTo(position) }
+
     override fun setVolume(volume: Float) {
-        connectionManager.playerConnection.value?.player?.volume = volume
+        val connection = connectionManager.playerConnection.value ?: return
+        scope.launch(Dispatchers.Main.immediate) {
+            connection.player.volume = volume
+        }
     }
+
     override fun setShuffleMode(enabled: Boolean) {
-        connectionManager.playerConnection.value?.player?.shuffleModeEnabled = enabled
+        val connection = connectionManager.playerConnection.value ?: return
+        scope.launch(Dispatchers.Main.immediate) {
+            connection.player.shuffleModeEnabled = enabled
+        }
     }
+
     override fun setRepeatMode(mode: Int) {
-        connectionManager.playerConnection.value?.player?.repeatMode = mode
+        val connection = connectionManager.playerConnection.value ?: return
+        scope.launch(Dispatchers.Main.immediate) {
+            connection.player.repeatMode = mode
+        }
     }
+
+    private data class Quint<A, B, C, D, E>(
+        val first: A,
+        val second: B,
+        val third: C,
+        val fourth: D,
+        val fifth: E
+    )
 }
+
