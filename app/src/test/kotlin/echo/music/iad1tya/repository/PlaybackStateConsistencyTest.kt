@@ -24,13 +24,12 @@ class PlaybackStateConsistencyTest {
     private val testScope = TestScope()
     private val connectionManager = mockk<PlayerConnectionManager>()
     private val playerConnection = mockk<PlayerConnection>()
-    private val player = mockk<androidx.media3.exoplayer.ExoPlayer>()
 
     @Test
     fun `test authoritative state transitions`() = testScope.runTest {
         val playerConnectionFlow = MutableStateFlow<PlayerConnection?>(playerConnection)
         every { connectionManager.playerConnection } returns playerConnectionFlow
-        
+
         val isPlayingFlow = MutableStateFlow(false)
         val metaFlow = MutableStateFlow<MediaMetadata?>(null)
         val posFlow = MutableStateFlow(0L)
@@ -50,16 +49,16 @@ class PlaybackStateConsistencyTest {
         every { playerConnection.technicalTelemetry } returns telemetryFlow
         every { playerConnection.aiDjCommentary } returns aiCommentaryFlow
         every { playerConnection.audioFormat } returns audioFormatFlow
-        every { playerConnection.player } returns player
-        
-        every { player.bufferedPosition } returns 0L
-        every { player.currentTimeline } returns androidx.media3.common.Timeline.EMPTY
-        every { player.currentMediaItemIndex } returns -1
-        every { player.volume } returns 1f
-        every { player.audioSessionId } returns 789
-        
+
+        // Thread-safe snapshot flows (no direct player access needed by repository).
+        every { playerConnection.audioSessionId } returns MutableStateFlow(789)
+        every { playerConnection.bufferedPosition } returns MutableStateFlow(0L)
+        every { playerConnection.playerVolume } returns MutableStateFlow(1f)
+        every { playerConnection.playerQueue } returns MutableStateFlow(emptyList())
+        every { playerConnection.currentMediaItemIndex } returns MutableStateFlow(-1)
+
         val repository = PlaybackRepositoryImpl(connectionManager, backgroundScope)
-        
+
         // Initial state
         var state = repository.playbackState.value
         assertFalse(state.isPlaying)
@@ -80,7 +79,7 @@ class PlaybackStateConsistencyTest {
         aiCommentaryFlow.value = "Neural logic active."
         state = repository.playbackState.first { it.aiDjCommentary != null }
         assertEquals("Neural logic active.", state.aiDjCommentary)
-        
+
         // Ensure state is unified
         assertEquals("test_id", state.currentSong?.id)
         assertTrue(state.isPlaying)

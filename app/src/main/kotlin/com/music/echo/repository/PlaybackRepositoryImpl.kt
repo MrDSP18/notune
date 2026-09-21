@@ -7,10 +7,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 import javax.inject.Singleton
-import echo.music.iad1tya.extensions.metadata
 import echo.music.iad1tya.models.MediaMetadata
 import echo.music.iad1tya.models.TechnicalTelemetry
 
+/**
+ * Thread-safe implementation of [PlaybackRepository].
+ *
+ * All player state is consumed from thread-safe [StateFlow]s exposed by [PlayerConnection]
+ * that are exclusively updated by [Player.Listener] callbacks on the main thread.
+ *
+ * NO direct access to `connection.player.*` is permitted here — this repository runs its
+ * [StateFlow] pipeline on [ApplicationScope] which is backed by [Dispatchers.Default].
+ */
 @Singleton
 class PlaybackRepositoryImpl @Inject constructor(
     private val connectionManager: PlayerConnectionManager,
@@ -20,8 +28,13 @@ class PlaybackRepositoryImpl @Inject constructor(
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     override val playbackState: StateFlow<PlaybackState> = connectionManager.playerConnection
         .flatMapLatest { connection ->
-            if (connection == null) flowOf(PlaybackState())
-            else combine(
+            if (connection == null) return@flatMapLatest flowOf(PlaybackState())
+
+            // All sources below are StateFlows updated exclusively on the main thread.
+            // The combine operator itself runs on whichever thread emits, but because
+            // all of these flows are backed by MutableStateFlow (thread-safe), reading
+            // their values inside this block is safe on any dispatcher.
+            combine(
                 connection.mediaMetadata,
                 connection.isPlaying,
                 connection.position,
@@ -30,42 +43,29 @@ class PlaybackRepositoryImpl @Inject constructor(
                 connection.repeatMode,
                 connection.technicalTelemetry,
                 connection.audioFormat,
-                connection.aiDjCommentary
+                connection.aiDjCommentary,
+                // Thread-safe snapshot flows — populated by Player.Listener on main thread.
+                connection.audioSessionId,
+                connection.bufferedPosition,
+                connection.playerVolume,
+                connection.playerQueue,
+                connection.currentMediaItemIndex
             ) { array ->
-                val metadata = array[0] as? MediaMetadata
-                val isPlaying = array[1] as Boolean
-                val pos = array[2] as Long
-                val dur = array[3] as Long
-                val shuffle = array[4] as Boolean
-                val repeat = array[5] as Int
-                val telemetry = array[6] as TechnicalTelemetry
-                val format = array[7] as? androidx.media3.common.Format
-                val aiCommentary = array[8] as? String
-
-                val audioSessionId = try {
-                    connection.player.audioSessionId.takeIf { it != androidx.media3.common.C.AUDIO_SESSION_ID_UNSET }
-                } catch (e: Throwable) { null }
-
-                val bufferedPosition = try {
-                    connection.player.bufferedPosition
-                } catch (e: Throwable) { 0L }
-
-                val queueIndex = try {
-                    connection.player.currentMediaItemIndex
-                } catch (e: Throwable) { -1 }
-
-                val volume = try {
-                    connection.player.volume
-                } catch (e: Throwable) { 1f }
-
-                val queue = try {
-                    val qList = mutableListOf<MediaMetadata>()
-                    val timeline = connection.player.currentTimeline
-                    for (i in 0 until timeline.windowCount) {
-                        timeline.getWindow(i, androidx.media3.common.Timeline.Window()).mediaItem.metadata?.let { qList.add(it) }
-                    }
-                    qList
-                } catch (e: Throwable) { emptyList() }
+                val metadata      = array[0] as? MediaMetadata
+                val isPlaying     = array[1] as Boolean
+                val pos           = array[2] as Long
+                val dur           = array[3] as Long
+                val shuffle       = array[4] as Boolean
+                val repeat        = array[5] as Int
+                val telemetry     = array[6] as TechnicalTelemetry
+                val format        = array[7] as? androidx.media3.common.Format
+                val aiCommentary  = array[8] as? String
+                val audioSessId   = array[9] as? Int
+                val buffered      = array[10] as Long
+                val volume        = array[11] as Float
+                @Suppress("UNCHECKED_CAST")
+                val queue         = array[12] as List<MediaMetadata>
+                val queueIndex    = array[13] as Int
 
                 val updatedTelemetry = if (format != null) {
                     telemetry.copy(
@@ -74,12 +74,10 @@ class PlaybackRepositoryImpl @Inject constructor(
                         codec = format.sampleMimeType?.substringAfter("audio/")?.uppercase(),
                         mimeType = format.sampleMimeType,
                         channelCount = if (format.channelCount != androidx.media3.common.Format.NO_VALUE) format.channelCount else null,
-                        audioSessionId = audioSessionId
+                        audioSessionId = audioSessId
                     )
                 } else {
-                    telemetry.copy(
-                         audioSessionId = audioSessionId
-                    )
+                    telemetry.copy(audioSessionId = audioSessId)
                 }
 
                 PlaybackState(
@@ -87,7 +85,7 @@ class PlaybackRepositoryImpl @Inject constructor(
                     isPlaying = isPlaying,
                     position = pos,
                     duration = dur,
-                    bufferedPosition = bufferedPosition,
+                    bufferedPosition = buffered,
                     queue = queue,
                     queueIndex = queueIndex,
                     shuffleModeEnabled = shuffle,
@@ -101,25 +99,13 @@ class PlaybackRepositoryImpl @Inject constructor(
             }
         }.stateIn(scope, SharingStarted.WhileSubscribed(5000), PlaybackState())
 
-    override fun play() { connectionManager.playerConnection.value?.play() }
-    override fun pause() { connectionManager.playerConnection.value?.pause() }
-    override fun next() { connectionManager.playerConnection.value?.seekToNext() }
-    override fun previous() { connectionManager.playerConnection.value?.seekToPrevious() }
-    override fun seekTo(position: Long) { connectionManager.playerConnection.value?.seekTo(position) }
-
-    override fun setVolume(volume: Float) {
-        val connection = connectionManager.playerConnection.value ?: return
-        try { connection.player.volume = volume } catch (e: Throwable) {}
-    }
-
-    override fun setShuffleMode(enabled: Boolean) {
-        val connection = connectionManager.playerConnection.value ?: return
-        try { connection.player.shuffleModeEnabled = enabled } catch (e: Throwable) {}
-    }
-
-    override fun setRepeatMode(mode: Int) {
-        val connection = connectionManager.playerConnection.value ?: return
-        try { connection.player.repeatMode = mode } catch (e: Throwable) {}
-    }
+    // Control methods — PlayerConnection.runOnMain ensures these dispatch to the main thread.
+    override fun play()                      { connectionManager.playerConnection.value?.play() }
+    override fun pause()                     { connectionManager.playerConnection.value?.pause() }
+    override fun next()                      { connectionManager.playerConnection.value?.seekToNext() }
+    override fun previous()                  { connectionManager.playerConnection.value?.seekToPrevious() }
+    override fun seekTo(position: Long)      { connectionManager.playerConnection.value?.seekTo(position) }
+    override fun setVolume(volume: Float)    { connectionManager.playerConnection.value?.setVolume(volume) }
+    override fun setShuffleMode(enabled: Boolean) { connectionManager.playerConnection.value?.setShuffleModeEnabled(enabled) }
+    override fun setRepeatMode(mode: Int)    { connectionManager.playerConnection.value?.setRepeatMode(mode) }
 }
-

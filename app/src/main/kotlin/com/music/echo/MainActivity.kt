@@ -748,7 +748,7 @@ class MainActivity : ComponentActivity() {
                             if (playerBottomSheetState.isExpanded) {
                                 playerBottomSheetState.collapseSoft()
                             }
-                            connection.player.shuffleModeEnabled = !connection.player.shuffleModeEnabled
+                            connection.setShuffleModeEnabled(!connection.shuffleModeEnabled.value)
                         }
                     }
                 }

@@ -187,6 +187,13 @@ class PlayerConnection(
 
     val audioFormat = MutableStateFlow<androidx.media3.common.Format?>(null)
 
+    // Thread-safe snapshots updated via Player.Listener (always on the main thread).
+    // Consume these instead of accessing connection.player.* directly from background threads.
+    val audioSessionId = MutableStateFlow<Int?>(null)
+    val bufferedPosition = MutableStateFlow(0L)
+    val playerVolume = MutableStateFlow(1f)
+    val playerQueue = MutableStateFlow<List<echo.music.iad1tya.models.MediaMetadata>>(emptyList())
+
     var shouldBlockPlaybackChanges: (() -> Boolean)? = null
     
     
@@ -231,7 +238,6 @@ class PlayerConnection(
         attachedPlayer = newPlayer
         newPlayer.addListener(this)
         
-        
         playbackState.value = newPlayer.playbackState
         playWhenReady.value = newPlayer.playWhenReady
         mediaMetadata.value = newPlayer.currentMetadata
@@ -241,13 +247,42 @@ class PlayerConnection(
         currentMediaItemIndex.value = newPlayer.currentMediaItemIndex
         shuffleModeEnabled.value = newPlayer.shuffleModeEnabled
         repeatMode.value = newPlayer.repeatMode
-        
-        val audioTrack = newPlayer.currentTracks.groups.firstOrNull { it.type == androidx.media3.common.C.TRACK_TYPE_AUDIO && it.isSelected }
+
+        val audioTrack = newPlayer.currentTracks.groups.firstOrNull {
+            it.type == androidx.media3.common.C.TRACK_TYPE_AUDIO && it.isSelected
+        }
         audioFormat.value = audioTrack?.getTrackFormat(0)
+
+        // Snapshot thread-safe properties (called on main thread from service playerFlow)
+        syncPlayerSnapshot(newPlayer)
 
         Timber.tag(TAG).d("Attached to new player instance: $newPlayer")
         
         startSponsorBlockPolling()
+    }
+
+    /**
+     * Refresh the thread-safe snapshot flows from the player.
+     * MUST be called only on the main thread (from Player.Listener callbacks or service init).
+     */
+    private fun syncPlayerSnapshot(p: Player) {
+        val sessionId = try {
+            (p as? ExoPlayer)?.audioSessionId
+                ?.takeIf { it != androidx.media3.common.C.AUDIO_SESSION_ID_UNSET }
+        } catch (_: Throwable) { null }
+        audioSessionId.value = sessionId
+
+        bufferedPosition.value = try { p.bufferedPosition } catch (_: Throwable) { 0L }
+        playerVolume.value = try { p.volume } catch (_: Throwable) { 1f }
+        playerQueue.value = try {
+            val list = mutableListOf<echo.music.iad1tya.models.MediaMetadata>()
+            val timeline = p.currentTimeline
+            for (i in 0 until timeline.windowCount) {
+                timeline.getWindow(i, androidx.media3.common.Timeline.Window())
+                    .mediaItem.metadata?.let { list.add(it) }
+            }
+            list
+        } catch (_: Throwable) { emptyList() }
     }
 
     fun playQueue(queue: Queue) {
@@ -332,6 +367,30 @@ class PlayerConnection(
             service.toggleLibrary()
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Error in toggleLibrary")
+        }
+    }
+
+    fun setVolume(volume: Float) {
+        runOnMain {
+            try { player.volume = volume } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in setVolume")
+            }
+        }
+    }
+
+    fun setShuffleModeEnabled(enabled: Boolean) {
+        runOnMain {
+            try { player.shuffleModeEnabled = enabled } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in setShuffleModeEnabled")
+            }
+        }
+    }
+
+    fun setRepeatMode(mode: Int) {
+        runOnMain {
+            try { player.repeatMode = mode } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in setRepeatMode")
+            }
         }
     }
 
@@ -472,6 +531,7 @@ class PlayerConnection(
     override fun onPlaybackStateChanged(state: Int) {
         playbackState.value = state
         error.value = player.playerError
+        syncPlayerSnapshot(player)
     }
 
     override fun onPlayWhenReadyChanged(
@@ -479,6 +539,7 @@ class PlayerConnection(
         reason: Int,
     ) {
         playWhenReady.value = newPlayWhenReady
+        syncPlayerSnapshot(player)
     }
 
     override fun onMediaItemTransition(
@@ -489,6 +550,7 @@ class PlayerConnection(
         currentMediaItemIndex.value = player.currentMediaItemIndex
         currentWindowIndex.value = player.getCurrentQueueIndex()
         updateCanSkipPreviousAndNext()
+        syncPlayerSnapshot(player)
     }
 
     override fun onTimelineChanged(
@@ -501,6 +563,7 @@ class PlayerConnection(
         currentMediaItemIndex.value = player.currentMediaItemIndex
         currentWindowIndex.value = player.getCurrentQueueIndex()
         updateCanSkipPreviousAndNext()
+        syncPlayerSnapshot(player)
     }
 
     override fun onShuffleModeEnabledChanged(enabled: Boolean) {
@@ -508,6 +571,7 @@ class PlayerConnection(
         queueWindows.value = player.getQueueWindows()
         currentWindowIndex.value = player.getCurrentQueueIndex()
         updateCanSkipPreviousAndNext()
+        syncPlayerSnapshot(player)
     }
 
     override fun onRepeatModeChanged(mode: Int) {

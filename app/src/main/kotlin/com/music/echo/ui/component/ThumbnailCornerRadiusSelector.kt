@@ -37,6 +37,7 @@ fun ThumbnailCornerRadiusModal(
     onRadiusSelected: (Float) -> Unit
 ) {
     var thumbnailCornerRadius by remember { mutableFloatStateOf(initialRadius) }
+    val scope = rememberCoroutineScope()
     val presetValues = listOf(0f, 8f, 16f, 24f, 32f, 40f)
     var customValue by remember { mutableStateOf("") }
     var isCustomSelected by remember { mutableStateOf(false) }
@@ -301,7 +302,7 @@ fun ThumbnailCornerRadiusModal(
 
                         Button(
                             onClick = {
-                                CoroutineScope(Dispatchers.IO).launch {
+                                scope.launch(kotlinx.coroutines.Dispatchers.IO) {
                                     onRadiusSelected(thumbnailCornerRadius)
                                 }
                             },

@@ -176,7 +176,6 @@ constructor(
             isSpotifySyncing.value = false
             true
         } catch (e: Exception) {
-            e.printStackTrace()
             Timber.e(e, "Spotify sync error")
             isSpotifySyncing.value = false
             false

@@ -3310,7 +3310,7 @@ class MusicService :
         }
 
         if (playbackStats.totalPlayTimeMs >= historyDurationMs) {
-            CoroutineScope(Dispatchers.IO).launch {
+            scope.launch(Dispatchers.IO) {
                 val playbackUrl = database.format(mediaItem.mediaId).first()?.playbackUrl
                     ?: YTPlayerUtils.playerResponseForMetadata(mediaItem.mediaId, null)
                         .getOrNull()?.playbackTracking?.videostatsPlaybackUrl?.baseUrl
@@ -3318,11 +3318,11 @@ class MusicService :
                     YouTube.registerPlayback(null, playbackUrl)
                         .onFailure {
                             reportException(it)
-                    }
+                        }
+                }
             }
         }
     }
-}
 
     private fun saveQueueToDisk() {
         if (player.mediaItemCount == 0) {
@@ -3461,13 +3461,13 @@ class MusicService :
         try {
             unregisterReceiver(screenStateReceiver)
         } catch (e: Exception) {
-            
-    }
+            Timber.tag(TAG).w(e, "Failed to unregister screenStateReceiver")
+        }
         audioManager.unregisterAudioDeviceCallback(audioDeviceCallback)
         castConnectionHandler?.release()
         if (dataStore.get(PersistentQueueKey, true)) {
             saveQueueToDisk()
-    }
+        }
         DiscordPresenceManager.stop()
         connectivityObserver.unregister()
         releaseWifiLock()
@@ -3479,20 +3479,17 @@ class MusicService :
             Timber.tag(TAG).d(e, "Failed releasing fading enhancer on destroy")
         } finally {
             fadingLoudnessEnhancer = null
-    }
+        }
         mediaSession.release()
         player.removeListener(this)
         player.removeListener(sleepTimer)
         playerSilenceProcessors.remove(player)
         playerStereoWideners.remove(player)
-        
-        
-        
         player.release()
         discordUpdateJob?.cancel()
         scope.cancel()
         super.onDestroy()
-}
+    }
 
     override fun onBind(intent: Intent?) = super.onBind(intent) ?: binder
 
