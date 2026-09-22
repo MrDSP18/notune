@@ -1162,7 +1162,7 @@ class MusicService :
             .setRenderersFactory(createRenderersFactory(eqProcessor, silenceProcessor, duckProcessor, stereoWidener))
             .setLoadControl(
                 DefaultLoadControl.Builder()
-                    .setBufferDurationsMs(25_000, 60_000, 1_000, 1_500)
+                    .setBufferDurationsMs(2_500, 30_000, 1_000, 1_500)
                     .setPrioritizeTimeOverSizeThresholds(true)
                     .build()
             )
