@@ -98,7 +98,16 @@ constructor(
                                         }
                                     }
                                 })
-                                .proxy(YouTube.proxy)
+                                 .addInterceptor { chain ->
+                                     val originalRequest = chain.request()
+                                     val cookie = com.music.innertube.YouTube.cookie
+                                     if (!cookie.isNullOrEmpty() && originalRequest.header("Cookie") == null) {
+                                         chain.proceed(originalRequest.newBuilder().header("Cookie", cookie).build())
+                                     } else {
+                                         chain.proceed(originalRequest)
+                                     }
+                                 }
+                                 .proxy(YouTube.proxy)
                                 .proxyAuthenticator { _, response ->
                                     YouTube.proxyAuth?.let { auth ->
                                         response.request.newBuilder()
