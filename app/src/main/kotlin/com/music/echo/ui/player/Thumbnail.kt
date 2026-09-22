@@ -138,11 +138,11 @@ private fun calculateThumbnailDimensions(
     cornerRadius: Dp = 2.dp, // Sharper for Nothing
     isLandscape: Boolean = false
 ): ThumbnailDimensions {
-    
+    val maxAllowedHeight = if (isLandscape) containerHeight else (containerHeight - 180.dp).coerceAtLeast(140.dp)
     val effectiveSize = if (isLandscape) {
-        minOf(containerWidth, containerHeight) - (horizontalPadding * 2)
+        (minOf(containerWidth, containerHeight) - (horizontalPadding * 2)).coerceAtLeast(120.dp)
     } else {
-        containerWidth - (horizontalPadding * 2)
+        minOf(containerWidth - (horizontalPadding * 2), maxAllowedHeight).coerceAtLeast(140.dp)
     }
     return ThumbnailDimensions(
         itemWidth = containerWidth,

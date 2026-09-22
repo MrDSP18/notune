@@ -2,9 +2,8 @@ package com.music.echo.notune.social.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,20 +15,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.music.echo.notune.social.model.MusicStory
-import com.music.echo.notune.social.repository.SocialRepository
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.music.echo.notune.theme.NoTuneAmbientCanvas
 import com.music.echo.notune.theme.NoTuneSurfaceCard
+import com.music.echo.viewmodels.SocialFeedViewModel
 import echo.music.iad1tya.constants.CardStyleVariant
+import echo.music.iad1tya.models.PostContent
+import echo.music.iad1tya.models.SocialPost
 
 @Composable
 fun MusicStoriesScreen(
-    socialRepository: SocialRepository = remember { SocialRepository() },
+    socialFeedViewModel: SocialFeedViewModel = hiltViewModel(),
     onDismiss: () -> Unit = {}
 ) {
-    val stories by socialRepository.stories.collectAsState()
-    var selectedStoryIndex by remember { mutableIntStateOf(0) }
-    val currentStory = stories.getOrNull(selectedStoryIndex) ?: stories.first()
+    val posts by socialFeedViewModel.feed.collectAsState()
 
     Box(
         modifier = Modifier
@@ -56,104 +55,53 @@ fun MusicStoriesScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "24-HOUR MUSIC STORIES",
+                        text = "SOCIAL ACTIVITY",
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp),
                         color = MaterialTheme.colorScheme.primary
                     )
-                    Text("Friend Music Stories", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                    Text("Cached community activity", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
                 }
             }
 
-            // Story Avatars Row
-            LazyRow(
+            if (posts.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        "No social activity is cached on this device yet.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                return@Column
+            }
+
+            LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.weight(1f)
             ) {
-                items(stories.indices.toList()) { idx ->
-                    val story = stories[idx]
-                    val isSelected = idx == selectedStoryIndex
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clip(CircleShape)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (isSelected) Brush.linearGradient(listOf(Color(0xFFFF007A), Color(0xFF7C4DFF)))
-                                    else Brush.linearGradient(listOf(Color.Gray, Color.DarkGray))
-                                )
-                                .padding(3.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surface),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(story.authorName.take(1).uppercase(), fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(story.authorName, style = MaterialTheme.typography.labelSmall, fontSize = 10.sp)
-                    }
+                items(posts, key = { it.id }) { post ->
+                    ActivityCard(post)
                 }
             }
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Main Story Preview Card
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 16.dp)
-            ) {
-                NoTuneSurfaceCard(cardStyle = CardStyleVariant.GLASS, modifier = Modifier.fillMaxSize()) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("👤 ${currentStory.authorName}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("• ${currentStory.timestampText}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                            Box(
-                                modifier = Modifier
-                                    .size(140.dp)
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(Brush.linearGradient(listOf(Color(0xFF00C6FF), Color(0xFF0072FF)))),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("🎵", fontSize = 60.sp)
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Text(currentStory.songTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                            Text(currentStory.artistName, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-                            if (!currentStory.caption.isNullOrBlank()) {
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Text("\"${currentStory.caption}\"", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                            }
-                        }
-
-                        // Reactions Bar
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            IconButton(onClick = {}) { Text("❤️", fontSize = 24.sp) }
-                            IconButton(onClick = {}) { Text("🔥", fontSize = 24.sp) }
-                            IconButton(onClick = {}) { Text("🥹", fontSize = 24.sp) }
-                            IconButton(onClick = {}) { Text("🤯", fontSize = 24.sp) }
-                        }
-                    }
-                }
+@Composable
+private fun ActivityCard(post: SocialPost) {
+    NoTuneSurfaceCard(cardStyle = CardStyleVariant.GLASS, modifier = Modifier.fillMaxWidth()) {
+        Column {
+            Text(post.author.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(post.createdAt.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (post.caption.isNotBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(post.caption, style = MaterialTheme.typography.bodyMedium)
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
+            (post.content as? PostContent.Song)?.let { song ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(song.metadata.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(song.metadata.artists.joinToString { it.name }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
     }
 }

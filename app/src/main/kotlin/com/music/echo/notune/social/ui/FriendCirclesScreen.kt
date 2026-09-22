@@ -4,37 +4,29 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.music.echo.notune.social.model.MusicChallenge
-import com.music.echo.notune.social.repository.SocialRepository
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.music.echo.notune.theme.NoTuneAmbientCanvas
 import com.music.echo.notune.theme.NoTuneSurfaceCard
+import com.music.echo.viewmodels.FriendsViewModel
 import echo.music.iad1tya.constants.CardStyleVariant
+import echo.music.iad1tya.models.SocialUser
 
 @Composable
 fun FriendCirclesScreen(
-    socialRepository: SocialRepository = remember { SocialRepository() },
+    friendsViewModel: FriendsViewModel = hiltViewModel(),
     onNavigateToListenTogether: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
-    val circles by socialRepository.circles.collectAsState()
-    val polls by socialRepository.polls.collectAsState()
-
-    val challenges = remember {
-        listOf(
-            MusicChallenge(1, "Day 1", "Song that reminds you of childhood", "Until I Found You"),
-            MusicChallenge(2, "Day 2", "Song that gives you goosebumps every time", "Kesariya"),
-            MusicChallenge(3, "Day 3", "One song you never skip", "Starboy")
-        )
-    }
+    val friends by friendsViewModel.friends.collectAsState()
+    val requests by friendsViewModel.friendRequests.collectAsState()
+    val mutationError by friendsViewModel.mutationError.collectAsState()
 
     Box(
         modifier = Modifier
@@ -74,79 +66,83 @@ fun FriendCirclesScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                // Squad Circles Section
-                item {
-                    Text("👥 FRIEND CIRCLES", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                }
-
-                items(circles) { circle ->
-                    NoTuneSurfaceCard(cardStyle = CardStyleVariant.GLASS, modifier = Modifier.fillMaxWidth()) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(circle.emoji, fontSize = 28.sp)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(circle.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                Text("${circle.membersCount} Members • Shared Queue: ${circle.sharedPlaylistName}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            Button(
-                                onClick = onNavigateToListenTogether,
-                                shape = RoundedCornerShape(10.dp)
+                mutationError?.let { error ->
+                    item {
+                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("📻 Room", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text(error, modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
+                                TextButton(onClick = friendsViewModel::clearMutationError) { Text("DISMISS") }
                             }
                         }
                     }
                 }
-
-                // Interactive Music Polls
                 item {
-                    Text("🗳️ MUSIC POLLS", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Text("FRIEND NODES", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 }
 
-                items(polls) { poll ->
-                    NoTuneSurfaceCard(cardStyle = CardStyleVariant.GLASS, modifier = Modifier.fillMaxWidth()) {
-                        Column {
-                            Text(poll.question, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text("Created by ${poll.creatorName} • ${poll.totalVotes} votes", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            poll.options.forEach { opt ->
-                                val pct = if (poll.totalVotes > 0) (opt.votes * 100) / poll.totalVotes else 0
-                                OutlinedButton(
-                                    onClick = { socialRepository.votePoll(poll.id, opt.id) },
-                                    enabled = !poll.isVoted,
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
-                                    shape = RoundedCornerShape(8.dp)
-                                ) {
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text(opt.text, fontWeight = FontWeight.Bold)
-                                        Text("$pct% (${opt.votes})", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                                    }
-                                }
-                            }
-                        }
+                if (friends.isEmpty()) {
+                    item {
+                        SocialEmptyState("No friends are cached on this device yet.")
+                    }
+                } else {
+                    items(friends, key = { it.id }) { friend ->
+                        FriendNode(friend = friend, onNavigateToListenTogether = onNavigateToListenTogether)
                     }
                 }
 
-                // 30-Day Music Challenges
-                item {
-                    Text("🎲 30-DAY MUSIC CHALLENGES", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                }
-
-                items(challenges) { ch ->
-                    NoTuneSurfaceCard(cardStyle = CardStyleVariant.GLASS, modifier = Modifier.fillMaxWidth()) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("🏆", fontSize = 24.sp)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("${ch.title}: ${ch.prompt}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                                Text("Your Pick: ${ch.completedSongTitle ?: "Not answered yet"}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                            }
-                        }
+                if (requests.isNotEmpty()) {
+                    item {
+                        Text("FRIEND REQUESTS", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    }
+                    items(requests, key = { it.id }) { request ->
+                        FriendRequestNode(
+                            request = request,
+                            onAccept = { friendsViewModel.acceptRequest(request.id) },
+                            onReject = { friendsViewModel.rejectRequest(request.id) }
+                        )
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun FriendNode(friend: SocialUser, onNavigateToListenTogether: () -> Unit) {
+    NoTuneSurfaceCard(cardStyle = CardStyleVariant.GLASS, modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(friend.displayName.take(1).uppercase(), fontSize = 28.sp)
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(friend.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(friend.presence?.state?.name ?: "OFFLINE", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Button(onClick = onNavigateToListenTogether) {
+                Text("ROOM", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FriendRequestNode(request: SocialUser, onAccept: () -> Unit, onReject: () -> Unit) {
+    NoTuneSurfaceCard(cardStyle = CardStyleVariant.GLASS, modifier = Modifier.fillMaxWidth()) {
+        Column {
+            Text(request.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = onAccept) { Text("ACCEPT") }
+                OutlinedButton(onClick = onReject) { Text("REJECT") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SocialEmptyState(message: String) {
+    NoTuneSurfaceCard(cardStyle = CardStyleVariant.GLASS, modifier = Modifier.fillMaxWidth()) {
+        Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

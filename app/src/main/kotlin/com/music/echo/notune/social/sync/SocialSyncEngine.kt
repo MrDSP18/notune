@@ -5,7 +5,6 @@ import echo.music.iad1tya.db.entities.PendingSocialActionEntity
 import echo.music.iad1tya.utils.NetworkConnectivityObserver
 import io.ktor.client.*
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -37,17 +36,15 @@ class SocialSyncEngine @Inject constructor(
                     database.socialDao.deletePendingAction(action)
                 } else {
                     Timber.tag("SocialSync").e("Failed to sync action: ${action.actionType}")
-                    delay(5000) // Backoff
-                    break 
+                    break
                 }
             }
         }
     }
 
     private suspend fun performRemoteAction(action: PendingSocialActionEntity): Result<Unit> = runCatching {
-        // Here we would call the actual backend API using httpClient
-        // For now, we simulate a successful sync
-        Timber.tag("SocialSync").d("Syncing action: ${action.actionType} for ${action.targetId}")
-        delay(100)
+        throw UnsupportedOperationException(
+            "Social backend transport is not configured; pending actions must remain in the outbox."
+        )
     }
 }

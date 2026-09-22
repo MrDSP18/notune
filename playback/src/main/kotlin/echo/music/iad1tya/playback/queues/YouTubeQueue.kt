@@ -26,14 +26,16 @@ class YouTubeQueue(
             for (attempt in 0..maxRetries) {
                 try {
                     val nextResult = YouTube.next(endpoint, continuation).getOrThrow()
-                    endpoint = nextResult.endpoint
-                    continuation = nextResult.continuation
-                    retryCount = 0
-                    return@withContext Queue.Status(
-                        title = nextResult.title,
-                        items = nextResult.items.map { it.toMediaItem() },
-                        mediaItemIndex = nextResult.currentIndex ?: 0,
-                    )
+                    if (nextResult.items.isNotEmpty()) {
+                        endpoint = nextResult.endpoint
+                        continuation = nextResult.continuation
+                        retryCount = 0
+                        return@withContext Queue.Status(
+                            title = nextResult.title,
+                            items = nextResult.items.map { it.toMediaItem() },
+                            mediaItemIndex = nextResult.currentIndex ?: 0,
+                        )
+                    }
                 } catch (e: Exception) {
                     lastException = e
                     
@@ -44,6 +46,13 @@ class YouTubeQueue(
                         )
                     }
                 }
+            }
+            if (preloadItem != null) {
+                return@withContext Queue.Status(
+                    title = preloadItem.title,
+                    items = listOf(preloadItem.toMediaItem()),
+                    mediaItemIndex = 0
+                )
             }
             throw lastException ?: Exception("Failed to get initial status")
         }

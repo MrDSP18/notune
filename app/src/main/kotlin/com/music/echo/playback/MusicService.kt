@@ -2807,6 +2807,7 @@ class MusicService :
             return
     }
 
+        val wasPlaying = player.playWhenReady || player.isPlaying
         incrementRetryCount(mediaId)
 
         retryJob?.cancel()
@@ -2819,6 +2820,9 @@ class MusicService :
             val currentIndex = player.currentMediaItemIndex
             player.seekTo(currentIndex, 0)
             player.prepare()
+            if (wasPlaying && castConnectionHandler?.isCasting?.value != true) {
+                player.play()
+        }
 
             Timber.tag(TAG).d("Retrying playback for $mediaId after 416 error (from position 0)")
     }
@@ -2831,6 +2835,7 @@ class MusicService :
             return
     }
 
+        val wasPlaying = player.playWhenReady || player.isPlaying
         incrementRetryCount(mediaId)
 
         retryJob?.cancel()
@@ -2845,6 +2850,9 @@ class MusicService :
             val currentIndex = player.currentMediaItemIndex
             player.seekTo(currentIndex, currentPosition)
             player.prepare()
+            if (wasPlaying && castConnectionHandler?.isCasting?.value != true) {
+                player.play()
+        }
 
             Timber.tag(TAG).d("Retrying playback for $mediaId after page reload error")
     }
@@ -2857,6 +2865,7 @@ class MusicService :
             return
     }
 
+        val wasPlaying = player.playWhenReady || player.isPlaying
         incrementRetryCount(mediaId)
 
         
@@ -2878,6 +2887,9 @@ class MusicService :
             val currentIndex = player.currentMediaItemIndex
             player.seekTo(currentIndex, currentPosition)
             player.prepare()
+            if (wasPlaying && castConnectionHandler?.isCasting?.value != true) {
+                player.play()
+        }
 
             Timber.tag(TAG).d("Retrying playback for $mediaId after 403 error")
     }
@@ -2890,6 +2902,7 @@ class MusicService :
             return
     }
 
+        val wasPlaying = player.playWhenReady || player.isPlaying
         incrementRetryCount(mediaId)
 
         retryJob?.cancel()
@@ -2901,6 +2914,9 @@ class MusicService :
             val currentIndex = player.currentMediaItemIndex
             player.seekTo(currentIndex, currentPosition)
             player.prepare()
+            if (wasPlaying && castConnectionHandler?.isCasting?.value != true) {
+                player.play()
+        }
 
             Timber.tag(TAG).d("Retrying playback for $mediaId after generic IO error")
     }

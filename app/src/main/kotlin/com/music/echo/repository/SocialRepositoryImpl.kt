@@ -106,7 +106,22 @@ class SocialRepositoryImpl @Inject constructor(
     }
 
     override suspend fun blockUser(userId: String): Result<Unit> = runCatching {
-        // Implementation for blocking
+        val myId = accountRepository.account.value.userId
+        database.socialDao.deleteFriendship(myId, userId)
+        database.socialDao.insertFriendship(
+            FriendshipEntity(
+                id = "${myId}_$userId",
+                user1Id = myId,
+                user2Id = userId,
+                status = "BLOCKED"
+            )
+        )
+        database.socialDao.insertPendingAction(
+            PendingSocialActionEntity(
+                actionType = "BLOCK_USER",
+                targetId = userId
+            )
+        )
     }
 
     override fun getFeed(): Flow<List<SocialPost>> = database.socialDao.getFeed().map { entities ->
@@ -154,6 +169,11 @@ class SocialRepositoryImpl @Inject constructor(
     }
 
     override suspend fun unlikePost(postId: String): Result<Unit> = runCatching {
-        // implementation
+        database.socialDao.insertPendingAction(
+            PendingSocialActionEntity(
+                actionType = "UNLIKE_POST",
+                targetId = postId
+            )
+        )
     }
 }

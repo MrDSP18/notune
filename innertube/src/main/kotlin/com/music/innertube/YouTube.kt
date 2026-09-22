@@ -1229,11 +1229,22 @@ object YouTube {
             endpoint.params,
             continuation).body<NextResponse>()
         val playlistPanelRenderer = response.continuationContents?.playlistPanelContinuation
-            ?: response.contents.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer
-                ?.watchNextTabbedResultsRenderer?.tabs?.get(0)?.tabRenderer?.content?.musicQueueRenderer
-                ?.content?.playlistPanelRenderer!!
-        val title = response.contents.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer
-            ?.watchNextTabbedResultsRenderer?.tabs?.get(0)?.tabRenderer?.content?.musicQueueRenderer
+            ?: response.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer
+                ?.watchNextTabbedResultsRenderer?.tabs?.getOrNull(0)?.tabRenderer?.content?.musicQueueRenderer
+                ?.content?.playlistPanelRenderer
+        if (playlistPanelRenderer == null) {
+            return@runCatching NextResult(
+                title = null,
+                items = emptyList(),
+                currentIndex = null,
+                lyricsEndpoint = null,
+                relatedEndpoint = null,
+                continuation = null,
+                endpoint = endpoint
+            )
+        }
+        val title = response.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer
+            ?.watchNextTabbedResultsRenderer?.tabs?.getOrNull(0)?.tabRenderer?.content?.musicQueueRenderer
             ?.header?.musicQueueHeaderRenderer?.subtitle?.runs?.firstOrNull()?.text
         val items = playlistPanelRenderer.contents.mapNotNull { content ->
             content.playlistPanelVideoRenderer
