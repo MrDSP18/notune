@@ -3,6 +3,7 @@
 package echo.music.iad1tya.ui.player
 
 import android.annotation.SuppressLint
+import androidx.core.content.ContextCompat
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -213,7 +214,7 @@ fun Queue(
             addAction("android.media.AUDIO_BECOMING_NOISY")
         }
         
-        context.registerReceiver(receiver, filter)
+        ContextCompat.registerReceiver(context, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && callback != null) {
             audioManager.registerAudioDeviceCallback(callback, Handler(Looper.getMainLooper()))
         }

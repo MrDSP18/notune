@@ -61,7 +61,8 @@ class SecureStorageManager @Inject constructor(
     private fun getMasterKey(): SecretKey {
         val keyStore = KeyStore.getInstance(keyStoreType)
         keyStore.load(null)
-        val entry = keyStore.getEntry(keyAlias, null) as KeyStore.SecretKeyEntry
+        val entry = keyStore.getEntry(keyAlias, null) as? KeyStore.SecretKeyEntry
+            ?: throw IllegalStateException("No SecretKey entry found for alias: $keyAlias")
         return entry.secretKey
     }
 

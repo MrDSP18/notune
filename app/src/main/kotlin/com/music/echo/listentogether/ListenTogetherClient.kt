@@ -313,19 +313,19 @@ class ListenTogetherClient @Inject constructor(
         try {
             scope.launch {
                 context.dataStore.edit { preferences ->
-                    if (sessionToken != null) {
-                        preferences[ListenTogetherSessionTokenKey] = sessionToken!!
-                        preferences[ListenTogetherRoomCodeKey] = storedRoomCode ?: ""
-                        preferences[ListenTogetherUserIdKey] = _userId.value ?: ""
-                        preferences[ListenTogetherIsHostKey] = wasHost
-                        preferences[ListenTogetherSessionTimestampKey] = System.currentTimeMillis()
-                    }
+                    val token = sessionToken ?: return@edit
+                    preferences[ListenTogetherSessionTokenKey] = token
+                    preferences[ListenTogetherRoomCodeKey] = storedRoomCode ?: ""
+                    preferences[ListenTogetherUserIdKey] = _userId.value ?: ""
+                    preferences[ListenTogetherIsHostKey] = wasHost
+                    preferences[ListenTogetherSessionTimestampKey] = System.currentTimeMillis()
                 }
             }
         } catch (e: Exception) {
             log(LogLevel.ERROR, "Failed to save persisted session", e.message)
         }
     }
+
     
     
     private fun clearPersistedSession() {
@@ -466,7 +466,7 @@ class ListenTogetherClient @Inject constructor(
                 
                 if (sessionToken != null && storedRoomCode != null) {
                     log(LogLevel.INFO, "Attempting to reconnect to previous session", "Room: $storedRoomCode")
-                    sendMessage(MessageTypes.RECONNECT, ReconnectPayload(sessionToken!!))
+                    sendMessage(MessageTypes.RECONNECT, ReconnectPayload(sessionToken ?: return@onOpen))
                 } else {
                     
                     executePendingAction()
@@ -1065,7 +1065,9 @@ class ListenTogetherClient @Inject constructor(
                                 
                                 scope.launch {
                                     delay(500) 
-                                    joinRoom(storedRoomCode!!, storedUsername!!)
+                                    val rc = storedRoomCode ?: return@launch
+                                    val un = storedUsername ?: return@launch
+                                    joinRoom(rc, un)
                                 }
                             } else if (storedRoomCode != null && storedUsername != null) {
                                 

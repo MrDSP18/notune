@@ -24,6 +24,7 @@ import android.net.ConnectivityManager
 import android.os.Binder
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
 import androidx.datastore.preferences.core.edit
@@ -710,14 +711,15 @@ class MusicService :
         val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
         controllerFuture.addListener({ controllerFuture.get() }, MoreExecutors.directExecutor())
 
-        connectivityManager = getSystemService()!!
+        connectivityManager = getSystemService()
+            ?: throw IllegalStateException("ConnectivityManager unavailable")
         connectivityObserver = NetworkConnectivityObserver(this)
 
         val screenStateFilter = IntentFilter().apply {
             addAction(Intent.ACTION_SCREEN_ON)
             addAction(Intent.ACTION_SCREEN_OFF)
     }
-        registerReceiver(screenStateReceiver, screenStateFilter)
+        ContextCompat.registerReceiver(this, screenStateReceiver, screenStateFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
 
         audioManager.registerAudioDeviceCallback(audioDeviceCallback, null)
 
@@ -1560,7 +1562,7 @@ class MusicService :
         
         originalQueueSize = 0
         if (queue.preloadItem != null) {
-            player.setMediaItem(queue.preloadItem!!.toMediaItem())
+            queue.preloadItem?.let { player.setMediaItem(it.toMediaItem()) }
             player.prepare()
             player.playWhenReady = playWhenReady
     }
@@ -4517,7 +4519,7 @@ class MusicService :
                                 if (now - lastThermalCheck > 10000) {
                                     lastThermalCheck = now
                                     val batteryStatus: android.content.Intent? = try {
-                                        registerReceiver(null, IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
+                                        ContextCompat.registerReceiver(this@MusicService, null, IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED)
                                     } catch (e: Exception) { null }
                                     
                                     cachedTemp = batteryStatus?.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, 0)?.let { it / 10f } ?: 0f

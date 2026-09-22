@@ -2,6 +2,7 @@
 package echo.music.iad1tya.notune.ai
 
 import android.content.Context
+import androidx.core.content.ContextCompat
 import echo.music.iad1tya.constants.PreferredAiProviderKey
 import echo.music.iad1tya.notune.ai.providers.GeminiProvider
 import echo.music.iad1tya.notune.ai.providers.GroqProvider
@@ -160,7 +161,7 @@ class AiEngine @Inject constructor(
 
     private suspend fun getEnvironmentalContext(): String {
         val batteryStatus: android.content.Intent? = IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED).let { filter ->
-            context.registerReceiver(null, filter)
+            ContextCompat.registerReceiver(context, null, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         }
         val batteryPct = batteryStatus?.let { intent ->
             val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)

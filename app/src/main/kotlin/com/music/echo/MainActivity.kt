@@ -704,11 +704,11 @@ class MainActivity : ComponentActivity() {
                 val shouldShowNavigationBar = remember(currentRoute, navigationItemRoutes) {
                     currentRoute == null ||
                         navigationItemRoutes.contains(currentRoute) ||
-                        currentRoute!!.startsWith("search/") ||
-                        currentRoute!!.startsWith("album/") ||
-                        currentRoute!!.startsWith("online_playlist/") ||
-                        currentRoute!!.startsWith("local_playlist/") ||
-                        currentRoute!!.startsWith("artist/")
+                        currentRoute?.startsWith("search/") == true ||
+                        currentRoute?.startsWith("album/") == true ||
+                        currentRoute?.startsWith("online_playlist/") == true ||
+                        currentRoute?.startsWith("local_playlist/") == true ||
+                        currentRoute?.startsWith("artist/") == true
                 }
 
                 val isLandscape = configuration.containerDpSize.width > configuration.containerDpSize.height

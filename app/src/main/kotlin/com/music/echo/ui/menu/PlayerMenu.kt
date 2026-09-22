@@ -65,6 +65,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.exoplayer.offline.Download
@@ -135,9 +136,11 @@ fun PlayerMenu(
                 }
             }
         }
-        context.registerReceiver(
+        ContextCompat.registerReceiver(
+            context,
             volumeChangeReceiver,
-            android.content.IntentFilter("android.media.VOLUME_CHANGED_ACTION")
+            android.content.IntentFilter("android.media.VOLUME_CHANGED_ACTION"),
+            ContextCompat.RECEIVER_NOT_EXPORTED
         )
         onDispose {
             context.unregisterReceiver(volumeChangeReceiver)

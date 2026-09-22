@@ -358,7 +358,7 @@ constructor(
 
         val albums = tracks
             .filter { !it.albumId.isNullOrBlank() && !it.albumName.isNullOrBlank() }
-            .groupBy { it.albumId!! }
+            .groupBy { it.albumId ?: "" }
             .map { (albumId, albumTracks) ->
                 LocalAlbumRecord(
                     id = albumId,
