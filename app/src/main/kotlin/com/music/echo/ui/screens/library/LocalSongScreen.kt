@@ -66,7 +66,7 @@ fun LocalSongScreen(
                         Icon(painterResource(R.drawable.sync), contentDescription = null, tint = Color.White)
                     }
                 },
-                colors = TopAppBarDefaults.largeTopAppBarColors(containerColor = Color.Black, titleContentColor = Color.White),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black, titleContentColor = Color.White),
                 scrollBehavior = scrollBehavior
             )
         },

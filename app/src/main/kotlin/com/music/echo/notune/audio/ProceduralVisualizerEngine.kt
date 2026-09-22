@@ -48,7 +48,7 @@ class ProceduralVisualizerEngine {
                 AnimationLevel.FULL -> 80L
                 AnimationLevel.REDUCED -> 160L
                 AnimationLevel.MINIMAL -> 320L
-                else -> 80L
+                AnimationLevel.OFF -> 80L
             }
 
             while (playbackState.isPlaying) {
