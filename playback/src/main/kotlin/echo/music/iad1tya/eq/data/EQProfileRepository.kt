@@ -69,12 +69,64 @@ class EQProfileRepository @Inject constructor(
                 
                 val activeId = prefs.getString(KEY_ACTIVE_PROFILE_ID, null)
                 _activeProfile.value = loadedProfiles.find { it.id == activeId }
+            } else {
+                val defaultProfiles = getDefaultNotuneProfiles()
+                _profiles.value = defaultProfiles
+                _activeProfile.value = defaultProfiles.first()
+                prefs.edit { putString(KEY_ACTIVE_PROFILE_ID, defaultProfiles.first().id) }
             }
         } catch (e: Exception) {
             Log.e("EQProfileRepository", "Error loading EQ profiles", e)
-            _profiles.value = emptyList()
-            _activeProfile.value = null
+            val defaultProfiles = getDefaultNotuneProfiles()
+            _profiles.value = defaultProfiles
+            _activeProfile.value = defaultProfiles.first()
         }
+    }
+
+    private fun getDefaultNotuneProfiles(): List<SavedEQProfile> {
+        return listOf(
+            SavedEQProfile(
+                id = "preset_bass_punch_pro",
+                name = "NØTUNE Bass Punch Pro",
+                deviceModel = "All Headphones / Speakers",
+                preamp = -2.0,
+                isCustom = false,
+                isActive = true,
+                bands = listOf(
+                    ParametricEQBand(frequency = 50.0, gain = 6.5, q = 1.0, filterType = FilterType.LSC),
+                    ParametricEQBand(frequency = 105.0, gain = 4.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 250.0, gain = -1.5, q = 1.2, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 3500.0, gain = 2.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 8000.0, gain = 3.5, q = 1.0, filterType = FilterType.HSC)
+                )
+            ),
+            SavedEQProfile(
+                id = "preset_club_edm_bass",
+                name = "NØTUNE Club & EDM Bass",
+                deviceModel = "Subwoofer / Bass Boost",
+                preamp = -2.5,
+                isCustom = false,
+                isActive = false,
+                bands = listOf(
+                    ParametricEQBand(frequency = 40.0, gain = 8.0, q = 0.9, filterType = FilterType.LSC),
+                    ParametricEQBand(frequency = 90.0, gain = 5.5, q = 1.5, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 12000.0, gain = 4.0, q = 1.0, filterType = FilterType.HSC)
+                )
+            ),
+            SavedEQProfile(
+                id = "preset_vocal_acoustic",
+                name = "NØTUNE Vocal & Acoustic Pure",
+                deviceModel = "Studio Monitors / Earbuds",
+                preamp = -1.0,
+                isCustom = false,
+                isActive = false,
+                bands = listOf(
+                    ParametricEQBand(frequency = 80.0, gain = 2.0, q = 1.2, filterType = FilterType.LSC),
+                    ParametricEQBand(frequency = 1000.0, gain = 3.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 4000.0, gain = 2.5, q = 1.41, filterType = FilterType.PK)
+                )
+            )
+        )
     }
 
     
