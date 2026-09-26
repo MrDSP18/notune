@@ -100,6 +100,14 @@ fun MusicDnaInspectorScreen(
                     }
                 }
 
+                com.music.echo.notune.ui.components.NotuneMusicDnaView(
+                    energyLevel = (energyLevel * 100).toInt(),
+                    discoveryRate = 82,
+                    repetitionRate = 21,
+                    topLanguage = "Tamil (41%)",
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Key & Tempo Card Grid
