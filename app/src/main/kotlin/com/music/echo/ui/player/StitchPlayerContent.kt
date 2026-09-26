@@ -228,6 +228,67 @@ fun StitchPlayerContent(
             )
         }
 
+        Spacer(Modifier.height(16.dp))
+
+        // Up Next Track Preview Card
+        val nextSong = playbackState.queue.getOrNull(playbackState.queueIndex + 1)
+        if (nextSong != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.White.copy(alpha = 0.05f))
+                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                    .clickable { onNextClick() }
+                    .padding(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                AsyncImage(
+                    model = nextSong.thumbnailUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "UP NEXT",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = NothingFont,
+                            color = NothingRed,
+                            fontSize = 8.sp,
+                            letterSpacing = 1.sp
+                        )
+                    )
+                    Text(
+                        text = nextSong.title,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = nextSong.artists.joinToString { it.name },
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = Color.White.copy(alpha = 0.6f)
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Icon(
+                    painter = painterResource(R.drawable.skip_next),
+                    contentDescription = "Skip to Next",
+                    tint = Color.White.copy(alpha = 0.8f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
         Spacer(Modifier.weight(1f))
 
         // Controls
@@ -239,16 +300,16 @@ fun StitchPlayerContent(
             IconButton(onClick = onPreviousClick) {
                 Icon(
                     painter = painterResource(R.drawable.skip_previous),
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp),
+                    contentDescription = "Previous Song",
+                    modifier = Modifier.size(36.dp),
                     tint = Color.White
                 )
             }
 
             Box(
                 modifier = Modifier
-                    .size(80.dp)
-                    .border(2.dp, NothingRed, RoundedCornerShape(40.dp))
+                    .size(76.dp)
+                    .border(2.dp, NothingRed, RoundedCornerShape(38.dp))
                     .padding(4.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -256,11 +317,11 @@ fun StitchPlayerContent(
                     onClick = onPlayPauseClick,
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(NothingRed, RoundedCornerShape(40.dp))
+                        .background(NothingRed, RoundedCornerShape(38.dp))
                 ) {
                     Icon(
                         painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
-                        contentDescription = null,
+                        contentDescription = if (isPlaying) "Pause" else "Play",
                         modifier = Modifier.size(36.dp),
                         tint = Color.White
                     )
@@ -270,8 +331,8 @@ fun StitchPlayerContent(
             IconButton(onClick = onNextClick) {
                 Icon(
                     painter = painterResource(R.drawable.skip_next),
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp),
+                    contentDescription = "Next Song",
+                    modifier = Modifier.size(36.dp),
                     tint = Color.White
                 )
             }
