@@ -9,8 +9,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
 
 @Serializable
 data class ListenTogetherServer(
@@ -48,41 +51,103 @@ object ListenTogetherServers {
     )
 
     private val _servers = MutableStateFlow(DEFAULT_SERVERS)
-    
+    private var lastFetchTimestamp: Long = 0L
+    private const val MIN_FETCH_INTERVAL_MS = 10 * 60 * 1000L // 10 minutes cache window
+
     val serversFlow: StateFlow<List<ListenTogetherServer>> = _servers
 
     val servers: List<ListenTogetherServer>
         get() = _servers.value
 
     init {
+        refreshManifest()
+    }
+
+    fun refreshManifest(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (!force && (now - lastFetchTimestamp) < MIN_FETCH_INTERVAL_MS) {
+            return
+        }
+        
         scope.launch {
             try {
-                val client = okhttp3.OkHttpClient()
+                lastFetchTimestamp = System.currentTimeMillis()
+                val client = okhttp3.OkHttpClient.Builder()
+                    .connectTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
+                    .build()
                 val request = okhttp3.Request.Builder().url(SERVER_JSON_URL).build()
                 val response = client.newCall(request).execute()
-                response.body.string().let { jsonString ->
-                    val jsonObject = Json.parseToJsonElement(jsonString).jsonObject
-                    val name = jsonObject["name"]?.jsonPrimitive?.content
-                    val url = jsonObject["serverUrl"]?.jsonPrimitive?.content
-                    val region = jsonObject["region"]?.jsonPrimitive?.content ?: "Global"
-                    
-                    if (!url.isNullOrBlank() && url != "wss://devilmi-vivi-music-listen-together.hf.space") {
-                        val fetchedServer = ListenTogetherServer(
-                            name = name ?: "Custom Server",
-                            url = url,
-                            location = region,
-                            operator = "Remote Config"
-                        )
-                        val combined = (listOf(fetchedServer) + DEFAULT_SERVERS).distinctBy { it.url }
-                        _servers.value = combined
-                    }
+                val jsonString = response.body.string()
+                val parsedServers = parseManifest(jsonString)
+                if (parsedServers.isNotEmpty()) {
+                    val combined = (parsedServers + DEFAULT_SERVERS).distinctBy { it.url }
+                    _servers.value = combined
                 }
             } catch (e: Exception) {
-                // Keep default servers intact on error
+                // Keep existing servers intact on network error or offline mode
             }
         }
     }
 
+    private fun parseManifest(jsonString: String): List<ListenTogetherServer> {
+        val result = mutableListOf<ListenTogetherServer>()
+        try {
+            val jsonElement = Json.parseToJsonElement(jsonString)
+            val jsonObject = jsonElement.jsonObject
+
+            // 1. Structured Endpoints Array (Version 1+)
+            val endpointsElement = jsonObject["endpoints"]
+            if (endpointsElement is JsonArray) {
+                endpointsElement.forEach { element ->
+                    if (element is JsonObject) {
+                        val enabled = element["enabled"]?.jsonPrimitive?.content?.toBooleanStrictOrNull() ?: true
+                        val url = element["url"]?.jsonPrimitive?.content
+                        val name = element["name"]?.jsonPrimitive?.content ?: "Remote Server"
+                        val region = element["region"]?.jsonPrimitive?.content ?: "Global Edge"
+                        val type = element["type"]?.jsonPrimitive?.content ?: "PRIMARY"
+
+                        if (enabled && isValidServerUrl(url)) {
+                            result.add(
+                                ListenTogetherServer(
+                                    name = name,
+                                    url = url!!,
+                                    location = region,
+                                    operator = if (type.contains("EMERGENCY")) "Third-Party Fallback" else "NØTUNE Ecosystem"
+                                )
+                            )
+                        }
+                    }
+                }
+            } else {
+                // 2. Legacy Simple Manifest Fallback
+                val url = jsonObject["serverUrl"]?.jsonPrimitive?.content
+                val name = jsonObject["name"]?.jsonPrimitive?.content ?: "Custom Server"
+                val region = jsonObject["region"]?.jsonPrimitive?.content ?: "Global"
+
+                if (isValidServerUrl(url)) {
+                    result.add(
+                        ListenTogetherServer(
+                            name = name,
+                            url = url!!,
+                            location = region,
+                            operator = "Remote Config"
+                        )
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            // Ignore parse errors, return empty list to trigger fallback
+        }
+        return result
+    }
+
+    private fun isValidServerUrl(url: String?): Boolean {
+        if (url.isNullOrBlank()) return false
+        if (!url.startsWith("ws://") && !url.startsWith("wss://")) return false
+        if (url.contains("hf.space")) return false // Blacklist deprecated legacy test servers
+        return true
+    }
 
     val defaultServerUrl: String
         get() = servers.first().url

@@ -1,19 +1,21 @@
 # NØTUNE Backend Infrastructure & High-Scale Architecture
 
-This document outlines the architecture, cloud hosting strategies, and scalability targets for the NØTUNE Listen Together and Cloud Ecosystem.
+This document outlines the architecture, security hardening, cloud deployment strategies, and scalability targets for the NØTUNE Listen Together and Cloud Ecosystem.
 
-> [!NOTE]
-> **Scalability Target**: Designed to scale toward 100,000 concurrent connections, subject to load testing, cloud-provider quotas, networking limits, and workload characteristics.
+> [!IMPORTANT]
+> **Scalability Target**: Designed to scale toward 100,000 concurrent connections, subject to load testing, cloud-provider quotas, networking limits, database capacity, and workload characteristics.
+> 
+> *Do NOT treat 100,000 CCU as an absolute guarantee or zero-cost promise. Capacity MUST be verified through representative load testing.*
 
 ---
 
-## 🏗 System Architecture & Data Flow
+## 🏗 System Architecture & Separation of Concerns
 
 NØTUNE enforces a strict **separation of concerns** between high-bandwidth media streaming and low-bandwidth state synchronization:
 
 ```text
-YouTube CDN ────────────────────────► NØTUNE Mobile Client
-Local MediaStore ───────────────────► NØTUNE Mobile Client
+YouTube CDN ────────────────────────► NØTUNE Client (Direct Stream)
+Local MediaStore ───────────────────► NØTUNE Client (Direct Stream)
 
 NØTUNE Backend ────────┬────────────► Metadata
                        ├────────────► Authentication / JWT
@@ -56,24 +58,38 @@ NØTUNE's core infrastructure relies on authoritative primary servers owned and 
 
 ---
 
-## ⚡ Concurrency Engineering & Realities
+## 🚦 Health & Readiness Probes
 
-Achieving high concurrency (e.g. 100k connections) depends on more than raw RAM capacity. Production stability requires optimizing:
+The backend exposes lightweight health endpoints:
 
-1. **Kernel & TCP File Descriptors**: High `ulimit -n` connection limits.
-2. **WebSocket Runtime**: Epoll / WebSocket Hibernation to minimize idle memory.
-3. **Heartbeat & Reconnect Storm Mitigation**: Jittered exponential backoff during server reconnects.
-4. **Room Message Fanout**: Efficient broad-casting without CPU locking.
-5. **Database Connection Pooling**: PgBouncer / Serverless connection pools to stay within DB limits.
+* **`/health` (or `/api/v1/health`)**: Liveness probe. Returns HTTP 200 `{ status: "UP" }` instantly without executing database queries.
+* **`/ready`**: Readiness probe. Executes a lightweight `SELECT 1` query to verify PostgreSQL connection pool health before accepting traffic.
 
 ---
 
-## 🧪 Load Testing & Benchmark Strategy
+## 🔒 Security & Authorization Audit
 
-Before certifying production readiness, the backend must be benchmarked under simulated load ramps:
+* **JWT Verification**: Validates session tokens on REST APIs and WebSocket handshakes (`AUTHENTICATE`).
+* **Room Member Authorization**: Verifies user presence in `room_members` prior to processing playback sync or queue mutations.
+* **Rate Limiting**: `express-rate-limit` enforces IP rate limits on `/api/` routes (1,000 req / 15 min).
+* **Security Headers**: `helmet` enforces security headers across HTTP endpoints.
+* **Data Privacy**: Passwords, secrets, and tokens are never logged or transmitted over unencrypted connections.
 
-```text
-10 CCU  ──►  100 CCU  ──►  1,000 CCU  ──►  10,000 CCU  ──►  50,000 CCU  ──►  100,000 CCU
+---
+
+## 🧪 Load Testing & Benchmark Suite
+
+NØTUNE includes an automated WebSocket and REST load-testing harness in `notune-backend/load-test.js`.
+
+### Running Load Tests
+```bash
+cd notune-backend
+
+# Run local benchmark with 100 concurrent clients
+npm run load-test -- --users=100 --ramp=5 --duration=20
+
+# Run high-concurrency target benchmark
+npm run load-test -- --users=1000 --ramp=10 --duration=30 --target=wss://notune.dharansundarapandiyan24.workers.dev/ws
 ```
 
 ### Key Performance Target Metrics
@@ -82,47 +98,22 @@ Before certifying production readiness, the backend must be benchmarked under si
 | :--- | :--- |
 | **WebSocket Connection Success** | > 99.9% |
 | **Room Sync Event Latency** | < 120ms (Global) |
-| **Authentication & Token Latency** | < 200ms |
+| **Authentication Latency** | < 200ms |
 | **Reconnection Success (After Outage)** | > 99.0% |
 | **DB Pool Connections** | < 80% Max Pool |
 | **Error Rate under Load** | < 0.01% |
 
 ---
 
-## 🏆 Free 24/7 Cloud Hosting Options
+## 🏆 Deployment Configurations
 
-### 1. Oracle Cloud Infrastructure (OCI) — Always Free VM
-* **Specs**: 4 ARM vCPUs (Ampere A1), 24 GB RAM, 200 GB Storage, 10 TB/month Free Egress.
-* **Cost**: **$0 / Forever** (24/7 dedicated compute).
-* **Setup**:
-  ```bash
-  cd notune-backend
-  sudo docker-compose up -d --build
-  ```
+### 1. Cloudflare Workers (Serverless Edge)
+* Deploy script: `npm run deploy:cloudflare`
+* Configuration: [`wrangler.toml`](file:///home/dharan-25486/Documents/music/V2/notune/wrangler.toml) & [`worker.js`](file:///home/dharan-25486/Documents/music/V2/notune/notune-backend/worker.js)
 
-### 2. Cloudflare Workers + D1 + R2 Storage (Serverless Edge)
-* **Specs**: Global edge network with WebSocket Hibernation API.
-* **Cost**: **$0 / Free Tier** (100,000 HTTP requests/day, 5M D1 reads/day).
-* **Setup**:
-  ```bash
-  cd notune-backend
-  npm run deploy:cloudflare
-  ```
-
-### 3. Supabase / Neon (Managed PostgreSQL)
-* **Specs**: Managed relational database with connection pooling and WebSocket broadcast capability.
-
----
-
-## 🔗 Connecting the App
-
-Primary endpoints are configured in [`ListenTogetherServers.kt`](file:///home/dharan-25486/Documents/music/V2/notune/app/src/main/kotlin/com/music/echo/listentogether/ListenTogetherServers.kt) with dynamic fallback logic:
-
-1. **Primary Edge**: `NØTUNE Cloudflare Edge`
-2. **Primary API**: `NØTUNE Cloud Server`
-3. **Emergency Fallback**: `Metrolist Server`
+### 2. Docker / Oracle Cloud / Render (Node.js + PostgreSQL)
+* Deploy script: `sudo docker-compose up -d --build`
+* Configuration: [`Dockerfile`](file:///home/dharan-25486/Documents/music/V2/notune/notune-backend/Dockerfile) & [`render.yaml`](file:///home/dharan-25486/Documents/music/V2/notune/render.yaml)
 
 ---
 **NØTUNE — Connected Listening at Global Scale.**
-
-

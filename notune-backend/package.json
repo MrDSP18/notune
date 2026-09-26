@@ -8,6 +8,7 @@
     "dev": "node --watch server.js",
     "deploy": "npx wrangler deploy worker.js",
     "deploy:cloudflare": "npx wrangler@3 deploy",
+    "load-test": "node load-test.js",
     "test": "node --test"
   },
   "dependencies": {
