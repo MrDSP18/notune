@@ -35,6 +35,7 @@ Status values used:
 | **Local Database Encryption** | `NOT IMPLEMENTED` | `core` Room DB (`MusicDatabase`) | SQLite File | None | Room DB | None | Database-at-Rest | Unit Tests | `NOT VERIFIED` | Keystore protects secrets; local Room SQLite file is unencrypted plaintext |
 | **Design System (20 Themes)** | `PASS` | `com.music.echo.notune.theme.NoTuneThemeEngine` | Compose Material 3 | None | DataStore | None | WCAG AAA Contrast | Visual Tests | `NOT VERIFIED` | Frosted glass blur performance varies on older GPUs |
 | **Smart Context Android Widgets** | `PASS` | `com.music.echo.notune.widget` | Glance / AppWidgetManager | None | Room DB | None | None | Manual Audit | `NOT VERIFIED` | Widget theme propagation requires widget recreate event |
+| **NØTUNE Universal Gesture Engine** | `PASS` | `com.music.echo.notune.gesture` | Coroutines / DataStore | None | DataStore | None | Context-Aware Gesture Guard | Unit Tests | `NOT VERIFIED` | Drawn shape stroke recognition accuracy depends on touch point sampling density |
 
 ---
 
