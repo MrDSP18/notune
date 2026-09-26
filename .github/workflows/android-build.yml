@@ -2,9 +2,10 @@ name: Android CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "feature/notune-platform-rebuild" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "feature/notune-platform-rebuild" ]
+  workflow_dispatch:
 
 jobs:
   build:
