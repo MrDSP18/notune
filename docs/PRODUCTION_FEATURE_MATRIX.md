@@ -36,6 +36,7 @@ Status values used:
 | **Design System (20 Themes)** | `PASS` | `com.music.echo.notune.theme.NoTuneThemeEngine` | Compose Material 3 | None | DataStore | None | WCAG AAA Contrast | Visual Tests | `NOT VERIFIED` | Frosted glass blur performance varies on older GPUs |
 | **Smart Context Android Widgets** | `PASS` | `com.music.echo.notune.widget` | Glance / AppWidgetManager | None | Room DB | None | None | Manual Audit | `NOT VERIFIED` | Widget theme propagation requires widget recreate event |
 | **NØTUNE Universal Gesture Engine** | `PASS` | `com.music.echo.notune.gesture` | Coroutines / DataStore | None | DataStore | None | Context-Aware Gesture Guard | Unit Tests | `NOT VERIFIED` | Drawn shape stroke recognition accuracy depends on touch point sampling density |
+| **NØTUNE Nothing-Inspired Design System** | `PASS` | `com.music.echo.notune.ui` | Jetpack Compose | None | None | None | High-Contrast WCAG AAA | Unit Tests | `NOT VERIFIED` | Dot-matrix canvas font rendering performance depends on GPU draw pipeline |
 
 ---
 
