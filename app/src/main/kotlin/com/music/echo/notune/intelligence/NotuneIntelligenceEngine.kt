@@ -6,20 +6,28 @@ import com.music.echo.notune.intelligence.explanation.RecommendationExplanation
 import com.music.echo.notune.intelligence.explanation.TasteExplanation
 import com.music.echo.notune.intelligence.explanation.TrackExplanationCard
 import com.music.echo.notune.intelligence.feedback.FeedbackProcessor
+import com.music.echo.notune.intelligence.feedback.SkipReasonAnalyzer
 import com.music.echo.notune.intelligence.feedback.UserEvent
+import com.music.echo.notune.intelligence.musicbrain.InferredMusicState
 import com.music.echo.notune.intelligence.musicbrain.MusicBrain
+import com.music.echo.notune.intelligence.musicbrain.MusicStateEngine
+import com.music.echo.notune.intelligence.personalization.InstantOverrideAction
 import com.music.echo.notune.intelligence.personalization.NotuneUserDNA
 import com.music.echo.notune.intelligence.personalization.PreferenceRule
+import com.music.echo.notune.intelligence.personalization.SessionOverrideEngine
 import com.music.echo.notune.intelligence.personalization.TasteProfileStore
 import com.music.echo.notune.intelligence.personalization.TeachNotuneEngine
 import com.music.echo.notune.intelligence.queue.AdaptiveQueueEngine
+import com.music.echo.notune.intelligence.queue.NotuneFlowMode
 import com.music.echo.notune.intelligence.queue.QueueTrack
 import com.music.echo.notune.intelligence.recommendation.RecommendationBatch
 import com.music.echo.notune.intelligence.recommendation.RecommendationCandidate
 import com.music.echo.notune.intelligence.recommendation.RecommendationEngine
 import com.music.echo.notune.intelligence.search.PersonalizedSearchEngine
+import com.music.echo.notune.intelligence.search.QualityGateDecision
 import com.music.echo.notune.intelligence.search.RankedSearchResult
 import com.music.echo.notune.intelligence.search.SearchCandidate
+import com.music.echo.notune.intelligence.search.SearchQualityGate
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,24 +35,28 @@ import javax.inject.Singleton
 /**
  * NØTUNE Personal Music Intelligence Engine v1
  *
- * Unified Coordinator for the 8 Production Components:
- * 1. Personal User DNA
- * 2. Personalized Search Engine
- * 3. Context Engine
- * 4. Music Brain
- * 5. Adaptive Queue Engine
- * 6. Continuous Feedback Learning
- * 7. Teach NØTUNE / Explicit Preferences
+ * Unified Coordinator:
+ * 1. Personal User DNA (3-Layer Taste Architecture)
+ * 2. Personalized Search Engine & Quality Gate
+ * 3. Context Engine & Non-Judgmental Music State Engine
+ * 4. Music Brain & Feature Vector Engines
+ * 5. Adaptive Queue Engine & Flow Selector
+ * 6. Continuous Feedback Learning & Skip Analyzer
+ * 7. Teach NØTUNE & Instant Session Overrides
  * 8. Recommendation Explanation & Control Center
  */
 @Singleton
 class NotuneIntelligenceEngine @Inject constructor(
     val tasteProfileStore: TasteProfileStore,
     val searchEngine: PersonalizedSearchEngine,
+    val searchQualityGate: SearchQualityGate,
     val contextEngine: ContextEngine,
+    val musicStateEngine: MusicStateEngine,
     val musicBrain: MusicBrain,
     val adaptiveQueueEngine: AdaptiveQueueEngine,
     val feedbackProcessor: FeedbackProcessor,
+    val skipReasonAnalyzer: SkipReasonAnalyzer,
+    val sessionOverrideEngine: SessionOverrideEngine,
     val teachNotuneEngine: TeachNotuneEngine,
     val recommendationEngine: RecommendationEngine,
     val recommendationExplanation: RecommendationExplanation,
@@ -56,10 +68,18 @@ class NotuneIntelligenceEngine @Inject constructor(
     fun getCurrentDna(): NotuneUserDNA = tasteProfileStore.getDnaSnapshot()
 
     /**
+     * Evaluates a search candidate against the Quality Gate.
+     */
+    fun evaluateQualityGate(candidate: SearchCandidate): QualityGateDecision {
+        return searchQualityGate.evaluateCandidate(candidate, tasteProfileStore.getDnaSnapshot())
+    }
+
+    /**
      * Executes personalized natural language search.
      */
     fun search(rawQuery: String, candidates: List<SearchCandidate>): List<RankedSearchResult> {
-        return searchEngine.rankCandidates(rawQuery, candidates)
+        val passedCandidates = candidates.filter { evaluateQualityGate(it).isPassed }
+        return searchEngine.rankCandidates(rawQuery, passedCandidates)
     }
 
     /**
@@ -81,10 +101,28 @@ class NotuneIntelligenceEngine @Inject constructor(
     }
 
     /**
+     * Gets non-judgmental Inferred Music State.
+     */
+    fun getInferredMusicState(): InferredMusicState {
+        val dna = getCurrentDna()
+        return musicStateEngine.inferMusicStateFromRecent(
+            recentAvgEnergy = dna.sessionTaste.currentEnergy,
+            recentAvgValence = 0.55f
+        )
+    }
+
+    /**
      * Updates adaptive queue with new playing and upcoming tracks.
      */
     fun updateQueue(current: QueueTrack?, upcoming: List<QueueTrack>) {
         adaptiveQueueEngine.setQueue(current, upcoming)
+    }
+
+    /**
+     * Sets NØTUNE Flow selector mode (Familiar, Balanced, Smart, Discovery, Deep Discovery).
+     */
+    fun setFlowMode(mode: NotuneFlowMode) {
+        adaptiveQueueEngine.setFlowMode(mode)
     }
 
     /**
@@ -110,6 +148,18 @@ class NotuneIntelligenceEngine @Inject constructor(
             else -> {}
         }
         return reward
+    }
+
+    /**
+     * Applies instant user gesture / action override to current session.
+     */
+    fun applyInstantOverride(
+        action: InstantOverrideAction,
+        currentTrackGenre: String? = null,
+        currentArtistName: String? = null,
+        currentTrackEnergy: Float? = null
+    ) {
+        sessionOverrideEngine.applyInstantOverride(action, currentTrackGenre, currentArtistName, currentTrackEnergy)
     }
 
     /**

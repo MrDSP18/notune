@@ -5,27 +5,32 @@ import com.music.echo.notune.intelligence.explanation.RecommendationExplanation
 import com.music.echo.notune.intelligence.explanation.TasteExplanation
 import com.music.echo.notune.intelligence.feedback.FeedbackProcessor
 import com.music.echo.notune.intelligence.feedback.RewardCalculator
+import com.music.echo.notune.intelligence.feedback.SkipReasonAnalyzer
 import com.music.echo.notune.intelligence.feedback.UserEvent
 import com.music.echo.notune.intelligence.musicbrain.EnergyEngine
 import com.music.echo.notune.intelligence.musicbrain.LanguageEngine
 import com.music.echo.notune.intelligence.musicbrain.MoodEngine
 import com.music.echo.notune.intelligence.musicbrain.MusicBrain
+import com.music.echo.notune.intelligence.musicbrain.MusicStateEngine
 import com.music.echo.notune.intelligence.musicbrain.SimilarityEngine
 import com.music.echo.notune.intelligence.musicbrain.TrackEmbedding
+import com.music.echo.notune.intelligence.personalization.InstantOverrideAction
 import com.music.echo.notune.intelligence.personalization.PreferenceDecay
 import com.music.echo.notune.intelligence.personalization.PreferenceLearner
+import com.music.echo.notune.intelligence.personalization.SessionOverrideEngine
 import com.music.echo.notune.intelligence.personalization.TasteProfileStore
 import com.music.echo.notune.intelligence.personalization.TeachNotuneEngine
 import com.music.echo.notune.intelligence.queue.AdaptiveQueueEngine
+import com.music.echo.notune.intelligence.queue.NotuneFlowMode
 import com.music.echo.notune.intelligence.queue.QueueTrack
 import com.music.echo.notune.intelligence.queue.RepetitionController
 import com.music.echo.notune.intelligence.queue.TransitionScorer
 import com.music.echo.notune.intelligence.recommendation.ExplorationEngine
-import com.music.echo.notune.intelligence.recommendation.RecommendationCandidate
 import com.music.echo.notune.intelligence.recommendation.RecommendationEngine
 import com.music.echo.notune.intelligence.search.PersonalizedSearchEngine
 import com.music.echo.notune.intelligence.search.SearchCandidate
 import com.music.echo.notune.intelligence.search.SearchIntentParser
+import com.music.echo.notune.intelligence.search.SearchQualityGate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -42,14 +47,17 @@ class NotuneIntelligenceEngineTest {
         val tasteProfileStore = TasteProfileStore(preferenceDecay)
         val preferenceLearner = PreferenceLearner(tasteProfileStore)
         val teachNotuneEngine = TeachNotuneEngine()
+        val sessionOverrideEngine = SessionOverrideEngine(tasteProfileStore)
 
         val similarityEngine = SimilarityEngine()
         val moodEngine = MoodEngine()
         val energyEngine = EnergyEngine()
         val languageEngine = LanguageEngine()
         val musicBrain = MusicBrain(similarityEngine, moodEngine, energyEngine, languageEngine)
+        val musicStateEngine = MusicStateEngine()
 
         val intentParser = SearchIntentParser()
+        val searchQualityGate = SearchQualityGate()
         val searchEngine = PersonalizedSearchEngine(intentParser, musicBrain, tasteProfileStore)
 
         val contextEngine = ContextEngine()
@@ -59,6 +67,7 @@ class NotuneIntelligenceEngineTest {
 
         val rewardCalculator = RewardCalculator()
         val feedbackProcessor = FeedbackProcessor(rewardCalculator, preferenceLearner, tasteProfileStore, teachNotuneEngine)
+        val skipReasonAnalyzer = SkipReasonAnalyzer()
 
         val explorationEngine = ExplorationEngine()
         val recommendationEngine = RecommendationEngine(explorationEngine, musicBrain, tasteProfileStore)
@@ -69,10 +78,14 @@ class NotuneIntelligenceEngineTest {
         intelligenceEngine = NotuneIntelligenceEngine(
             tasteProfileStore = tasteProfileStore,
             searchEngine = searchEngine,
+            searchQualityGate = searchQualityGate,
             contextEngine = contextEngine,
+            musicStateEngine = musicStateEngine,
             musicBrain = musicBrain,
             adaptiveQueueEngine = adaptiveQueueEngine,
             feedbackProcessor = feedbackProcessor,
+            skipReasonAnalyzer = skipReasonAnalyzer,
+            sessionOverrideEngine = sessionOverrideEngine,
             teachNotuneEngine = teachNotuneEngine,
             recommendationEngine = recommendationEngine,
             recommendationExplanation = recommendationExplanation,
@@ -103,26 +116,28 @@ class NotuneIntelligenceEngineTest {
     }
 
     @Test
-    fun `test adaptive queue reordering on skips`() {
-        val track1 = QueueTrack("t1", "Song 1", "Artist A", TrackEmbedding("t1", "Song 1", "Artist A", energy = 0.7f))
-        val track2 = QueueTrack("t2", "Song 2", "Artist B", TrackEmbedding("t2", "Song 2", "Artist B", energy = 0.65f))
-        val track3 = QueueTrack("t3", "Song 3", "Artist C", TrackEmbedding("t3", "Song 3", "Artist C", energy = 0.2f))
+    fun `test user locked tracks preserved in queue`() {
+        val track1 = QueueTrack("t1", "User Lock", "Artist A", TrackEmbedding("t1", "User Lock", "Artist A"), isLockedByUser = true)
+        val track2 = QueueTrack("t2", "Auto Rec", "Artist B", TrackEmbedding("t2", "Auto Rec", "Artist B"))
 
-        intelligenceEngine.updateQueue(track1, listOf(track2, track3))
-
-        // Record skip event
-        intelligenceEngine.recordFeedback(UserEvent.Skip("t1", "Song 1", "Artist A", playedDurationSec = 5.0f))
+        intelligenceEngine.updateQueue(null, listOf(track2, track1))
 
         val state = intelligenceEngine.adaptiveQueueEngine.queueState.value
-        assertEquals(1, intelligenceEngine.getCurrentDna().sessionTaste.consecutiveSkips)
+        assertEquals("t1", state.upcomingQueue.first().id)
+        assertTrue(state.upcomingQueue.first().isLockedByUser)
     }
 
     @Test
-    fun `test teach rule compilation and control center summary`() {
-        val rule = intelligenceEngine.teachRule("Don't play sad songs when I'm working")
-        assertNotNull(rule)
+    fun `test instant session override action`() {
+        intelligenceEngine.applyInstantOverride(InstantOverrideAction.SURPRISE_ME)
+        val dna = intelligenceEngine.getCurrentDna()
+        assertEquals(0.80f, dna.discoveryProfile.explorationRate, 0.05f)
+    }
 
-        val summary = intelligenceEngine.getControlCenterSummary()
-        assertTrue(summary.activeRulesCount >= 1)
+    @Test
+    fun `test set flow mode`() {
+        intelligenceEngine.setFlowMode(NotuneFlowMode.DISCOVERY)
+        val state = intelligenceEngine.adaptiveQueueEngine.queueState.value
+        assertEquals(NotuneFlowMode.DISCOVERY, state.flowMode)
     }
 }

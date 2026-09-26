@@ -7,6 +7,7 @@ data class QueueTrack(
     val title: String,
     val artistName: String,
     val embedding: TrackEmbedding,
+    val isLockedByUser: Boolean = false,
     val scoreDetails: TrackScoreDetails = TrackScoreDetails()
 )
 
@@ -34,5 +35,6 @@ data class QueueState(
     val upcomingQueue: List<QueueTrack> = emptyList(),
     val playedHistory: List<QueueTrack> = emptyList(),
     val overallFlowScore: Float = 0.85f,
+    val flowMode: NotuneFlowMode = NotuneFlowMode.SMART,
     val isAutoAdaptiveEnabled: Boolean = true
 )

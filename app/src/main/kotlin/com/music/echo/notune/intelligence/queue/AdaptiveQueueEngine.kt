@@ -59,6 +59,10 @@ class AdaptiveQueueEngine @Inject constructor(
         }
     }
 
+    fun setFlowMode(mode: NotuneFlowMode) {
+        _queueState.update { it.copy(flowMode = mode) }
+    }
+
     fun reorderQueue(
         current: QueueTrack?,
         upcoming: List<QueueTrack>
@@ -68,7 +72,11 @@ class AdaptiveQueueEngine @Inject constructor(
         val userDna = tasteProfileStore.getDnaSnapshot()
         val currentHistory = _queueState.value.playedHistory
 
-        val scoredTracks = upcoming.mapIndexed { index, track ->
+        // Separate user-locked tracks (manual additions) from dynamic AI candidates
+        val lockedTracks = upcoming.filter { it.isLockedByUser }
+        val dynamicCandidates = upcoming.filterNot { it.isLockedByUser }
+
+        val scoredDynamic = dynamicCandidates.map { track ->
             val brainScore = musicBrain.scoreTrack(track.embedding, userDna).totalScore
 
             val transitionQuality = if (current != null) {
@@ -82,7 +90,6 @@ class AdaptiveQueueEngine @Inject constructor(
                 upcomingQueue = upcoming
             )
 
-            // Combined NextTrackScore formula
             val finalScore = (brainScore * 0.45f + transitionQuality * 0.35f - overexposurePenalty * 0.20f).coerceIn(0f, 1f)
 
             val details = TrackScoreDetails(
@@ -95,10 +102,10 @@ class AdaptiveQueueEngine @Inject constructor(
             )
 
             track.copy(scoreDetails = details)
-        }
+        }.sortedByDescending { it.scoreDetails.totalScore }
 
-        // Sort by final score descending
-        return scoredTracks.sortedByDescending { it.scoreDetails.totalScore }
+        // Place user-locked tracks first, then dynamic auto-filled recommendations
+        return lockedTracks + scoredDynamic
     }
 
     private fun calculateAverageFlow(current: QueueTrack?, upcoming: List<QueueTrack>): Float {
