@@ -7,17 +7,20 @@ on:
     branches: [ "main", "feature/notune-platform-rebuild" ]
   workflow_dispatch:
 
+env:
+  JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
+  GRADLE_OPTS: "-Djava.awt.headless=true -Dorg.gradle.daemon=false"
+
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build, Lint & Test
     runs-on: ubuntu-latest
-    env:
-      JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
-      GRADLE_OPTS: "-Djava.awt.headless=true"
-
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         submodules: recursive
@@ -35,7 +38,7 @@ jobs:
       continue-on-error: false
 
     - name: Set up JDK 21
-      uses: actions/setup-java@v5
+      uses: actions/setup-java@v4
       with:
         java-version: '21'
         distribution: 'temurin'
@@ -58,11 +61,11 @@ jobs:
     - name: Run Lint
       run: |
         chmod +x gradlew
-        ./gradlew lintUniversalFossDebug
+        ./gradlew lintUniversalFossDebug -Djava.awt.headless=true --no-daemon
 
     - name: Run Unit Tests
       run: |
-        ./gradlew testUniversalFossDebugUnitTest
+        ./gradlew testUniversalFossDebugUnitTest -Djava.awt.headless=true --no-daemon
 
     - name: Upload Lint Results
       if: always()
@@ -90,7 +93,7 @@ jobs:
         LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
         LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
       run: |
-        ./gradlew assembleUniversalGmsRelease bundleUniversalGmsRelease
+        ./gradlew assembleUniversalGmsRelease bundleUniversalGmsRelease -Djava.awt.headless=true --no-daemon
 
     - name: Build Debug APK & AAB (fork PR fallback without signing)
       if: ${{ env.KEYSTORE_BASE64 == '' }}
@@ -108,7 +111,7 @@ jobs:
           -dname "CN=Android Debug,O=Android,C=US" \
           -keyalg RSA \
           -validity 10000
-        ./gradlew assembleUniversalFossDebug bundleUniversalFossDebug
+        ./gradlew assembleUniversalFossDebug bundleUniversalFossDebug -Djava.awt.headless=true --no-daemon
 
     - name: Upload Universal APK
       uses: actions/upload-artifact@v4
@@ -122,3 +125,18 @@ jobs:
         name: NOTUNE-Universal-AAB
         path: app/build/outputs/bundle/**/*.aab
         if-no-files-found: ignore
+
+    - name: Publish Public Direct APK Release (No Sign-in Required)
+      uses: softprops/action-gh-release@v2
+      if: success()
+      with:
+        tag_name: "latest"
+        name: "NØTUNE Universal Direct Release"
+        body: |
+          ### 📱 Public Direct APK Download (No GitHub Login Required)
+          Download the latest NØTUNE Universal APK directly below without signing in to GitHub.
+        draft: false
+        prerelease: false
+        files: app/build/outputs/apk/universalFoss/debug/app-universal-foss-debug.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

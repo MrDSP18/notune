@@ -9,6 +9,10 @@ on:
       - feature/notune-platform-rebuild
   workflow_dispatch:
 
+env:
+  JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
+  GRADLE_OPTS: "-Djava.awt.headless=true -Dorg.gradle.daemon=false"
+
 permissions:
   contents: write
 
@@ -16,9 +20,6 @@ jobs:
   build-apk:
     name: Build & Publish Direct APK Asset
     runs-on: ubuntu-latest
-    env:
-      JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
-      GRADLE_OPTS: "-Djava.awt.headless=true"
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -34,7 +35,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Universal FOSS Debug APK
-        run: ./gradlew :app:assembleUniversalFossDebug --no-daemon
+        run: ./gradlew :app:assembleUniversalFossDebug -Djava.awt.headless=true --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
@@ -42,12 +43,15 @@ jobs:
           name: NOTUNE-v2.0-Universal
           path: app/build/outputs/apk/universalFoss/debug/app-universal-foss-debug.apk
 
-      - name: Create GitHub Release & Attach Direct APK Asset
+      - name: Create GitHub Release & Attach Direct APK Asset (Public Download)
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
+        if: success()
         with:
-          tag_name: ${{ github.ref_name }}
-          name: NØTUNE v2.0.0 Universal Release
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'latest' }}
+          name: NØTUNE Universal Latest Release
+          body: |
+            ### 📱 Public Direct APK Download (No GitHub Login Required)
+            Download the latest NØTUNE Universal APK directly below without logging into GitHub.
           draft: false
           prerelease: false
           files: app/build/outputs/apk/universalFoss/debug/app-universal-foss-debug.apk
