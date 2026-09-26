@@ -28,22 +28,22 @@ object ListenTogetherServers {
 
     private val DEFAULT_SERVERS = listOf(
         ListenTogetherServer(
-            name = "Metrolist Server",
-            url = "wss://metroserverx.meowery.eu/ws",
-            location = "Global Sync (Metrolist)",
-            operator = "Metrolist"
-        ),
-        ListenTogetherServer(
             name = "NØTUNE Cloudflare Edge",
             url = "wss://notune.dharansundarapandiyan24.workers.dev/ws",
             location = "Global Edge (Cloudflare)",
-            operator = "NØTUNE Ecosystem"
+            operator = "NØTUNE Ecosystem Primary"
         ),
         ListenTogetherServer(
             name = "NØTUNE Cloud Server",
             url = "wss://notune-backend-service.onrender.com/ws",
-            location = "Global Cloud (Render)",
-            operator = "NØTUNE Ecosystem"
+            location = "Global Cloud (Render/OCI)",
+            operator = "NØTUNE Ecosystem API"
+        ),
+        ListenTogetherServer(
+            name = "Metrolist Server",
+            url = "wss://metroserverx.meowery.eu/ws",
+            location = "Global Sync (Fallback)",
+            operator = "Third-Party Fallback"
         )
     )
 

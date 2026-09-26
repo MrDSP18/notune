@@ -1,71 +1,128 @@
-# NØTUNE Listen Together - 24/7 Free Cloud Hosting & 100k Concurrency Architecture
+# NØTUNE Backend Infrastructure & High-Scale Architecture
 
-This guide explains how to host the NØTUNE backend server and database for **100% FREE** on cloud platforms without hosting on your personal local machine.
+This document outlines the architecture, cloud hosting strategies, and scalability targets for the NØTUNE Listen Together and Cloud Ecosystem.
 
----
-
-## ⚡ How NØTUNE Handles 100,000 Concurrent Users (100k CCU)
-
-To serve **100,000 concurrent users** without crashing or incurring huge bandwidth bills:
-1. **Audio Streams Direct from CDN**: Audio files are streamed directly from YouTube CDNs / Local MediaStore to user devices. The backend server **never proxies audio bytes**—it only handles lightweight JSON events (~1 KB/s per user).
-2. **WebSocket Memory Optimization**: 100k open WebSockets require ~2.5 GB to 4 GB RAM. Platforms like **Oracle Cloud Always Free (24 GB RAM)** or **Cloudflare Worker Hibernation** easily support this volume.
+> [!NOTE]
+> **Scalability Target**: Designed to scale toward 100,000 concurrent connections, subject to load testing, cloud-provider quotas, networking limits, and workload characteristics.
 
 ---
 
-## 🏆 Top 100% Free 24/7 Cloud Platforms
+## 🏗 System Architecture & Data Flow
 
-### 1. Oracle Cloud Infrastructure (OCI) — "Always Free" VM (RECOMMENDED FOR 100K CCU)
-* **Specs**: 4 ARM vCPUs (Ampere A1), **24 GB RAM**, 200 GB NVMe Storage, **10 TB/month Free Bandwidth**.
-* **Cost**: **$0 / Forever** (24/7 active, never sleeps).
-* **Capacity**: **100,000+ simultaneous WebSocket connections** effortlessly fit into 24 GB RAM.
+NØTUNE enforces a strict **separation of concerns** between high-bandwidth media streaming and low-bandwidth state synchronization:
 
-#### Quick Oracle Cloud Setup:
-1. Create a free account on [Oracle Cloud Infrastructure](https://www.oracle.com/cloud/free/).
-2. Launch an **Ampere ARM Instance** (Select 4 OCPUs, 24 GB RAM, Ubuntu 24.04 LTS).
-3. Connect via SSH and run:
-   ```bash
-   git clone https://github.com/MrDSP18/notune.git
-   cd notune/notune-backend
-   sudo docker-compose up -d --build
-   ```
-4. Your server will be live 24/7 at `wss://your-oracle-ip:10000/ws` with local PostgreSQL running inside Docker!
+```text
+YouTube CDN ────────────────────────► NØTUNE Mobile Client
+Local MediaStore ───────────────────► NØTUNE Mobile Client
 
----
+NØTUNE Backend ────────┬────────────► Metadata
+                       ├────────────► Authentication / JWT
+                       ├────────────► Room Sync & Playback Events
+                       ├────────────► Dynamic Playlists & Queues
+                       ├────────────► Social Feed & Reactions
+                       └────────────► Presence & Taste DNA
 
-### 2. Cloudflare Workers + D1 Database + R2 Storage (GLOBAL SERVERLESS EDGE)
-* **Specs**: Runs across 300+ edge locations worldwide with automatic DDoS protection.
-* **WebSocket Hibernation**: Idle WebSockets consume 0 RAM billing on Cloudflare Workers.
-* **Free Tier**: 100,000 HTTP requests/day, 5 Million D1 SQL reads/day, 10 GB R2 media storage with **$0 egress fees**.
-* **Cost**: **$0 / Forever**.
-
-#### Quick Cloudflare Deployment:
-1. Install Wrangler CLI: `npm install -g wrangler`
-2. Login to Cloudflare: `wrangler login`
-3. Deploy NØTUNE Edge Worker:
-   ```bash
-   cd notune-backend
-   wrangler deploy
-   ```
-4. Your server is instantly live worldwide at `wss://notune.<your-subdomain>.workers.dev/ws`!
+NØTUNE Backend ────────❌───────────► NO Audio Bytes (Zero Proxying)
+```
 
 ---
 
-### 3. Supabase (Managed Free PostgreSQL Database)
-* **Specs**: 500 MB PostgreSQL Database, 50,000 Monthly Active Users, Realtime WebSocket Broadcast.
-* **Cost**: **$0 / Forever**.
-* **Setup**: Connect `DATABASE_URL` in `render.yaml` or `notune-backend/.env` to your Supabase PostgreSQL connection string.
+## 🌐 Authoritative Infrastructure Topology
+
+NØTUNE's core infrastructure relies on authoritative primary servers owned and operated within the NØTUNE ecosystem. Third-party fallback servers are maintained strictly as emergency redundancies.
+
+```text
+                             NØTUNE Mobile Client
+                                      │
+                         ┌────────────┴────────────┐
+                         │   Cloudflare Edge WAF   │
+                         │    Routing & CDN        │
+                         └────────────┬────────────┘
+                                      │
+               ┌──────────────────────┴──────────────────────┐
+               │                                             │
+   NØTUNE Primary Worker Edge                      NØTUNE Primary API Server
+(wss://notune...workers.dev/ws)                (wss://notune-backend...onrender.com/ws)
+               │                                             │
+               └──────────────────────┬──────────────────────┘
+                                      │
+                             ┌────────┴────────┐
+                             │ PostgreSQL / D1 │
+                             │ Data Store      │
+                             └─────────────────┘
+                                      │
+                        [Emergency Fallback Servers]
+```
 
 ---
 
-### 4. Koyeb / Render / Railway (Fast Container Hosting)
-* **Render**: Free 512 MB Web Service ([`render.yaml`](file:///home/dharan-25486/Documents/music/V2/notune/render.yaml))
-* **Koyeb**: 512 MB RAM instance, 24/7 online, fast Docker deployment.
+## ⚡ Concurrency Engineering & Realities
+
+Achieving high concurrency (e.g. 100k connections) depends on more than raw RAM capacity. Production stability requires optimizing:
+
+1. **Kernel & TCP File Descriptors**: High `ulimit -n` connection limits.
+2. **WebSocket Runtime**: Epoll / WebSocket Hibernation to minimize idle memory.
+3. **Heartbeat & Reconnect Storm Mitigation**: Jittered exponential backoff during server reconnects.
+4. **Room Message Fanout**: Efficient broad-casting without CPU locking.
+5. **Database Connection Pooling**: PgBouncer / Serverless connection pools to stay within DB limits.
+
+---
+
+## 🧪 Load Testing & Benchmark Strategy
+
+Before certifying production readiness, the backend must be benchmarked under simulated load ramps:
+
+```text
+10 CCU  ──►  100 CCU  ──►  1,000 CCU  ──►  10,000 CCU  ──►  50,000 CCU  ──►  100,000 CCU
+```
+
+### Key Performance Target Metrics
+
+| Metric | Target Standard |
+| :--- | :--- |
+| **WebSocket Connection Success** | > 99.9% |
+| **Room Sync Event Latency** | < 120ms (Global) |
+| **Authentication & Token Latency** | < 200ms |
+| **Reconnection Success (After Outage)** | > 99.0% |
+| **DB Pool Connections** | < 80% Max Pool |
+| **Error Rate under Load** | < 0.01% |
+
+---
+
+## 🏆 Free 24/7 Cloud Hosting Options
+
+### 1. Oracle Cloud Infrastructure (OCI) — Always Free VM
+* **Specs**: 4 ARM vCPUs (Ampere A1), 24 GB RAM, 200 GB Storage, 10 TB/month Free Egress.
+* **Cost**: **$0 / Forever** (24/7 dedicated compute).
+* **Setup**:
+  ```bash
+  cd notune-backend
+  sudo docker-compose up -d --build
+  ```
+
+### 2. Cloudflare Workers + D1 + R2 Storage (Serverless Edge)
+* **Specs**: Global edge network with WebSocket Hibernation API.
+* **Cost**: **$0 / Free Tier** (100,000 HTTP requests/day, 5M D1 reads/day).
+* **Setup**:
+  ```bash
+  cd notune-backend
+  npm run deploy:cloudflare
+  ```
+
+### 3. Supabase / Neon (Managed PostgreSQL)
+* **Specs**: Managed relational database with connection pooling and WebSocket broadcast capability.
 
 ---
 
 ## 🔗 Connecting the App
-Once your server is live on Oracle Cloud or Cloudflare Workers, users connect by setting the **Listen Together Server URL** in **Settings > Integrations > Listen Together** or by updating `ListenTogetherServers.kt`.
+
+Primary endpoints are configured in [`ListenTogetherServers.kt`](file:///home/dharan-25486/Documents/music/V2/notune/app/src/main/kotlin/com/music/echo/listentogether/ListenTogetherServers.kt) with dynamic fallback logic:
+
+1. **Primary Edge**: `NØTUNE Cloudflare Edge`
+2. **Primary API**: `NØTUNE Cloud Server`
+3. **Emergency Fallback**: `Metrolist Server`
 
 ---
 **NØTUNE — Connected Listening at Global Scale.**
+
 
