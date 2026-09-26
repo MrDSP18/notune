@@ -34,6 +34,9 @@ class ExplorationEngine @Inject constructor() {
             )
         }
 
+        val learnedExploration = userDna.discoveryProfile.explorationRate.coerceIn(0.05f, 0.60f)
+        val baseExploit = (1.0f - learnedExploration).coerceIn(0.40f, 0.95f)
+
         return when {
             consecutiveSkips >= 3 -> {
                 // User is skipping everything: fall back to safe favorites
@@ -45,25 +48,29 @@ class ExplorationEngine @Inject constructor() {
             }
             consecutiveSkips == 2 -> {
                 ExplorationRatio(
-                    exploitationRate = 0.80f,
-                    similarDiscoveryRate = 0.15f,
+                    exploitationRate = 0.82f,
+                    similarDiscoveryRate = 0.13f,
                     experimentalDiscoveryRate = 0.05f
                 )
             }
             userDna.sessionTaste.totalSessionTracks >= 10 -> {
-                // Session is going great, increase discovery
+                // Session is going great, increase discovery based on learned profile
+                val exploit = (baseExploit - 0.10f).coerceAtLeast(0.40f)
+                val similar = (learnedExploration * 0.65f)
+                val exp = 1.0f - exploit - similar
                 ExplorationRatio(
-                    exploitationRate = 0.60f,
-                    similarDiscoveryRate = 0.25f,
-                    experimentalDiscoveryRate = 0.15f
+                    exploitationRate = exploit,
+                    similarDiscoveryRate = similar,
+                    experimentalDiscoveryRate = exp.coerceAtLeast(0.05f)
                 )
             }
             else -> {
-                // Default baseline
+                val similar = (learnedExploration * 0.60f)
+                val exp = 1.0f - baseExploit - similar
                 ExplorationRatio(
-                    exploitationRate = 0.70f,
-                    similarDiscoveryRate = 0.20f,
-                    experimentalDiscoveryRate = 0.10f
+                    exploitationRate = baseExploit,
+                    similarDiscoveryRate = similar,
+                    experimentalDiscoveryRate = exp.coerceAtLeast(0.05f)
                 )
             }
         }

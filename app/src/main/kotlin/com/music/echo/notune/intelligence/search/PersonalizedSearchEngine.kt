@@ -68,4 +68,34 @@ class PersonalizedSearchEngine @Inject constructor(
             .filter { it.candidate.isAvailableOfflineOrStream && it.scoreResult.totalScore > 0f }
             .sortedByDescending { it.scoreResult.totalScore }
     }
+
+    suspend fun searchRealCatalog(
+        rawQuery: String,
+        providerRegistry: echo.music.iad1tya.notune.provider.ProviderRegistry,
+        searchQualityGate: SearchQualityGate
+    ): List<RankedSearchResult> {
+        val userDna = tasteProfileStore.getDnaSnapshot()
+        val unifiedTracks = providerRegistry.searchUnifiedCatalog(rawQuery)
+
+        val candidates = unifiedTracks.map { track ->
+            val embedding = com.music.echo.notune.intelligence.musicbrain.TrackEmbedding(
+                trackId = track.id,
+                title = track.title,
+                artistName = track.artist,
+                genre = userDna.coreTaste.genres.keys.firstOrNull() ?: "Pop",
+                language = userDna.coreTaste.languages.keys.firstOrNull() ?: "English"
+            )
+            SearchCandidate(
+                id = track.id,
+                title = track.title,
+                artistName = track.artist,
+                albumName = track.album,
+                embedding = embedding,
+                isAvailableOfflineOrStream = track.rights.isStreamable || track.rights.isDownloadable
+            )
+        }
+
+        val passedCandidates = candidates.filter { searchQualityGate.evaluateCandidate(it, userDna).isPassed }
+        return rankCandidates(rawQuery, passedCandidates)
+    }
 }

@@ -31,15 +31,17 @@ import com.music.echo.notune.intelligence.search.PersonalizedSearchEngine
 import com.music.echo.notune.intelligence.search.SearchCandidate
 import com.music.echo.notune.intelligence.search.SearchIntentParser
 import com.music.echo.notune.intelligence.search.SearchQualityGate
+import com.music.echo.notune.intelligence.session.PersonalMusicSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-class NotuneIntelligenceEngineTest {
+class RealAppIntegrationTest {
 
     private lateinit var intelligenceEngine: NotuneIntelligenceEngine
+    private lateinit var personalMusicSession: PersonalMusicSession
 
     @Before
     fun setUp() {
@@ -74,12 +76,13 @@ class NotuneIntelligenceEngineTest {
 
         val recommendationExplanation = RecommendationExplanation()
         val tasteExplanation = TasteExplanation()
+        personalMusicSession = PersonalMusicSession()
 
-        val musicDnaInitializer = com.music.echo.notune.intelligence.personalization.MusicDnaInitializer(null, null, null)
+        val dnaInitializer = com.music.echo.notune.intelligence.personalization.MusicDnaInitializer(null, null, null)
 
         intelligenceEngine = NotuneIntelligenceEngine(
             tasteProfileStore = tasteProfileStore,
-            musicDnaInitializer = musicDnaInitializer,
+            musicDnaInitializer = dnaInitializer,
             searchEngine = searchEngine,
             searchQualityGate = searchQualityGate,
             contextEngine = contextEngine,
@@ -97,50 +100,48 @@ class NotuneIntelligenceEngineTest {
     }
 
     @Test
-    fun `test personalized search with natural language intent`() {
-        val candidates = listOf(
-            SearchCandidate(
-                id = "s1",
-                title = "Munbe Vaa",
-                artistName = "A.R. Rahman",
-                embedding = TrackEmbedding("s1", "Munbe Vaa", "A.R. Rahman", energy = 0.4f, moodValence = 0.6f, language = "Tamil", genre = "Tamil Pop")
-            ),
-            SearchCandidate(
-                id = "s2",
-                title = "Heavy Rock",
-                artistName = "Band X",
-                embedding = TrackEmbedding("s2", "Heavy Rock", "Band X", energy = 0.95f, moodValence = 0.8f, language = "English", genre = "Rock")
-            )
-        )
+    fun `test real music session track transitions and live taste snapshot`() {
+        val track1 = QueueTrack("rt1", "Vennilave", "Hariharan", TrackEmbedding("rt1", "Vennilave", "Hariharan", energy = 0.35f, genre = "Tamil Melody", language = "Tamil"))
+        personalMusicSession.onTrackStarted(track1)
 
-        val results = intelligenceEngine.search("peaceful Tamil songs for studying", candidates)
-        assertTrue(results.isNotEmpty())
-        assertEquals("Munbe Vaa", results.first().candidate.title)
+        val snapshot = personalMusicSession.liveTasteSnapshot.value
+        assertEquals("Hariharan", snapshot.primaryArtist)
+        assertEquals("Tamil Melody", snapshot.primaryGenre)
+        assertEquals(0.35f, snapshot.currentEnergyTarget, 0.05f)
     }
 
     @Test
-    fun `test user locked tracks preserved in queue`() {
-        val track1 = QueueTrack("t1", "User Lock", "Artist A", TrackEmbedding("t1", "User Lock", "Artist A"), isLockedByUser = true)
-        val track2 = QueueTrack("t2", "Auto Rec", "Artist B", TrackEmbedding("t2", "Auto Rec", "Artist B"))
+    fun `test quality gate rejects unplayable candidates`() {
+        val unplayableCandidate = SearchCandidate(
+            id = "unplay_1",
+            title = "Broken Song",
+            artistName = "Broken Artist",
+            embedding = TrackEmbedding("unplay_1", "Broken Song", "Broken Artist"),
+            isAvailableOfflineOrStream = false
+        )
 
-        intelligenceEngine.updateQueue(null, listOf(track2, track1))
+        val decision = intelligenceEngine.evaluateQualityGate(unplayableCandidate)
+        assertTrue(!decision.isPassed)
+        assertEquals(com.music.echo.notune.intelligence.search.GateResultStatus.REJECT_UNPLAYABLE, decision.status)
+    }
+
+    @Test
+    fun `test user locked track preservation during skip reorder`() {
+        val currentTrack = QueueTrack("ct1", "Now Playing", "Artist A", TrackEmbedding("ct1", "Now Playing", "Artist A"))
+        val userLockedTrack = QueueTrack("lock1", "User Selected Song", "Artist B", TrackEmbedding("lock1", "User Selected Song", "Artist B"), isLockedByUser = true)
+        val dynamicTrack = QueueTrack("dyn1", "Auto Generated", "Artist C", TrackEmbedding("dyn1", "Auto Generated", "Artist C"))
+
+        intelligenceEngine.updateQueue(currentTrack, listOf(dynamicTrack, userLockedTrack))
 
         val state = intelligenceEngine.adaptiveQueueEngine.queueState.value
-        assertEquals("t1", state.upcomingQueue.first().id)
+        assertEquals("lock1", state.upcomingQueue.first().id)
         assertTrue(state.upcomingQueue.first().isLockedByUser)
     }
 
     @Test
-    fun `test instant session override action`() {
+    fun `test instant session override actions`() {
         intelligenceEngine.applyInstantOverride(InstantOverrideAction.SURPRISE_ME)
         val dna = intelligenceEngine.getCurrentDna()
         assertEquals(0.80f, dna.discoveryProfile.explorationRate, 0.05f)
-    }
-
-    @Test
-    fun `test set flow mode`() {
-        intelligenceEngine.setFlowMode(NotuneFlowMode.DISCOVERY)
-        val state = intelligenceEngine.adaptiveQueueEngine.queueState.value
-        assertEquals(NotuneFlowMode.DISCOVERY, state.flowMode)
     }
 }

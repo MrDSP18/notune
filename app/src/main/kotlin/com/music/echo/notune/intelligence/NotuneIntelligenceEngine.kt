@@ -48,6 +48,7 @@ import javax.inject.Singleton
 @Singleton
 class NotuneIntelligenceEngine @Inject constructor(
     val tasteProfileStore: TasteProfileStore,
+    val musicDnaInitializer: com.music.echo.notune.intelligence.personalization.MusicDnaInitializer,
     val searchEngine: PersonalizedSearchEngine,
     val searchQualityGate: SearchQualityGate,
     val contextEngine: ContextEngine,
@@ -66,6 +67,13 @@ class NotuneIntelligenceEngine @Inject constructor(
     val userDnaFlow: StateFlow<NotuneUserDNA> = tasteProfileStore.userDna
 
     fun getCurrentDna(): NotuneUserDNA = tasteProfileStore.getDnaSnapshot()
+
+    /**
+     * Initializes User DNA from existing database listening history on app startup.
+     */
+    suspend fun initializeFromHistory() {
+        musicDnaInitializer.initializeDnaFromExistingHistory()
+    }
 
     /**
      * Evaluates a search candidate against the Quality Gate.
