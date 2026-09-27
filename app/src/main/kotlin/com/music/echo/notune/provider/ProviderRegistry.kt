@@ -1,8 +1,14 @@
 package echo.music.iad1tya.notune.provider
 
+import android.content.Context
+import android.net.ConnectivityManager
+import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import com.music.innertube.YouTube
 import com.music.innertube.models.SongItem
+import echo.music.iad1tya.constants.AudioQuality
 import echo.music.iad1tya.repository.LocalMediaRepository
+import echo.music.iad1tya.utils.YTPlayerUtils
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -63,7 +69,9 @@ class LocalMediaStoreProvider @Inject constructor(
 }
 
 @Singleton
-class YouTubeInnerTubeProvider @Inject constructor() : MusicProvider {
+class YouTubeInnerTubeProvider @Inject constructor(
+    @ApplicationContext private val context: Context
+) : MusicProvider {
     override val providerId: String = "innertube_api"
     override val providerName: String = "YouTube Music Engine"
 
@@ -107,11 +115,14 @@ class YouTubeInnerTubeProvider @Inject constructor() : MusicProvider {
 
     override suspend fun resolvePlaybackUri(trackId: String): Result<String> {
         val cleanId = trackId.removePrefix("yt_")
-        return YouTube.player(cleanId, client = com.music.innertube.models.YouTubeClient.ANDROID_VR_1_65_10).mapCatching { playerResponse ->
-            val adaptive = playerResponse.streamingData?.adaptiveFormats.orEmpty()
-            val format = adaptive.filter { it.isAudio }.maxByOrNull { it.bitrate }
-                ?: adaptive.firstOrNull { it.url != null }
-            format?.url ?: throw Exception("Audio stream URL not found")
+        val cm = context.getSystemService<ConnectivityManager>()
+            ?: return Result.failure(Exception("ConnectivityManager unavailable"))
+        return YTPlayerUtils.playerResponseForPlayback(
+            videoId = cleanId,
+            audioQuality = AudioQuality.OPUS,
+            connectivityManager = cm
+        ).mapCatching { playbackData ->
+            playbackData.streamUrl
         }
     }
 }

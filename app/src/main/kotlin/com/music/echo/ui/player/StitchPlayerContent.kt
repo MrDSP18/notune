@@ -61,18 +61,24 @@ fun StitchPlayerContent(
     val visualizerEngine = remember { ProceduralVisualizerEngine() }
     val waveformFrame = visualizerEngine.rememberWaveformFrame(playbackState, animationLevel)
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color(0xFF131313))
-            .padding(horizontal = 24.dp)
-            .padding(top = 16.dp, bottom = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        // Top Telemetry Bar
-        NoTuneTelemetryHeader(section = "AUDIO_ENGINE", status = telemetry.bufferState)
-        
-        Spacer(Modifier.height(24.dp))
+    BoxWithConstraints(modifier = modifier.fillMaxSize().background(Color(0xFF131313))) {
+        val availableHeight = maxHeight
+        val isCompact = availableHeight < 650.dp
+        val topPadding = if (isCompact) 8.dp else 16.dp
+        val bottomPadding = if (isCompact) 16.dp else 32.dp
+        val verticalSpacing = if (isCompact) 12.dp else 24.dp
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp)
+                .padding(top = topPadding, bottom = bottomPadding),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            // Top Telemetry Bar
+            NoTuneTelemetryHeader(section = "AUDIO_ENGINE", status = telemetry.bufferState)
+            
+            Spacer(Modifier.height(verticalSpacing))
 
         // Technical Album Art Container with Waveform
         Box(
@@ -371,17 +377,18 @@ fun StitchPlayerContent(
 
         Spacer(Modifier.height(24.dp))
 
-        // Brand Footer
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            NoTuneLogo(size = 16.dp)
-            Text(
-                text = "NØTUNE // AUDIO_OS",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontFamily = NothingFont,
-                    color = Color.White.copy(alpha = 0.3f),
-                    letterSpacing = 2.sp
+            // Brand Footer
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                NoTuneLogo(size = 16.dp)
+                Text(
+                    text = "NØTUNE // AUDIO_OS",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = NothingFont,
+                        color = Color.White.copy(alpha = 0.3f),
+                        letterSpacing = 2.sp
+                    )
                 )
-            )
+            }
         }
     }
 }
