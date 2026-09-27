@@ -108,8 +108,10 @@ class YouTubeInnerTubeProvider @Inject constructor() : MusicProvider {
     override suspend fun resolvePlaybackUri(trackId: String): Result<String> {
         val cleanId = trackId.removePrefix("yt_")
         return YouTube.player(cleanId, client = com.music.innertube.models.YouTubeClient.ANDROID_VR_1_65_10).mapCatching { playerResponse ->
-            playerResponse.streamingData?.adaptiveFormats?.firstOrNull()?.url
-                ?: throw Exception("Audio stream URL not found")
+            val adaptive = playerResponse.streamingData?.adaptiveFormats.orEmpty()
+            val format = adaptive.filter { it.isAudio }.maxByOrNull { it.bitrate }
+                ?: adaptive.firstOrNull { it.url != null }
+            format?.url ?: throw Exception("Audio stream URL not found")
         }
     }
 }
