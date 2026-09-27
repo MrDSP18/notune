@@ -856,6 +856,19 @@ class MainActivity : ComponentActivity() {
                 var showWelcomeDialog by remember { mutableStateOf(false) }
                 val googleAuthManager = remember { GoogleAuthManager(applicationContext) }
                 val googleAccount by googleAuthManager.googleAccountFlow.collectAsState(initial = GoogleUserAccount())
+                var showGoogleAuthPopup by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(!googleAccount.isLoggedIn) }
+
+                LaunchedEffect(googleAccount) {
+                    if (googleAccount.isLoggedIn) {
+                        showGoogleAuthPopup = false
+                        if (googleAccount.name.isNotBlank()) {
+                            homeViewModel.accountName.value = googleAccount.name
+                        }
+                        if (googleAccount.photoUrl.isNotBlank()) {
+                            homeViewModel.accountImageUrl.value = googleAccount.photoUrl
+                        }
+                    }
+                }
 
                 LaunchedEffect(lastOpenedVersionCode) {
                     if (lastOpenedVersionCode < BuildConfig.VERSION_CODE) {
@@ -1216,8 +1229,12 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    if (!googleAccount.isLoggedIn) {
-                        GoogleLoginPopupDialog(authManager = googleAuthManager, onLoginSuccess = { })
+                    if (showGoogleAuthPopup && !googleAccount.isLoggedIn) {
+                        GoogleLoginPopupDialog(
+                            authManager = googleAuthManager,
+                            onLoginSuccess = { showGoogleAuthPopup = false },
+                            onDismiss = { showGoogleAuthPopup = false }
+                        )
                     }
 
                     if (showWelcomeDialog) {
