@@ -17,7 +17,7 @@ import java.util.Locale
 val MediaItem.metadata: MediaMetadata?
     get() = localConfiguration?.tag as? MediaMetadata
 
-private fun playbackSeedUri(mediaId: String): String {
+fun playbackSeedUri(mediaId: String): String {
     val cleanId = mediaId.removePrefix("yt_").removePrefix("local_")
     val scheme = mediaId.toUri().scheme?.lowercase(Locale.US)
     return when {

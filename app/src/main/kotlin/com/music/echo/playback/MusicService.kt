@@ -3126,8 +3126,15 @@ class MusicService :
         return ResolvingDataSource.Factory(
             DefaultDataSource.Factory(this, createCacheDataSource())
         ) { dataSpec ->
-            val rawMediaId = dataSpec.key ?: error("No media id")
-            val mediaId = rawMediaId.removePrefix("yt_").removePrefix("local_")
+            val rawMediaId = dataSpec.key
+                ?: dataSpec.uri.toString().takeIf { it.isNotEmpty() && it != "about:blank" }
+                ?: player.currentMediaItem?.mediaId
+                ?: player.currentMediaItem?.localConfiguration?.uri?.toString()
+                ?: return@Factory dataSpec
+            val mediaId = when {
+                rawMediaId.contains("v=") -> android.net.Uri.parse(rawMediaId).getQueryParameter("v") ?: rawMediaId
+                else -> rawMediaId
+            }.removePrefix("yt_").removePrefix("local_").substringAfterLast("/")
             if (rawMediaId.isLocalMediaId() || rawMediaId.startsWith("local_")) {
                 val localUri = if (rawMediaId.startsWith("local_")) {
                     android.net.Uri.parse("content://media/external/audio/media/$mediaId")

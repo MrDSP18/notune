@@ -18,6 +18,12 @@ class YouTubeQueue(
     private var retryCount = 0
     private val maxRetries = 3
 
+    init {
+        val cleanVideoId = endpoint.videoId?.removePrefix("yt_")?.removePrefix("local_")
+        val cleanPlaylistId = endpoint.playlistId?.removePrefix("yt_")?.removePrefix("local_")?.replace("RDAMVMyt_", "RDAMVM")?.replace("RDAMVMlocal_", "RDAMVM")
+        endpoint = endpoint.copy(videoId = cleanVideoId, playlistId = cleanPlaylistId)
+    }
+
     override suspend fun getInitialStatus(): Queue.Status {
         return withContext(IO) {
             var lastException: Throwable? = null

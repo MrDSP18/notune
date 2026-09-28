@@ -1195,8 +1195,16 @@ object YouTube {
         innerTube.deletePlaylist(WEB_REMIX, playlistId)
     }
 
+    private fun cleanId(id: String?): String? = id
+        ?.removePrefix("yt_")
+        ?.removePrefix("local_")
+        ?.replace("RDAMVMyt_", "RDAMVM")
+        ?.replace("RDAMVMlocal_", "RDAMVM")
+
     suspend fun player(videoId: String, playlistId: String? = null, client: YouTubeClient, signatureTimestamp: Int? = null, poToken: String? = null): Result<PlayerResponse> = runCatching {
-        innerTube.player(client, videoId, playlistId, signatureTimestamp, poToken).body<PlayerResponse>()
+        val cleanVideoId = cleanId(videoId)!!
+        val cleanPlaylistId = cleanId(playlistId)
+        innerTube.player(client, cleanVideoId, cleanPlaylistId, signatureTimestamp, poToken).body<PlayerResponse>()
     }
 
     suspend fun registerPlayback(playlistId: String? = null, playbackTracking: String) = runCatching {
@@ -1214,17 +1222,20 @@ object YouTube {
 
         innerTube.registerPlayback(
             url = playbackUrl,
-            playlistId = playlistId,
+            playlistId = cleanId(playlistId),
             cpn = cpn
         )
     }
 
     suspend fun next(endpoint: WatchEndpoint, continuation: String? = null): Result<NextResult> = runCatching {
+        val cleanVideoId = cleanId(endpoint.videoId)
+        val cleanPlaylistId = cleanId(endpoint.playlistId)
+        val cleanSetVideoId = cleanId(endpoint.playlistSetVideoId)
         val response = innerTube.next(
             WEB_REMIX,
-            endpoint.videoId,
-            endpoint.playlistId,
-            endpoint.playlistSetVideoId,
+            cleanVideoId,
+            cleanPlaylistId,
+            cleanSetVideoId,
             endpoint.index,
             endpoint.params,
             continuation).body<NextResponse>()
