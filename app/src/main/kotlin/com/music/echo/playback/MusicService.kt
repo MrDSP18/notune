@@ -3126,16 +3126,21 @@ class MusicService :
         return ResolvingDataSource.Factory(
             DefaultDataSource.Factory(this, createCacheDataSource())
         ) { dataSpec ->
-            val mediaId = dataSpec.key ?: error("No media id")
-            if (mediaId.isLocalMediaId()) {
-                val localUri = android.net.Uri.parse(mediaId)
+            val rawMediaId = dataSpec.key ?: error("No media id")
+            val mediaId = rawMediaId.removePrefix("yt_").removePrefix("local_")
+            if (rawMediaId.isLocalMediaId() || rawMediaId.startsWith("local_")) {
+                val localUri = if (rawMediaId.startsWith("local_")) {
+                    android.net.Uri.parse("content://media/external/audio/media/$mediaId")
+                } else {
+                    android.net.Uri.parse(rawMediaId)
+                }
                 try {
                     contentResolver.openFileDescriptor(localUri, "r")?.close()
                 } catch (e: java.io.FileNotFoundException) {
                     throw androidx.media3.common.PlaybackException("Local file deleted", e, androidx.media3.common.PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND)
+                }
+                return@Factory dataSpec.withUri(localUri)
             }
-                return@Factory dataSpec
-        }
 
 
             

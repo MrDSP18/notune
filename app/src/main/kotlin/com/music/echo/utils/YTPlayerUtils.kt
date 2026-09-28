@@ -246,6 +246,7 @@ object YTPlayerUtils {
         audioQuality: AudioQuality,
         connectivityManager: ConnectivityManager,
     ): Result<PlaybackData> = runCatching {
+        val videoId = videoId.removePrefix("yt_").removePrefix("local_")
         val fx = Fix403.nextId("res")
         Timber.tag(TAG).d("=== PLAYER RESPONSE FOR PLAYBACK ===")
         PlaybackLogManager.log(PlaybackLogLevel.INFO, "Fetching player response", "VideoId: $videoId")
@@ -789,6 +790,7 @@ object YTPlayerUtils {
         videoId: String,
         playlistId: String? = null,
     ): Result<PlayerResponse> {
+        val videoId = videoId.removePrefix("yt_").removePrefix("local_")
         Timber.tag(logTag).d("Fetching metadata-only player response for videoId: $videoId using MAIN_CLIENT: ${MAIN_CLIENT.clientName}")
         return YouTube.player(videoId, playlistId, client = WEB_REMIX) // ANDROID_VR does not work with history
             .onSuccess { Timber.tag(logTag).d("Successfully fetched metadata") }

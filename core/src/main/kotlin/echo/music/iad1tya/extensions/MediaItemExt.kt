@@ -18,10 +18,12 @@ val MediaItem.metadata: MediaMetadata?
     get() = localConfiguration?.tag as? MediaMetadata
 
 private fun playbackSeedUri(mediaId: String): String {
+    val cleanId = mediaId.removePrefix("yt_").removePrefix("local_")
     val scheme = mediaId.toUri().scheme?.lowercase(Locale.US)
-    return when (scheme) {
-        "content", "file", "android.resource", "http", "https" -> mediaId
-        else -> "https://music.youtube.com/watch?v=${Uri.encode(mediaId)}"
+    return when {
+        mediaId.startsWith("local_") -> "content://media/external/audio/media/$cleanId"
+        scheme in listOf("content", "file", "android.resource", "http", "https") -> mediaId
+        else -> "https://music.youtube.com/watch?v=${Uri.encode(cleanId)}"
     }
 }
 

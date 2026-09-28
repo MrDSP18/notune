@@ -122,7 +122,8 @@ constructor(
                     .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
             )
         ) { dataSpec ->
-            val mediaId = dataSpec.key ?: error("No media id")
+            val rawMediaId = dataSpec.key ?: error("No media id")
+            val mediaId = rawMediaId.removePrefix("yt_").removePrefix("local_")
 
             songUrlCache["${mediaId}_${downloadQuality.name}"]?.takeIf { it.second > System.currentTimeMillis() }?.let {
                 return@Factory dataSpec.withUri(it.first.toUri())

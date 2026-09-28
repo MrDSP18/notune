@@ -9,6 +9,7 @@ import androidx.core.net.toUri
 import java.util.Locale
 
 fun String.isLocalMediaId(): Boolean {
+    if (startsWith("local_")) return true
     return runCatching {
         when (toUri().scheme?.lowercase(Locale.US)) {
             "content", "file", "android.resource" -> true
