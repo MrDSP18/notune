@@ -711,8 +711,12 @@ class MainActivity : ComponentActivity() {
                         currentRoute?.startsWith("artist/") == true
                 }
 
-                val isLandscape = configuration.containerDpSize.width > configuration.containerDpSize.height
-                val showRail = isLandscape && !inSearchScreen && currentRoute != "ambient_mode"
+                val windowInfo = echo.music.iad1tya.ui.adaptive.rememberAdaptiveWindowInfo(
+                    availableWidthDp = maxWidth,
+                    availableHeightDp = maxHeight
+                )
+                val isLandscape = windowInfo.isLandscape
+                val showRail = (windowInfo.useNavigationRail || windowInfo.useThreeColumnLayout) && !inSearchScreen && currentRoute != "ambient_mode"
 
                 val navPadding = if (shouldShowNavigationBar && !showRail) {
                     NavigationBarHeight + FloatingToolbarBottomPadding
