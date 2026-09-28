@@ -1347,9 +1347,10 @@ fun HomeScreen(
                                             .animateItem()
                                     ) { index ->
                                         val originalSong = distinctQuickPicks[index]
-                                        val song by database.song(originalSong.id)
+                                        val songState by database.song(originalSong.id)
                                             .collectAsState(initial = originalSong)
-                                        val isActive = song!!.id == mediaMetadata?.id
+                                        val currentSong = songState ?: originalSong
+                                        val isActive = currentSong.id == mediaMetadata?.id
 
                                         Box(
                                             modifier = Modifier
@@ -1365,14 +1366,14 @@ fun HomeScreen(
                                                         if (isActive) {
                                                             playerConnection.togglePlayPause()
                                                         } else {
-                                                            playerConnection.playQueue(YouTubeQueue.radio(song!!.toMediaMetadata()))
+                                                            playerConnection.playQueue(YouTubeQueue.radio(currentSong.toMediaMetadata()))
                                                         }
                                                     },
                                                     onLongClick = {
                                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                         menuState.show {
                                                             SongMenu(
-                                                                originalSong = song!!,
+                                                                originalSong = currentSong,
                                                                 navController = navController,
                                                                 onDismiss = menuState::dismiss
                                                             )
@@ -1382,7 +1383,7 @@ fun HomeScreen(
                                         ) {
                                             AsyncImage(
                                                 model = coil3.request.ImageRequest.Builder(LocalContext.current)
-                                                    .data(song!!.thumbnailUrl)
+                                                    .data(currentSong.thumbnailUrl)
                                                     .crossfade(true)
                                                     .build(),
                                                 contentDescription = null,
@@ -1431,14 +1432,14 @@ fun HomeScreen(
                                                     .padding(16.dp)
                                             ) {
                                                 Text(
-                                                    text = song!!.title,
+                                                    text = currentSong.title,
                                                     style = MaterialTheme.typography.titleMedium,
                                                     color = Color.White,
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis
                                                 )
                                                 Text(
-                                                    text = song!!.artists.joinToString { it.name },
+                                                    text = currentSong.artists.joinToString { it.name },
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     color = Color.White.copy(alpha = 0.7f),
                                                     maxLines = 1,
@@ -1672,13 +1673,14 @@ fun HomeScreen(
                                             items = forgottenFavorites.distinctBy { it.id },
                                             key = { _, it -> it.id }
                                         ) { index, originalSong ->
-                                            val song by database.song(originalSong.id)
+                                            val songState by database.song(originalSong.id)
                                                 .collectAsState(initial = originalSong)
+                                            val currentSong = songState ?: originalSong
 
                                             SongListItem(
-                                                song = song!!,
+                                                song = currentSong,
                                                 showInLibraryIcon = true,
-                                                isActive = song!!.id == mediaMetadata?.id,
+                                                isActive = currentSong.id == mediaMetadata?.id,
                                                 isPlaying = isPlaying,
                                                 isSwipeable = false,
                                                 shape = listItemShape(index = index % rows, count = rows),
@@ -1688,7 +1690,7 @@ fun HomeScreen(
                                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                             menuState.show {
                                                                 SongMenu(
-                                                                    originalSong = song!!,
+                                                                    originalSong = currentSong,
                                                                     navController = navController,
                                                                     onDismiss = menuState::dismiss
                                                                 )
@@ -1705,12 +1707,12 @@ fun HomeScreen(
                                                     .width(horizontalLazyGridItemWidth)
                                                     .combinedClickable(
                                                         onClick = {
-                                                            if (song!!.id == mediaMetadata?.id) {
+                                                            if (currentSong.id == mediaMetadata?.id) {
                                                                 playerConnection.togglePlayPause()
                                                             } else {
                                                                 playerConnection.playQueue(
                                                                     YouTubeQueue.radio(
-                                                                        song!!.toMediaMetadata()
+                                                                        currentSong.toMediaMetadata()
                                                                     )
                                                                 )
                                                             }
@@ -1719,7 +1721,7 @@ fun HomeScreen(
                                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                             menuState.show {
                                                                 SongMenu(
-                                                                    originalSong = song!!,
+                                                                    originalSong = currentSong,
                                                                     navController = navController,
                                                                     onDismiss = menuState::dismiss
                                                                 )

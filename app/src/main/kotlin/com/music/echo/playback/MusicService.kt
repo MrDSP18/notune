@@ -1278,24 +1278,15 @@ class MusicService :
 }
 
     private fun requestAudioFocus(): Boolean {
-        if (hasAudioFocus) return true
-
-        audioFocusRequest?.let { request ->
-            val result = audioManager.requestAudioFocus(request)
-            hasAudioFocus = result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
-            return hasAudioFocus
+        // ExoPlayer manages AudioFocus natively via setAudioAttributes(..., handleAudioFocus = true).
+        // Avoid duplicate/conflicting manual AudioManager calls that trigger auto-pause loops.
+        hasAudioFocus = true
+        return true
     }
-        return false
-}
 
     private fun abandonAudioFocus() {
-        if (hasAudioFocus) {
-            audioFocusRequest?.let { request ->
-                audioManager.abandonAudioFocusRequest(request)
-                hasAudioFocus = false
-        }
+        hasAudioFocus = false
     }
-}
 
     /**
      * Acquires a high-performance Wi-Fi lock when playback starts.
