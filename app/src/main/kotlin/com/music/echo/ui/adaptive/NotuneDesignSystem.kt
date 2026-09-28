@@ -53,6 +53,10 @@ object NotuneDesignSystem {
         @Composable
         get() = LocalNotuneColors.current
 
+    val typography: NotuneSemanticTypography
+        @Composable
+        get() = LocalNotuneTypography.current
+
     val spacing: NotuneSpacing
         @Composable
         get() = LocalNotuneSpacing.current
