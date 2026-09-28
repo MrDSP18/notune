@@ -348,28 +348,28 @@ object YTPlayerUtils {
 
         // Try WEB_REMIX with signature timestamp and poToken (same as before)
         Timber.tag(logTag).d("Attempting to get player response using MAIN_CLIENT: ${MAIN_CLIENT.clientName}")
-        var mainPlayerResponse = Fix403.trapRethrow(fx, "mainClient.player") {
+        var mainPlayerResponse: PlayerResponse? = if (skipMainClient) null else Fix403.trap(fx, "mainClient.player") {
             Fix403.timed(fx, "mainClient.request") {
-                YouTube.player(videoId, playlistId, MAIN_CLIENT, signatureTimestamp.timestamp, poToken?.playerRequestPoToken).getOrThrow()
+                YouTube.player(videoId, playlistId, MAIN_CLIENT, signatureTimestamp.timestamp, poToken?.playerRequestPoToken).getOrNull()
             }
         }
         Fix403.i(fx, "mainClient.response", describeResponse(MAIN_CLIENT, mainPlayerResponse))
 
         // Debug uploaded track response
         if (isUploadedTrack || playlistId?.contains("MLPT") == true) {
-            println("[PLAYBACK_DEBUG] Main player response status: ${mainPlayerResponse.playabilityStatus.status}")
-            PlaybackLogManager.log(PlaybackLogLevel.DEBUG, "Status: ${mainPlayerResponse.playabilityStatus.status}", "Reason: ${mainPlayerResponse.playabilityStatus.reason}")
-            println("[PLAYBACK_DEBUG] Playability reason: ${mainPlayerResponse.playabilityStatus.reason}")
-            println("[PLAYBACK_DEBUG] Video details: title=${mainPlayerResponse.videoDetails?.title}, videoId=${mainPlayerResponse.videoDetails?.videoId}")
-            println("[PLAYBACK_DEBUG] Streaming data null? ${mainPlayerResponse.streamingData == null}")
-            println("[PLAYBACK_DEBUG] Adaptive formats count: ${mainPlayerResponse.streamingData?.adaptiveFormats?.size ?: 0}")
+            println("[PLAYBACK_DEBUG] Main player response status: ${mainPlayerResponse?.playabilityStatus?.status}")
+            PlaybackLogManager.log(PlaybackLogLevel.DEBUG, "Status: ${mainPlayerResponse?.playabilityStatus?.status}", "Reason: ${mainPlayerResponse?.playabilityStatus?.reason}")
+            println("[PLAYBACK_DEBUG] Playability reason: ${mainPlayerResponse?.playabilityStatus?.reason}")
+            println("[PLAYBACK_DEBUG] Video details: title=${mainPlayerResponse?.videoDetails?.title}, videoId=${mainPlayerResponse?.videoDetails?.videoId}")
+            println("[PLAYBACK_DEBUG] Streaming data null? ${mainPlayerResponse?.streamingData == null}")
+            println("[PLAYBACK_DEBUG] Adaptive formats count: ${mainPlayerResponse?.streamingData?.adaptiveFormats?.size ?: 0}")
         }
 
         var usedAgeRestrictedClient: YouTubeClient? = null
         val wasOriginallyAgeRestricted: Boolean
 
         // Check if WEB_REMIX response indicates age-restricted
-        val mainStatus = mainPlayerResponse.playabilityStatus.status
+        val mainStatus = mainPlayerResponse?.playabilityStatus?.status
         val isAgeRestrictedFromResponse = mainStatus in listOf("AGE_CHECK_REQUIRED", "AGE_VERIFICATION_REQUIRED", "LOGIN_REQUIRED", "CONTENT_CHECK_REQUIRED")
         wasOriginallyAgeRestricted = isAgeRestrictedFromResponse
 
@@ -387,9 +387,9 @@ object YTPlayerUtils {
 
         // If we still don't have a valid response, throw
 
-        val audioConfig = mainPlayerResponse.playerConfig?.audioConfig
-        val videoDetails = mainPlayerResponse.videoDetails
-        val playbackTracking = mainPlayerResponse.playbackTracking
+        val audioConfig = mainPlayerResponse?.playerConfig?.audioConfig
+        val videoDetails = mainPlayerResponse?.videoDetails
+        val playbackTracking = mainPlayerResponse?.playbackTracking
         var format: PlayerResponse.StreamingData.Format? = null
         var streamUrl: String? = null
         var streamExpiresInSeconds: Int? = null
@@ -397,7 +397,7 @@ object YTPlayerUtils {
         val retryMainPlayerResponse: PlayerResponse? = if (usedAgeRestrictedClient != null) mainPlayerResponse else null
 
         // Check current status
-        val currentStatus = mainPlayerResponse.playabilityStatus.status
+        val currentStatus = mainPlayerResponse?.playabilityStatus?.status
         val isAgeRestricted = currentStatus in listOf("AGE_CHECK_REQUIRED", "AGE_VERIFICATION_REQUIRED", "LOGIN_REQUIRED", "CONTENT_CHECK_REQUIRED")
 
         if (isAgeRestricted) {
@@ -407,7 +407,7 @@ object YTPlayerUtils {
         }
 
         // Check if this is a privately owned track (uploaded song)
-        val isPrivateTrack = mainPlayerResponse.videoDetails?.musicVideoType == "MUSIC_VIDEO_TYPE_PRIVATELY_OWNED_TRACK"
+        val isPrivateTrack = mainPlayerResponse?.videoDetails?.musicVideoType == "MUSIC_VIDEO_TYPE_PRIVATELY_OWNED_TRACK"
 
         // For private tracks: use TVHTML5 with PoToken + n-transform
         // For age-restricted: skip main client, start with fallbacks
@@ -862,44 +862,32 @@ object YTPlayerUtils {
     private fun validateStatus(url: String, contentLength: Long? = null, label: String = ""): Boolean {
         Timber.tag(logTag).d("Validating stream URL status")
         try {
-            // Last byte when we know the size, else the first chunk ExoPlayer will ask for.
-            val range = if (contentLength != null && contentLength > 0) {
-                "bytes=${contentLength - 1}-${contentLength - 1}"
-            } else {
-                "bytes=0-${VALIDATION_CHUNK_LENGTH - 1}"
-            }
+            val range = "bytes=0-1"
             val requestBuilder = okhttp3.Request.Builder()
-                .head()
+                .get()
                 .url(url)
                 .addHeader("Range", range)
+                .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
             YouTube.cookie?.let { cookie ->
                 requestBuilder.addHeader("Cookie", cookie)
             }
 
             val response = httpClient.newCall(requestBuilder.build()).execute()
-            response.close()
             val code = response.code
-            val accepted = response.isSuccessful || code == 405
-            when {
-                !accepted ->
-                    Timber.tag(logTag).w("Stream URL REJECTED: code=$code range=$range $label ${describeStreamUrl(url)}")
-                !response.isSuccessful ->
-                    Timber.tag(logTag).w("Stream URL accepted on non-2xx code=$code (HEAD refused) range=$range $label")
-                else ->
-                    Timber.tag(logTag).d("Stream URL validation: code=$code range=$range accepted $label")
+            response.body.close()
+            response.close()
+
+            val accepted = response.isSuccessful || code == 206 || code == 405 || code == 403
+            if (code == 403) {
+                Timber.tag(logTag).w("Stream URL probe returned 403; accepting optimistically for ExoPlayer: $label")
+                return true
             }
             return accepted
-        } catch (e: java.io.IOException) {
-            // Network timeout / reset while HEAD-probing. The stream URL itself may still
-            // be fine — let ExoPlayer attempt GET rather than burning a fallback client.
-            Timber.tag(logTag).w(e, "Stream URL HEAD probe failed (IO); accepting optimistically")
-            return true
         } catch (e: Exception) {
-            Timber.tag(logTag).e(e, "Stream URL validation failed with exception")
-            reportException(e)
+            Timber.tag(logTag).w(e, "Stream URL probe failed; accepting optimistically")
+            return true
         }
-        return false
     }
     data class SignatureTimestampResult(
         val timestamp: Int?,
