@@ -9,6 +9,9 @@ on:
       - feature/notune-platform-rebuild
       - feature/notune-ui-reconstruction
       - feature/notune-experience-engine
+      - release/notune-final
+      - release/final
+      - feature/notune-final
   workflow_dispatch:
 
 env:
