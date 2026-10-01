@@ -983,6 +983,17 @@ fun HomeScreen(
                     )
                 }
 
+                // NØTUNE NOW Context Engine Header
+                item {
+                    com.music.echo.notune.ui.home.NotuneNowHeader(
+                        currentSongTitle = mediaMetadata?.title ?: "Husn",
+                        currentArtistName = mediaMetadata?.artists?.joinToString(", ") { it.name } ?: "Anuv Jain",
+                        onPlayClick = {
+                            playerConnection.togglePlayPause()
+                        }
+                    )
+                }
+
                 // High Accessibility Module Matrix
                 item {
                     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
