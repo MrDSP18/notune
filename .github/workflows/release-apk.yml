@@ -7,6 +7,8 @@ on:
     branches:
       - main
       - feature/notune-platform-rebuild
+      - feature/notune-ui-reconstruction
+      - feature/notune-experience-engine
   workflow_dispatch:
 
 env:
