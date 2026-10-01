@@ -1122,6 +1122,23 @@ val ExperimentalAnimationsKey = booleanPreferencesKey("experimentalAnimations")
 
 val SelectedLogoKey = stringPreferencesKey("selected_logo")
 val WidgetStyleKey = stringPreferencesKey("widget_style")
+val OsPersonalityKey = stringPreferencesKey("os_personality")
+
+enum class OsPersonality {
+    AUTO,
+    PIXEL,
+    SAMSUNG,
+    NOTHING,
+    HYPEROS,
+    OXYGENOS,
+    COLOROS,
+    ORIGINOS,
+    REALME,
+    MOTOROLA,
+    ZENUI,
+    NOTUNE_ORIGINAL
+}
+
 
 enum class ThemePreset {
     NOTHING,

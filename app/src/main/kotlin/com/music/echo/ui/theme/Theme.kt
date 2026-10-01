@@ -81,16 +81,20 @@ fun notuneTheme(
         else -> AppTypography
     }
 
+    val osPersonality by rememberEnumPreference(echo.music.iad1tya.constants.OsPersonalityKey, echo.music.iad1tya.constants.OsPersonality.AUTO)
+    val osTokens = com.music.echo.notune.os.NotuneOsAdapter.getTokens(osPersonality)
+
     val shapes = Shapes(
-        extraSmall = RoundedCornerShape(2.dp),
-        small = RoundedCornerShape(6.dp),
-        medium = RoundedCornerShape(12.dp),
-        large = RoundedCornerShape(20.dp),
-        extraLarge = RoundedCornerShape(28.dp)
+        extraSmall = RoundedCornerShape((2 * osTokens.cornerScale).dp),
+        small = RoundedCornerShape((6 * osTokens.cornerScale).dp),
+        medium = RoundedCornerShape((12 * osTokens.cornerScale).dp),
+        large = RoundedCornerShape((20 * osTokens.cornerScale).dp),
+        extraLarge = RoundedCornerShape((28 * osTokens.cornerScale).dp)
     )
 
     CompositionLocalProvider(
-        LocalThemeTokens provides tokens
+        LocalThemeTokens provides tokens,
+        com.music.echo.notune.os.LocalOsPersonalityTokens provides osTokens
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
