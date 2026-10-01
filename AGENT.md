@@ -13,7 +13,7 @@ All branding, strings, and UI elements **must** use the **NØTUNE** identity. Th
 All UI work **must** match the **NØTUNE** design language:
 - **Sharp Geometry**: Preferred 0dp-4dp corners. Use `rememberArtworkShape` for consistency.
 - **Glassmorphism**: Use translucent surfaces with technical outlines.
-- **Monochrome + Nothing Red**: Background is strictly black (`#000000`), accents are Nothing Red (`#FF0031`).
+- **Monochrome + NØTUNE Red**: Background is strictly black (`#000000`), accents are NØTUNE Red (`#FF0031`).
 - **Dot Matrix Typography**: Use `NothingFont` for all headers and labels.
 
 ### AI Architecture Rule: Multi-Provider & Tool-Calling
