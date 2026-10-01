@@ -55,17 +55,17 @@ data class RelatedPage(
                             name = it.text,
                             id = it.navigationEndpoint?.browseEndpoint?.browseId,
                         )
-                    } ?: return null,
+                    } ?: emptyList(),
                 album =
                     renderer.flexColumns.getOrNull(2)?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.firstOrNull()?.let {
                         Album(
                             name = it.text,
-                            id = it.navigationEndpoint?.browseEndpoint?.browseId ?: return null,
+                            id = it.navigationEndpoint?.browseEndpoint?.browseId ?: return@let null,
                         )
                     },
                 duration = null,
                 musicVideoType = renderer.musicVideoType,
-                thumbnail = renderer.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
+                thumbnail = renderer.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl() ?: "",
                 explicit =
                     renderer.badges?.find {
                         it.musicInlineBadgeRenderer?.icon?.iconType == "MUSIC_EXPLICIT_BADGE"

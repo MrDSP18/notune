@@ -1,6 +1,9 @@
 /**
  * NØTUNE Cloud & Social Ecosystem Backend Server Service
  * Production-grade REST API + WebSocket Server with PostgreSQL Persistence.
+ * 
+ * Scalability Target: Designed to scale toward 100,000 concurrent connections,
+ * subject to load testing, cloud-provider quotas, networking limits, database capacity, and workload characteristics.
  */
 
 const express = require('express');
@@ -9,26 +12,43 @@ const WebSocket = require('ws');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const crypto = require('crypto');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET || 'notune_production_jwt_secret_key_2026';
 const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/notune_db';
 
-// Cloudflare R2 Object Storage Config (10GB Free S3 Media Storage)
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID || 'c4062f2f7ab8860317a18a059f9cd756';
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID || '1cde81840d6a160f7a4bbf0230f7c6af';
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY || '89606808b1f0074082e844763594283dc3678c9d068ef00c7bab612facc7a97c';
-const R2_ENDPOINT = process.env.R2_ENDPOINT || 'https://c4062f2f7ab8860317a18a059f9cd756.r2.cloudflarestorage.com';
-
 const app = express();
-app.use(cors());
-app.use(express.json());
 
-// Initialize PostgreSQL Connection Pool
+// Security & Middleware
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors());
+app.use(express.json({ limit: '1mb' }));
+
+// Global Rate Limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' }
+});
+app.use('/api/', apiLimiter);
+
+// Bounded PostgreSQL Connection Pool
 const pool = new Pool({
   connectionString: DATABASE_URL,
+  max: parseInt(process.env.DB_POOL_MAX || '25', 10),
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+pool.on('error', (err) => {
+  console.error('Unexpected PostgreSQL Pool Error:', err.message);
 });
 
 // Middleware: Authentication Token Extraction
@@ -47,20 +67,40 @@ function authenticateToken(req, res, next) {
 }
 
 // --------------------------------------------------------------------
-// REST API Endpoints
+// Health & Readiness Probes
 // --------------------------------------------------------------------
 
-// 1. Health & Status
-app.get('/api/v1/health', async (req, res) => {
+// Liveness Probe: Fast 200 OK without DB overhead
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'UP',
+    service: 'NØTUNE Cloud Server',
+    version: '2.0.0',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/api/v1/health', (req, res) => {
+  res.json({ status: 'UP', service: 'NØTUNE Cloud Server', timestamp: new Date().toISOString() });
+});
+
+// Readiness Probe: Verifies database connectivity
+app.get('/ready', async (req, res) => {
   try {
-    const dbRes = await pool.query('SELECT NOW()');
-    res.json({ status: 'OK', timestamp: dbRes.rows[0].now, service: 'NØTUNE Social Cloud' });
+    const dbRes = await pool.query('SELECT 1 as ready');
+    if (dbRes.rows[0].ready === 1) {
+      return res.json({ status: 'READY', db: 'CONNECTED', timestamp: new Date().toISOString() });
+    }
+    res.status(503).json({ status: 'UNREADY', db: 'UNAVAILABLE' });
   } catch (err) {
-    res.status(500).json({ status: 'ERROR', message: err.message });
+    res.status(503).json({ status: 'UNREADY', error: err.message });
   }
 });
 
-// 2. User Auth & Session
+// --------------------------------------------------------------------
+// REST API Endpoints (Metadata, Auth, Social - Zero Audio Bytes)
+// --------------------------------------------------------------------
+
 app.post('/api/v1/auth/register', async (req, res) => {
   const { email, displayName, avatarUrl } = req.body;
   if (!displayName) return res.status(400).json({ error: 'displayName is required' });
@@ -80,7 +120,6 @@ app.post('/api/v1/auth/register', async (req, res) => {
   }
 });
 
-// 3. Friend Network & Requests
 app.get('/api/v1/friends', authenticateToken, async (req, res) => {
   try {
     const query = `
@@ -97,25 +136,6 @@ app.get('/api/v1/friends', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/v1/friends/requests', authenticateToken, async (req, res) => {
-  const { targetUserId } = req.body;
-  if (!targetUserId) return res.status(400).json({ error: 'targetUserId required' });
-
-  try {
-    const query = `
-      INSERT INTO friendships (requester_id, addressee_id, status)
-      VALUES ($1, $2, 'PENDING')
-      ON CONFLICT (requester_id, addressee_id) DO NOTHING
-      RETURNING id, status, created_at;
-    `;
-    const result = await pool.query(query, [req.user.id, targetUserId]);
-    res.json({ request: result.rows[0] || { status: 'EXISTS' } });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// 4. Social Feed & Posts
 app.get('/api/v1/feed', authenticateToken, async (req, res) => {
   try {
     const query = `
@@ -157,137 +177,167 @@ app.post('/api/v1/posts', authenticateToken, async (req, res) => {
   }
 });
 
-// 5. Post Reactions & Comments
-app.post('/api/v1/posts/:id/react', authenticateToken, async (req, res) => {
-  const postId = req.params.id;
-  const { reactionType } = req.body; // LOVE, FIRE, FEELS, etc.
-
-  try {
-    const upsertQuery = `
-      INSERT INTO post_reactions (post_id, user_id, reaction_type)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (post_id, user_id) DO UPDATE SET reaction_type = EXCLUDED.reaction_type
-      RETURNING *;
-    `;
-    await pool.query(upsertQuery, [postId, req.user.id, reactionType]);
-    res.json({ success: true, reaction: reactionType });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// 6. Direct Messages & Song Suggestions
-app.get('/api/v1/messages/:friendId', authenticateToken, async (req, res) => {
-  const friendId = req.params.friendId;
-  try {
-    const query = `
-      SELECT * FROM direct_messages
-      WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1)
-      ORDER BY created_at ASC
-      LIMIT 100;
-    `;
-    const result = await pool.query(query, [req.user.id, friendId]);
-    res.json({ messages: result.rows });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/v1/messages', authenticateToken, async (req, res) => {
-  const { receiverId, messageType, textContent, songId, songTitle, artistName } = req.body;
-  try {
-    const query = `
-      INSERT INTO direct_messages (sender_id, receiver_id, message_type, text_content, song_id, song_title, artist_name)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING *;
-    `;
-    const result = await pool.query(query, [
-      req.user.id,
-      receiverId,
-      messageType || 'TEXT',
-      textContent || null,
-      songId || null,
-      songTitle || null,
-      artistName || null
-    ]);
-
-    const msg = result.rows[0];
-    broadcastWebSocketMessage(receiverId, { type: 'NEW_MESSAGE', message: msg });
-    res.json({ message: msg });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // --------------------------------------------------------------------
-// WebSocket Server for Real-Time Presence & Messaging
+// Real-Time Room & Presence Synchronization (WebSocket)
 // --------------------------------------------------------------------
 
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-const connectedClients = new Map(); // userId -> WebSocket connection
+const wss = new WebSocket.Server({ server, maxPayload: 128 * 1024 });
+
+// In-Memory Ephemeral State (Zero Database Write for Heartbeats)
+const connectedClients = new Map(); // userId -> { ws, username, currentRoomId }
+const roomsState = new Map(); // roomId -> { roomCode, hostUserId, sequence: number, members: Set<userId>, queue: Array }
+const ephemeralPresence = new Map(); // userId -> { status, trackData, lastActiveTimestamp }
 
 wss.on('connection', (ws, req) => {
-  let authenticatedUserId = null;
+  let userId = null;
+  let username = 'Anonymous';
 
-  ws.on('message', async (data) => {
+  ws.on('message', async (messageBuffer) => {
     try {
-      const payload = JSON.parse(data.toString());
-      if (payload.type === 'AUTHENTICATE') {
-        authenticatedUserId = payload.userId;
-        connectedClients.set(authenticatedUserId, ws);
-        await updatePresence(authenticatedUserId, 'ONLINE');
-        ws.send(JSON.stringify({ type: 'AUTHENTICATED', status: 'SUCCESS' }));
-      } else if (payload.type === 'HEARTBEAT_PRESENCE') {
-        if (authenticatedUserId) {
-          await updatePresence(authenticatedUserId, payload.status || 'ONLINE', payload.currentTrack);
+      const data = JSON.parse(messageBuffer.toString());
+      const { type, roomId, payload } = data;
+
+      switch (type) {
+        case 'AUTHENTICATE': {
+          userId = data.userId || crypto.randomUUID();
+          username = data.username || 'Listener';
+          connectedClients.set(userId, { ws, username, currentRoomId: null });
+          ephemeralPresence.set(userId, { status: 'ONLINE', trackData: null, lastActiveTimestamp: Date.now() });
+          ws.send(JSON.stringify({ type: 'AUTHENTICATED', userId, status: 'SUCCESS' }));
+          break;
+        }
+
+        case 'HEARTBEAT_PRESENCE': {
+          if (userId) {
+            ephemeralPresence.set(userId, {
+              status: data.status || 'ONLINE',
+              trackData: data.currentTrack || null,
+              lastActiveTimestamp: Date.now()
+            });
+            ws.send(JSON.stringify({ type: 'PONG', serverTime: Date.now() }));
+          }
+          break;
+        }
+
+        case 'JOIN_ROOM': {
+          if (!userId) break;
+          const targetRoomId = roomId || data.roomCode;
+          let room = roomsState.get(targetRoomId);
+
+          if (!room) {
+            room = {
+              roomId: targetRoomId,
+              roomCode: targetRoomId,
+              hostUserId: userId,
+              sequence: 1,
+              members: new Set(),
+              queue: []
+            };
+            roomsState.set(targetRoomId, room);
+          }
+
+          room.members.add(userId);
+          const clientSession = connectedClients.get(userId);
+          if (clientSession) clientSession.currentRoomId = targetRoomId;
+
+          broadcastToRoom(targetRoomId, {
+            eventId: crypto.randomUUID(),
+            roomId: targetRoomId,
+            sequence: ++room.sequence,
+            type: 'USER_JOINED',
+            senderId: userId,
+            serverTime: Date.now(),
+            payload: { userId, username }
+          });
+          break;
+        }
+
+        case 'ROOM_SYNC_EVENT':
+        case 'PLAYBACK_ACTION': {
+          if (!userId || !roomId) break;
+          const room = roomsState.get(roomId);
+          if (!room || !room.members.has(userId)) {
+            ws.send(JSON.stringify({ type: 'ERROR', message: 'Unauthorized room action' }));
+            break;
+          }
+
+          const sequence = ++room.sequence;
+          const syncEvent = {
+            eventId: crypto.randomUUID(),
+            roomId,
+            sequence,
+            type: payload?.action || type,
+            senderId: userId,
+            serverTime: Date.now(),
+            payload: payload || {}
+          };
+
+          broadcastToRoom(roomId, syncEvent);
+          break;
+        }
+
+        case 'LEAVE_ROOM': {
+          if (!userId || !roomId) break;
+          const room = roomsState.get(roomId);
+          if (room) {
+            room.members.delete(userId);
+            broadcastToRoom(roomId, {
+              eventId: crypto.randomUUID(),
+              roomId,
+              sequence: ++room.sequence,
+              type: 'USER_LEFT',
+              senderId: userId,
+              serverTime: Date.now(),
+              payload: { userId, username }
+            });
+          }
+          break;
         }
       }
-    } catch (e) {
-      console.error('WebSocket payload error:', e.message);
+    } catch (err) {
+      console.error('WS Error:', err.message);
     }
   });
 
-  ws.on('close', async () => {
-    if (authenticatedUserId) {
-      connectedClients.delete(authenticatedUserId);
-      await updatePresence(authenticatedUserId, 'OFFLINE');
+  ws.on('close', () => {
+    if (userId) {
+      const clientSession = connectedClients.get(userId);
+      if (clientSession && clientSession.currentRoomId) {
+        const room = roomsState.get(clientSession.currentRoomId);
+        if (room) {
+          room.members.delete(userId);
+          broadcastToRoom(clientSession.currentRoomId, {
+            eventId: crypto.randomUUID(),
+            roomId: clientSession.currentRoomId,
+            sequence: ++room.sequence,
+            type: 'USER_LEFT',
+            senderId: userId,
+            serverTime: Date.now(),
+            payload: { userId, username }
+          });
+        }
+      }
+      connectedClients.delete(userId);
+      ephemeralPresence.delete(userId);
     }
   });
 });
 
-async function updatePresence(userId, status, trackData = {}) {
-  try {
-    const query = `
-      INSERT INTO user_presence (user_id, status, current_track_id, current_track_title, current_artist_name, last_active_at)
-      VALUES ($1, $2, $3, $4, $5, NOW())
-      ON CONFLICT (user_id) DO UPDATE SET
-        status = EXCLUDED.status,
-        current_track_id = EXCLUDED.current_track_id,
-        current_track_title = EXCLUDED.current_track_title,
-        current_artist_name = EXCLUDED.current_artist_name,
-        last_active_at = NOW();
-    `;
-    await pool.query(query, [
-      userId,
-      status,
-      trackData.trackId || null,
-      trackData.title || null,
-      trackData.artist || null
-    ]);
-  } catch (e) {
-    console.error('Failed to update presence:', e.message);
-  }
-}
+function broadcastToRoom(roomId, syncEvent) {
+  const room = roomsState.get(roomId);
+  if (!room) return;
+  const eventString = JSON.stringify(syncEvent);
 
-function broadcastWebSocketMessage(targetUserId, payload) {
-  const targetWs = connectedClients.get(targetUserId);
-  if (targetWs && targetWs.readyState === WebSocket.OPEN) {
-    targetWs.send(JSON.stringify(payload));
+  for (const memberUserId of room.members) {
+    const client = connectedClients.get(memberUserId);
+    if (client && client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(eventString);
+    }
   }
 }
 
 // Start Server
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 NØTUNE Cloud Server active on port ${PORT}`);
+  console.log(`🚀 NØTUNE Hardened Backend Server running on port ${PORT}`);
 });

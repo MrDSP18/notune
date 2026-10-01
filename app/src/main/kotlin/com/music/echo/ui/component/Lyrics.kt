@@ -257,6 +257,9 @@ fun Lyrics(
     val lyricsEntity by playerConnection.currentLyrics.collectAsState(initial = null)
     val currentSong by playerConnection.currentSong.collectAsState(initial = null)
     val lyrics = remember(lyricsEntity) { lyricsEntity?.lyrics?.trim() }
+    val timedLines = remember(lyrics) {
+        if (lyrics.isNullOrBlank() || lyrics == LYRICS_NOT_FOUND) emptyList() else parseLyrics(lyrics)
+    }
 
     val playerBackground by rememberEnumPreference(
         key = PlayerBackgroundStyleKey,
@@ -269,11 +272,17 @@ fun Lyrics(
         if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
     }
 
-    val lines = remember(lyrics, scope) {
+    val lines = remember(
+        lyrics, scope, romanizeJapaneseLyrics, romanizeKoreanLyrics,
+        romanizeRussianLyrics, romanizeUkrainianLyrics, romanizeSerbianLyrics,
+        romanizeBulgarianLyrics, romanizeBelarusianLyrics, romanizeKyrgyzLyrics,
+        romanizeMacedonianLyrics, romanizeCyrillicByLine, romanizeChineseLyrics,
+        romanizeHindiLyrics, romanizePunjabiLyrics
+    ) {
         if (lyrics == null || lyrics == LYRICS_NOT_FOUND) {
             emptyList()
-        } else if (lyrics.startsWith("[")) {
-            val parsedLines = parseLyrics(lyrics)
+        } else if (timedLines.isNotEmpty()) {
+            val parsedLines = timedLines
 
             val isRussianLyrics = romanizeRussianLyrics && !romanizeCyrillicByLine && isRussian(lyrics)
             val isUkrainianLyrics = romanizeUkrainianLyrics && !romanizeCyrillicByLine && isUkrainian(lyrics)
@@ -450,10 +459,7 @@ fun Lyrics(
             }
         }
     }
-    val isSynced =
-        remember(lyrics) {
-            !lyrics.isNullOrEmpty() && lyrics.startsWith("[")
-        }
+    val isSynced = timedLines.isNotEmpty()
 
     
     val translationStatus by LyricsTranslationHelper.status.collectAsState()
@@ -470,17 +476,19 @@ fun Lyrics(
     
     
     LaunchedEffect(lines, lyricsEntity, translateLanguage, translateMode, autoTranslate) {
-        if (lines.isNotEmpty() && lyricsEntity != null) {
+        val loadedLyrics = lyricsEntity
+        if (lines.isNotEmpty() && loadedLyrics != null) {
             LyricsTranslationHelper.loadTranslationsFromDatabase(
                 lyrics = lines,
-                lyricsEntity = lyricsEntity,
+                lyricsEntity = loadedLyrics,
                 targetLanguage = translateLanguage,
                 mode = translateMode
             )
             
             kotlinx.coroutines.delay(100)
             
-            if (autoTranslate && !LyricsTranslationHelper.hasTranslations(lyricsEntity) &&
+            if (autoTranslate && (loadedLyrics.translatedLyrics.isBlank() ||
+                loadedLyrics.translationLanguage != translateLanguage || loadedLyrics.translationMode != translateMode) &&
                 LyricsTranslationHelper.status.value !is LyricsTranslationHelper.TranslationStatus.Translating &&
                 !LyricsTranslationHelper.hasActiveTranslations.value) {
                 LyricsTranslationHelper.triggerManualTranslation()
@@ -489,7 +497,7 @@ fun Lyrics(
     }
     
     
-    LaunchedEffect(showLyrics, lines.size) {
+    LaunchedEffect(showLyrics, lines, currentSong?.id, translateLanguage, translateMode) {
         LyricsTranslationHelper.manualTrigger.collect {
             if (showLyrics && lines.isNotEmpty()) {
                 LyricsTranslationHelper.translateLyrics(
@@ -506,14 +514,15 @@ fun Lyrics(
                     deeplFormality = deeplFormality,
                     useStreaming = true,
                     songId = currentSong?.id ?: "",
-                    database = database
+                    database = database,
+                    sourceLyrics = lyricsEntity?.lyrics.orEmpty()
                 )
             }
         }
     }
 
     
-    LaunchedEffect(Unit) {
+    LaunchedEffect(lines) {
         LyricsTranslationHelper.clearTranslationsTrigger.collect {
             lines.forEach { it.translatedTextFlow.value = null }
         }
@@ -639,19 +648,19 @@ fun Lyrics(
         selectedIndices.clear()
     }
 
-    LaunchedEffect(lyrics) {
-        if (lyrics.isNullOrEmpty() || !lyrics.startsWith("[")) {
+    LaunchedEffect(lines, currentSong?.id, currentSong?.song?.lyricsOffset, isSynced, showLyrics) {
+        if (!showLyrics || !isSynced || lines.isEmpty()) {
             currentLineIndex = -1
             return@LaunchedEffect
         }
         while (isActive) {
-            androidx.compose.runtime.withFrameMillis { }
             val sliderPosition = sliderPositionProvider()
             isSeeking = sliderPosition != null
             val position = sliderPosition ?: playerConnection.player.currentPosition
             currentPlaybackPosition = position
             val lyricsOffset = currentSong?.song?.lyricsOffset ?: 0
             currentLineIndex = findCurrentLineIndex(lines, position + lyricsOffset)
+            delay(50)
         }
     }
 
