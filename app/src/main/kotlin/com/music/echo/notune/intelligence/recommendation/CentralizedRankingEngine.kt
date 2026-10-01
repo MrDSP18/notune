@@ -41,14 +41,14 @@ class CentralizedRankingEngine @Inject constructor(
             }
 
             // Energy match
-            if (intent.constraints.minEnergy != null && features.energy >= intent.constraints.minEnergy!!) {
+            if (intent.constraints.minEnergy != null && features.energy >= intent.constraints.minEnergy) {
                 score += 0.20f
-            } else if (intent.constraints.maxEnergy != null && features.energy <= intent.constraints.maxEnergy!!) {
+            } else if (intent.constraints.maxEnergy != null && features.energy <= intent.constraints.maxEnergy) {
                 score += 0.20f
             }
 
             // Artist match
-            if (intent.targetArtist != null && track.artist.contains(intent.targetArtist!!, ignoreCase = true)) {
+            if (intent.targetArtist != null && track.artist.contains(intent.targetArtist, ignoreCase = true)) {
                 score += 0.30f
             }
 
@@ -64,7 +64,7 @@ class CentralizedRankingEngine @Inject constructor(
                 if (intent.targetLanguage != null && features.language.equals(intent.targetLanguage, ignoreCase = true)) {
                     append("Matches requested ${intent.targetLanguage} language preference. ")
                 }
-                if (intent.targetArtist != null && track.artist.contains(intent.targetArtist!!, ignoreCase = true)) {
+                if (intent.targetArtist != null && track.artist.contains(intent.targetArtist, ignoreCase = true)) {
                     append("Matches requested artist ${intent.targetArtist}. ")
                 }
                 if (isEmpty()) append("Matches your continuous listening DNA and session energy profile.")

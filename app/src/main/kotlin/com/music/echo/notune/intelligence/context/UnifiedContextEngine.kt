@@ -141,8 +141,8 @@ class UnifiedContextEngine @Inject constructor(
         val isOffline = caps == null || (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) && !caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR))
         val networkType = when {
             isOffline -> "OFFLINE"
-            caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true -> "WIFI"
-            caps?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true -> "CELLULAR"
+            caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "WIFI"
+            caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "CELLULAR"
             else -> "ETHERNET"
         }
 

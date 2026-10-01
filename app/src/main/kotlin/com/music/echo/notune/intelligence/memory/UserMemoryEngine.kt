@@ -28,7 +28,7 @@ data class MemoryItem(
     fun calculateEffectiveConfidence(now: Long = System.currentTimeMillis()): Float {
         if (source == MemorySource.EXPLICIT) return 1.0f
         val daysElapsed = TimeUnit.MILLISECONDS.toDays(now - updatedAt).coerceAtLeast(0)
-        val decayFactor = Math.pow((1.0 - decayRate).toDouble(), daysElapsed.toDouble()).toFloat()
+        val decayFactor = Math.pow(1.0 - decayRate, daysElapsed.toDouble()).toFloat()
         return (confidence * decayFactor).coerceIn(0.0f, 1.0f)
     }
 }

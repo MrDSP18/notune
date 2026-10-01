@@ -1341,7 +1341,6 @@ class MainActivity : ComponentActivity() {
                     Timber.w("Profile deep links are not available in this build: $uri")
                 }
             }
-            else -> Unit
         }
     }
 

@@ -103,7 +103,7 @@ fun LyricsStudioContainer(
         Spacer(modifier = Modifier.height(14.dp))
 
         // Language Translation Switcher Tabs
-        ScrollableTabRow(
+        SecondaryScrollableTabRow(
             selectedTabIndex = languages.indexOf(selectedLanguage),
             edgePadding = 0.dp,
             containerColor = Color.Transparent,

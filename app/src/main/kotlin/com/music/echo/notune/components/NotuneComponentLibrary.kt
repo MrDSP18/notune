@@ -278,7 +278,7 @@ fun NoTuneVisualizer(
             val factor = if (isPlaying) {
                 0.2f + 0.8f * kotlin.math.abs(kotlin.math.sin(phase + i * 0.5f))
             } else 0.15f
-            val barH = h * factor.toFloat()
+            val barH = h * factor
             val x = i * (barWidth + gap) + gap / 2f
             val y = h - barH
             drawRoundRect(
