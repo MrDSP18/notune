@@ -68,6 +68,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -617,6 +618,8 @@ fun HomeScreen(
     val innerTubeCookie by rememberPreference(InnerTubeCookieKey, "")
     val (randomizeHomeOrder) = rememberPreference(RandomizeHomeOrderKey, true)
     val (showSpeedDial) = rememberPreference(ShowSpeedDialKey, true)
+    val homeOrderPref by rememberPreference(echo.music.iad1tya.constants.HomeOrderKey, "")
+    var showHomeLayoutEditorDialog by remember { mutableStateOf(false) }
 
 
     val isLoggedIn = remember(innerTubeCookie) {
@@ -816,6 +819,7 @@ fun HomeScreen(
     }
 
     val homeSections = remember(
+        homeOrderPref,
         randomizeHomeOrder,
         randomSeed,
         speedDialItems,
@@ -851,44 +855,52 @@ fun HomeScreen(
 
         if (explorePage?.moodAndGenres != null) list.add(HomeSection.MoodAndGenres)
 
-        if (randomizeHomeOrder) {
+        if (homeOrderPref.isNotBlank()) {
+            val userOrder = homeOrderPref.split(",").map { it.trim() }
+            val orderedList = mutableListOf<HomeSection>()
+            userOrder.forEach { orderId ->
+                list.filter { section ->
+                    when (section) {
+                        HomeSection.SpeedDial -> orderId == "speed_dial" || orderId == "greeting"
+                        HomeSection.KeepListening -> orderId == "keep_listening"
+                        HomeSection.QuickPicks -> orderId == "quick_picks"
+                        HomeSection.DailyDiscover -> orderId == "daily_discover"
+                        HomeSection.MoodAndGenres -> orderId == "mood_and_genres"
+                        HomeSection.AccountPlaylists -> orderId == "account_playlists"
+                        HomeSection.AiRecommendations -> orderId == "ai_recommendations"
+                        HomeSection.ForgottenFavorites -> orderId == "forgotten_favorites"
+                        HomeSection.FromTheCommunity -> orderId == "from_the_community"
+                        else -> true
+                    }
+                }.forEach {
+                    if (!orderedList.contains(it)) orderedList.add(it)
+                }
+            }
+            list.forEach {
+                if (!orderedList.contains(it)) orderedList.add(it)
+            }
+            orderedList
+        } else if (randomizeHomeOrder) {
             list.sortedByDescending { section ->
-                
-                
-                
                 val sectionRandom = Random(randomSeed + section.id.hashCode())
-
-                
-                
                 val base = when (section) {
                     HomeSection.QuickPicks -> 10000
                     HomeSection.SpeedDial,
-                    HomeSection.DailyDiscover -> 500 
-
+                    HomeSection.DailyDiscover -> 500
                     HomeSection.KeepListening,
                     HomeSection.AccountPlaylists,
                     HomeSection.ForgottenFavorites,
-                    HomeSection.FromTheCommunity -> 300 
-
-                    else -> 100 
+                    HomeSection.FromTheCommunity -> 300
+                    else -> 100
                 }
-
                 val modifier = when (section) {
-                    
-                    
                     HomeSection.QuickPicks -> 0
                     HomeSection.SpeedDial,
                     HomeSection.DailyDiscover -> sectionRandom.nextInt(-200, 400)
-
-                    
-                    
-                    
                     HomeSection.KeepListening,
                     HomeSection.AccountPlaylists,
                     HomeSection.ForgottenFavorites,
                     HomeSection.FromTheCommunity -> sectionRandom.nextInt(-100, 400)
-
-                    
                     else -> sectionRandom.nextInt(-50, 50)
                 }
                 base + modifier
@@ -974,15 +986,34 @@ fun HomeScreen(
                 // High Accessibility Module Matrix
                 item {
                     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-                        Text(
-                            text = "SYSTEM_MODULES // DATA_NODES",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontFamily = echo.music.iad1tya.ui.theme.NothingFont,
-                                color = Color(0xFF71717A),
-                                letterSpacing = 1.sp
-                            ),
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "SYSTEM_MODULES // DATA_NODES",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontFamily = echo.music.iad1tya.ui.theme.NothingFont,
+                                    color = Color(0xFF71717A),
+                                    letterSpacing = 1.sp
+                                )
+                            )
+                            TextButton(
+                                onClick = { showHomeLayoutEditorDialog = true },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "[ EDIT LAYOUT ]",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontFamily = echo.music.iad1tya.ui.theme.NothingFont,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.sp
+                                    )
+                                )
+                            }
+                        }
                         
                         Row(modifier = Modifier.fillMaxWidth().height(100.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             ModuleTile(
@@ -2034,6 +2065,11 @@ fun HomeScreen(
                 }
             }
 
+            if (showHomeLayoutEditorDialog) {
+                com.music.echo.notune.components.HomeLayoutEditorDialog(
+                    onDismiss = { showHomeLayoutEditorDialog = false }
+                )
+            }
         }
     }
 }
