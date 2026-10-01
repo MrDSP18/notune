@@ -26,6 +26,10 @@ class LocalSongsViewModel @Inject constructor(
     private val _scanState = MutableStateFlow(LocalSongsScanState())
     val scanState = _scanState.asStateFlow()
 
+    init {
+        scanDevice()
+    }
+
     val songs = repository.getSongs().map { localSongs ->
         localSongs.map { local ->
             // Try to find in DB if it's already there (to get proper Song entity with artists etc)

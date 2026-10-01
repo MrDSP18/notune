@@ -149,7 +149,7 @@
                 <data android:pathPrefix="/MrDSP18/notune" />
             </intent-filter>
 
-            <!-- NØTUNE Share Links -->
+            <!-- NØTUNE Canonical App Links (https://notune.app) -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 
@@ -158,8 +158,15 @@
 
                 <data android:scheme="http" />
                 <data android:scheme="https" />
+                <data android:host="notune.app" />
                 <data android:host="share.notune.fun" />
-                <data android:pathPrefix="/" />
+                <data android:pathPrefix="/song/" />
+                <data android:pathPrefix="/album/" />
+                <data android:pathPrefix="/playlist/" />
+                <data android:pathPrefix="/artist/" />
+                <data android:pathPrefix="/room/" />
+                <data android:pathPrefix="/user/" />
+                <data android:pathPrefix="/mix/" />
             </intent-filter>
 
             <!-- Youtube filter -->

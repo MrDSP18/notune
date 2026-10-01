@@ -58,10 +58,12 @@ object LyricsTranslationHelper {
     private var isCompositionActive = true
 
     
-    private val translationCache = mutableMapOf<String, List<String>>()
+    private data class TranslationCacheKey(val lyricsText: String, val mode: String, val language: String)
 
-    private fun getCacheKey(lyricsText: String, mode: String, language: String): String =
-        "${lyricsText.hashCode()}_${mode}_$language"
+    private val translationCache = mutableMapOf<TranslationCacheKey, List<String>>()
+
+    private fun getCacheKey(lyricsText: String, mode: String, language: String): TranslationCacheKey =
+        TranslationCacheKey(lyricsText, mode, language)
 
     
     private fun tryParsePartialTranslation(content: String, expectedCount: Int): List<String> {
@@ -194,10 +196,13 @@ object LyricsTranslationHelper {
             if (entry.text.isNotBlank()) index to entry else null
         }
 
+        if (translatedLines.size != nonEmptyEntries.size || translatedLines.any { it.isBlank() }) {
+            _hasActiveTranslations.value = false
+            return
+        }
+
         nonEmptyEntries.forEachIndexed { idx, (originalIndex, _) ->
-            if (idx < translatedLines.size) {
-                lyrics[originalIndex].translatedTextFlow.value = translatedLines[idx]
-            }
+            lyrics[originalIndex].translatedTextFlow.value = translatedLines[idx]
         }
 
         
@@ -224,9 +229,11 @@ object LyricsTranslationHelper {
         useStreaming: Boolean = true,
         songId: String = "",
         database: MusicDatabase? = null,
+        sourceLyrics: String = "",
     ) {
         translationJob?.cancel()
         _status.value = TranslationStatus.Translating()
+        _hasActiveTranslations.value = false
 
         
         lyrics.forEach { it.translatedTextFlow.value = null }
@@ -251,20 +258,9 @@ object LyricsTranslationHelper {
                     return@launch
                 }
 
-                if (isZeroConfigFreeMode) {
-                    // Free Built-in AI Translation fallback
-                    val freeTranslations = nonEmptyEntries.map { (_, entry) ->
-                        entry.text.trim()
-                    }
-                    nonEmptyEntries.forEachIndexed { idx, (originalIndex, _) ->
-                        lyrics[originalIndex].translatedTextFlow.value = freeTranslations[idx]
-                    }
-                    _hasActiveTranslations.value = true
-                    _status.value = TranslationStatus.Success
-                    delay(2000)
-                    if (_status.value is TranslationStatus.Success && isCompositionActive) {
-                        _status.value = TranslationStatus.Idle
-                    }
+                if (isZeroConfigFreeMode && !(provider == "NØTUNE Neural" && externalNeuralTranslator != null)) {
+                    _hasActiveTranslations.value = false
+                    _status.value = TranslationStatus.Error("Configure a translation provider to translate lyrics")
                     return@launch
                 }
 
@@ -289,7 +285,7 @@ object LyricsTranslationHelper {
                     if (songId.isNotBlank() && database != null) {
                         try {
                             val currentLyrics = database.lyrics(songId).first()
-                            if (currentLyrics != null && currentLyrics.translatedLyrics.isNullOrBlank()) {
+                            if (currentLyrics != null && currentLyrics.lyrics == sourceLyrics && currentLyrics.translatedLyrics.isNullOrBlank()) {
                                 database.query {
                                     upsert(
                                         currentLyrics.copy(
@@ -433,6 +429,13 @@ object LyricsTranslationHelper {
                         return@onSuccess
                     }
 
+                    if (translatedLines.size != nonEmptyEntries.size || translatedLines.any { it.isBlank() }) {
+                        lyrics.forEach { it.translatedTextFlow.value = null }
+                        _hasActiveTranslations.value = false
+                        _status.value = TranslationStatus.Error("Translation provider returned incomplete lyrics")
+                        return@onSuccess
+                    }
+
                     
                     val cacheKey2 = getCacheKey(fullText, mode, targetLanguage)
                     translationCache[cacheKey2] = translatedLines
@@ -442,7 +445,7 @@ object LyricsTranslationHelper {
                         scope.launch(Dispatchers.IO) {
                             try {
                                 val currentLyrics = database.lyrics(songId).first()
-                                if (currentLyrics != null) {
+                                if (currentLyrics != null && currentLyrics.lyrics == sourceLyrics) {
                                     database.query {
                                         upsert(
                                             currentLyrics.copy(
@@ -462,30 +465,11 @@ object LyricsTranslationHelper {
                     }
 
                     
-                    val expectedCount = nonEmptyEntries.size
-
-                    when {
-                        translatedLines.size >= expectedCount -> {
-                            nonEmptyEntries.forEachIndexed { idx, (originalIndex, _) ->
-                                lyrics[originalIndex].translatedTextFlow.value = translatedLines[idx]
-                            }
-                            _hasActiveTranslations.value = true
-                            _status.value = TranslationStatus.Success
-                        }
-                        translatedLines.size < expectedCount -> {
-                            translatedLines.forEachIndexed { idx, translation ->
-                                if (idx < nonEmptyEntries.size) {
-                                    val originalIndex = nonEmptyEntries[idx].first
-                                    lyrics[originalIndex].translatedTextFlow.value = translation
-                                }
-                            }
-                            _hasActiveTranslations.value = true
-                            _status.value = TranslationStatus.Success
-                        }
-                        else -> {
-                            _status.value = TranslationStatus.Error(context.getString(com.music.echo.lyrics.R.string.ai_error_unexpected))
-                        }
+                    nonEmptyEntries.forEachIndexed { idx, (originalIndex, _) ->
+                        lyrics[originalIndex].translatedTextFlow.value = translatedLines[idx]
                     }
+                    _hasActiveTranslations.value = true
+                    _status.value = TranslationStatus.Success
 
                     
                     delay(3000)
@@ -497,6 +481,8 @@ object LyricsTranslationHelper {
                         return@onFailure
                     }
 
+                    lyrics.forEach { it.translatedTextFlow.value = null }
+                    _hasActiveTranslations.value = false
                     val errorMessage = error.message ?: context.getString(com.music.echo.lyrics.R.string.ai_error_unknown)
                     _status.value = TranslationStatus.Error(errorMessage)
                 }

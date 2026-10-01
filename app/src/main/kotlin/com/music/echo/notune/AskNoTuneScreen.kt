@@ -83,9 +83,13 @@ fun AskNoTuneScreen(
     Scaffold(
         topBar = {
             Column {
-                com.music.echo.notune.theme.SystemTelemetryHeader(
-                    title = "NØTUNE // AI DJ INTELLIGENCE",
-                    subtitle = "Voice & Neural Matrix"
+                com.music.echo.notune.ui.components.NotuneAIIndicator(
+                    isOnline = true,
+                    currentActivity = if (isTyping) "ANALYZING TASTE & SELECTING TRACKS" else "ONLINE / READY",
+                    contextEnergy = 72,
+                    contextMood = "CALM",
+                    queueSize = 18,
+                    modifier = Modifier.padding(8.dp)
                 )
                 TopAppBar(
                     title = {

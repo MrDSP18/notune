@@ -117,7 +117,7 @@ constructor(
                     val result = channel.receive()
                     responses++
                     if (result != null) {
-                        val isSynced = result.lyrics?.trimStart()?.startsWith("[") == true
+                        val isSynced = result.lyrics?.let { LyricsUtils.parseLyrics(it).isNotEmpty() } == true
                         if (isSynced) {
                             coroutineContext.cancelChildren()
                             return@coroutineScope result
@@ -149,7 +149,7 @@ constructor(
                 for (provider in providers) {
                     val result = deferreds[provider]?.await()
                     if (result != null && result != LYRICS_NOT_FOUND && result.isNotBlank()) {
-                        val isSynced = result.trimStart().startsWith("[")
+                        val isSynced = LyricsUtils.parseLyrics(result).isNotEmpty()
                         if (isSynced) {
                             coroutineContext.cancelChildren()
                             return@coroutineScope LyricsWithProvider(result, provider.name)

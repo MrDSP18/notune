@@ -1,6 +1,14 @@
 package echo.music.iad1tya.notune.flow
 
 import echo.music.iad1tya.models.MediaMetadata
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import com.music.echo.notune.intelligence.NotuneIntelligenceEngine
+import com.music.echo.notune.intelligence.feedback.UserEvent
+import com.music.echo.notune.intelligence.session.Media3PlaybackListener
+import com.music.echo.notune.intelligence.session.PersonalMusicSession
+import io.mockk.mockk
+import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -23,12 +31,74 @@ class AdaptiveEndlessQueueEngineTest {
     }
 
     @Test
+    fun testPlaybackFeedbackUsesOutgoingTrackMetadata() {
+        val intelligence = mockk<NotuneIntelligenceEngine>(relaxed = true)
+        val session = PersonalMusicSession()
+        assertEquals("", session.liveTasteSnapshot.value.primaryGenre)
+        assertEquals(null, session.liveTasteSnapshot.value.longTermAffinityPct)
+        val listener = Media3PlaybackListener(intelligence, session)
+        fun item(id: String, title: String, artist: String) = MediaItem.Builder()
+            .setMediaId(id)
+            .setMediaMetadata(androidx.media3.common.MediaMetadata.Builder().setTitle(title).setArtist(artist).build())
+            .build()
+
+        listener.onMediaItemTransition(item("first", "First", "Artist A"), Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED)
+        listener.onMediaItemTransition(item("second", "Second", "Artist B"), Player.MEDIA_ITEM_TRANSITION_REASON_AUTO)
+        verify { intelligence.recordFeedback(match {
+            it is UserEvent.Completed && it.trackId == "first" && it.title == "First" && it.artistName == "Artist A"
+        }) }
+        listener.onMediaItemTransition(item("third", "Third", "Artist C"), Player.MEDIA_ITEM_TRANSITION_REASON_SEEK)
+        verify { intelligence.recordFeedback(match {
+            it is UserEvent.Skip && it.trackId == "second" && it.title == "Second" && it.artistName == "Artist B"
+        }) }
+        assertEquals("Artist C", session.sessionState.value.currentTrack?.artistName)
+        listener.onMediaItemTransition(item("third", "Third", "Artist C"), Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT)
+        verify { intelligence.recordFeedback(match {
+            it is UserEvent.Replay && it.trackId == "third" && it.title == "Third"
+        }) }
+        assertEquals(1, session.sessionState.value.recentReplaysCount)
+    }
+
+    @Test
     fun testQueueReplenishmentTriggerWhenUpcomingLow() {
         val shouldRefillAt4 = optimizer.shouldRefillQueue(4)
         val shouldRefillAt10 = optimizer.shouldRefillQueue(10)
 
         assertTrue("Queue should refill when upcoming items count is 4 (<=5)", shouldRefillAt4)
         assertFalse("Queue should not refill when upcoming items count is 10 (>5)", shouldRefillAt10)
+    }
+
+    @Test
+    fun testGeneratedQueueNeverDuplicatesExistingManualEntries() {
+        val candidate = FlowQueueItem(
+            mediaMetadata = MediaMetadata(id = "manual", title = "Manual", artists = emptyList(), duration = 180),
+            source = ItemSource.FLOW,
+            isLocked = false,
+            reason = FlowReason(FlowReasonType.PERSONAL_TASTE, "Taste"),
+            generationId = 1L
+        )
+        val fresh = candidate.copy(mediaMetadata = candidate.mediaMetadata.copy(id = "new", title = "New"))
+        assertEquals(listOf("new"), optimizer.appendableItems(listOf("playing", "manual"), listOf(candidate, fresh, fresh))
+            .map { it.mediaMetadata.id })
+    }
+
+    @Test
+    fun testRankedCandidatesCannotAddSameTrackTwice() {
+        val candidate = FlowCandidate(
+            MediaMetadata(id = "repeat", title = "Repeat", artists = emptyList(), duration = 180), "Catalog"
+        )
+        val scored = FlowScore(candidate, 20f, primaryReason = FlowReason(FlowReasonType.PERSONAL_TASTE, "Taste"))
+        val result = optimizer.buildOptimizedQueue(emptyList(), listOf(scored, scored), 1L)
+        assertEquals(listOf("repeat"), result.map { it.mediaMetadata.id })
+    }
+
+    @Test
+    fun testFavoriteFeedbackUpdatesFlowCandidates() {
+        val feedback = FlowFeedbackProcessor(languageTracker)
+        feedback.recordFavorite("liked", true)
+        assertTrue("liked" in feedback.getFavoriteTrackIds())
+        feedback.recordFavorite("liked", false)
+        assertFalse("liked" in feedback.getFavoriteTrackIds())
     }
 
     @Test
