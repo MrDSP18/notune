@@ -48,6 +48,9 @@ class LyricsIntelligence2Test {
 
         val devanagariPron = transliterator.transliterateToPronunciation("केसरिया तेरा इश्क", LyricsLanguage.HINDI)
         assertEquals("Kesariya tera ishq", devanagariPron)
+
+        val mixedPron = transliterator.transliterateToPronunciation("காதல் दिल", LyricsLanguage.TAMIL)
+        assertEquals("kaadhal dil", mixedPron)
     }
 
     @Test
@@ -94,8 +97,30 @@ class LyricsIntelligence2Test {
             lines = lines,
             sourceLanguage = LyricsLanguage.TAMIL,
             targetLanguage = LyricsLanguage.ENGLISH,
-            displayMode = LyricsDisplayMode.DUAL_LYRICS
+            displayMode = LyricsDisplayMode.DUAL_LYRICS,
+            artistName = "Anirudh"
         )
         assertEquals(doc, cachedDoc)
+
+        val changed = router.processDocument(
+            songId = "song_123",
+            lines = listOf(lines.single().copy(originalText = "காதல்")),
+            sourceLanguage = LyricsLanguage.TAMIL,
+            targetLanguage = LyricsLanguage.ENGLISH,
+            displayMode = LyricsDisplayMode.DUAL_LYRICS,
+            artistName = "Anirudh"
+        )
+        assertEquals("காதல்", changed.lines.single().originalText)
+        assertEquals("kaadhal", changed.lines.single().transliteratedText)
+    }
+
+    @Test
+    fun testUnavailableMeaningPreservesOriginal() = runBlocking {
+        val line = LyricLine("1", 0L, 1000L, "Unknown lyric")
+        val document = router.processDocument(
+            "unknown", listOf(line), LyricsLanguage.ENGLISH, LyricsLanguage.TAMIL, LyricsDisplayMode.MEANING
+        )
+        assertEquals(null, document.lines.single().translatedText)
+        assertEquals("Unknown lyric", document.lines.single().textForDisplayMode(LyricsDisplayMode.MEANING))
     }
 }

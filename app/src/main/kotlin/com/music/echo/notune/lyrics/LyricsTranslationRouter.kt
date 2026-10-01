@@ -17,8 +17,16 @@ class LyricsTranslationRouter @Inject constructor(
     private val translationEngine: LyricsTranslationEngine,
     private val singAlongEngine: SingAlongEngine
 ) {
-    // In-memory cache key: "songId_displayMode_targetLanguageCode"
-    private val cache = ConcurrentHashMap<String, LyricsDocument>()
+    private data class CacheKey(
+        val songId: String,
+        val lines: List<LyricLine>,
+        val sourceLanguage: LyricsLanguage,
+        val targetLanguage: LyricsLanguage,
+        val displayMode: LyricsDisplayMode,
+        val artistName: String?
+    )
+
+    private val cache = ConcurrentHashMap<CacheKey, LyricsDocument>()
 
     /**
      * Protect proper nouns, artist names, and sound expressions from unintended translation.
@@ -74,7 +82,7 @@ class LyricsTranslationRouter @Inject constructor(
         displayMode: LyricsDisplayMode,
         artistName: String? = null
     ): LyricsDocument = withContext(Dispatchers.Default) {
-        val cacheKey = "${songId}_${displayMode.name}_${targetLanguage.code}"
+        val cacheKey = CacheKey(songId, lines.toList(), sourceLanguage, targetLanguage, displayMode, artistName)
         cache[cacheKey]?.let { return@withContext it }
 
         val protectedList = if (!artistName.isNullOrBlank()) listOf(artistName) else emptyList()
@@ -95,7 +103,7 @@ class LyricsTranslationRouter @Inject constructor(
                 val (protectedText, tokenMap) = protectTokens(line.originalText, protectedList)
                 val rawTranslation = translationEngine.ruleBasedTranslate(protectedText, targetLanguage)
                 val restored = restoreTokens(rawTranslation, tokenMap)
-                line.copy(translatedText = restored)
+                line.copy(translatedText = restored.takeIf { it != line.originalText })
             }
         } else {
             transliteratedLines

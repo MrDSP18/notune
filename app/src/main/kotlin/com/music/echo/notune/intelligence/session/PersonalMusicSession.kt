@@ -19,14 +19,14 @@ import javax.inject.Singleton
  * Combines 3 Layers of Taste: Long-Term + Recent (last 5-10 songs) + Current Session.
  */
 data class LiveTasteSnapshot(
-    val primaryGenre: String = "Tamil Pop",
-    val primaryArtist: String = "A.R. Rahman",
+    val primaryGenre: String = "",
+    val primaryArtist: String = "",
     val currentEnergyTarget: Float = 0.55f,
     val currentTempoBpm: Float = 105f,
-    val longTermAffinityPct: Int = 85,
-    val recentAffinityPct: Int = 90,
-    val sessionAffinityPct: Int = 95,
-    val activeMusicStateMessage: String = "Keeping the flow calm"
+    val longTermAffinityPct: Int? = null,
+    val recentAffinityPct: Int? = null,
+    val sessionAffinityPct: Int? = null,
+    val activeMusicStateMessage: String = ""
 )
 
 /**
@@ -99,17 +99,14 @@ class PersonalMusicSession @Inject constructor() {
 
     private fun recalculateLiveTasteSnapshot() {
         val state = _sessionState.value
-        val topArtist = state.recentArtists.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: "Varied"
-        val topGenre = state.recentGenres.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: "Pop"
+        val topArtist = state.recentArtists.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key.orEmpty()
+        val topGenre = state.recentGenres.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key.orEmpty()
 
         _liveTasteSnapshot.value = LiveTasteSnapshot(
             primaryGenre = topGenre,
             primaryArtist = topArtist,
             currentEnergyTarget = state.currentEnergy,
             currentTempoBpm = state.currentTempo,
-            longTermAffinityPct = 82,
-            recentAffinityPct = 88,
-            sessionAffinityPct = 94,
             activeMusicStateMessage = state.currentMusicState.quietUserMessage
         )
     }

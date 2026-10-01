@@ -271,10 +271,19 @@ class MusicService :
     lateinit var flowEngine: echo.music.iad1tya.notune.flow.FlowEngine
 
     @Inject
+    lateinit var flowQueueOptimizer: echo.music.iad1tya.notune.flow.FlowQueueOptimizer
+
+    @Inject
+    lateinit var flowFeedbackProcessor: echo.music.iad1tya.notune.flow.FlowFeedbackProcessor
+
+    @Inject
     lateinit var eventRepository: echo.music.iad1tya.repository.EventRepository
     
     @Inject
     lateinit var analyticsManager: com.music.echo.notune.AnalyticsManager
+
+    @Inject
+    lateinit var media3PlaybackListener: com.music.echo.notune.intelligence.session.Media3PlaybackListener
 
     @Inject
     lateinit var sleepFlowManager: com.music.echo.notune.flow.SleepFlowManager
@@ -671,6 +680,7 @@ class MusicService :
         )
         player = createExoPlayer()
         player.addListener(this@MusicService)
+        player.addListener(media3PlaybackListener)
         sleepTimer = SleepTimer(scope, player)
         player.addListener(sleepTimer)
         playerInitialized.value = true
@@ -2008,6 +2018,7 @@ class MusicService :
                         )
                 }
             }
+                flowFeedbackProcessor.recordFavorite(song.id, song.liked)
                 currentMediaMetadata.value = player.currentMetadata
         }
     }
@@ -2187,10 +2198,13 @@ class MusicService :
             currentTrack = mediaItem?.metadata,
             upcomingQueueTrackIds = upcomingMediaIds
         ) { newQueueItems ->
-            if (newQueueItems.isNotEmpty()) {
-                val mediaItemsToAdd = newQueueItems.map { it.mediaMetadata.toMediaItem() }
-                player.addMediaItems(mediaItemsToAdd)
-        }
+            scope.launch(Dispatchers.Main.immediate) {
+                if (mediaItem?.mediaId != player.currentMediaItem?.mediaId) return@launch
+                val queuedIds = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }
+                val mediaItemsToAdd = flowQueueOptimizer.appendableItems(queuedIds, newQueueItems)
+                    .map { it.mediaMetadata.toMediaItem() }
+                if (mediaItemsToAdd.isNotEmpty()) player.addMediaItems(mediaItemsToAdd)
+            }
     }
 
         discordUpdateJob?.cancel()
@@ -3512,6 +3526,7 @@ class MusicService :
         }
         mediaSession.release()
         player.removeListener(this)
+        player.removeListener(media3PlaybackListener)
         player.removeListener(sleepTimer)
         playerSilenceProcessors.remove(player)
         playerStereoWideners.remove(player)
@@ -4194,6 +4209,7 @@ class MusicService :
     }
 
         fadingPlayer?.removeListener(this)
+        fadingPlayer?.removeListener(media3PlaybackListener)
         fadingPlayer?.removeListener(sleepTimer)
 
         
@@ -4217,6 +4233,8 @@ class MusicService :
 
         nextPlayer.removeListener(secondaryPlayerListener)
         nextPlayer.addListener(this)
+        nextPlayer.addListener(media3PlaybackListener)
+        media3PlaybackListener.onMediaItemTransition(nextPlayer.currentMediaItem, Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED)
         nextPlayer.addListener(sleepTimer)
 
         sleepTimer.player = player

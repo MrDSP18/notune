@@ -19,18 +19,35 @@ class LyricsTransliterator @Inject constructor() {
         // 1. Check exact phrase override dictionary
         EXACT_PHRASE_PRONUNCIATION[lowerText]?.let { return it }
 
-        // 2. Transliterate based on language / script family
-        return when (sourceLanguage) {
-            LyricsLanguage.TAMIL -> transliterateTamil(trimmed)
-            LyricsLanguage.HINDI, LyricsLanguage.MARATHI, LyricsLanguage.SANSKRIT, LyricsLanguage.KONKANI -> transliterateDevanagari(trimmed)
-            LyricsLanguage.TELUGU -> transliterateTelugu(trimmed)
-            LyricsLanguage.KANNADA -> transliterateKannada(trimmed)
-            LyricsLanguage.MALAYALAM -> transliterateMalayalam(trimmed)
-            LyricsLanguage.BENGALI, LyricsLanguage.ASSAMESE -> transliterateBengali(trimmed)
-            LyricsLanguage.PUNJABI -> transliterateGurmukhi(trimmed)
-            LyricsLanguage.GUJARATI -> transliterateGujarati(trimmed)
-            LyricsLanguage.ODIA -> transliterateOdia(trimmed)
-            else -> transliterateGenericIndic(trimmed)
+        return Regex("\\S+|\\s+").findAll(trimmed).joinToString("") { match ->
+            val token = match.value
+            if (token.isBlank()) token else when (detectScript(token) ?: sourceLanguage.script) {
+                "Tamil" -> transliterateTamil(token)
+                "Devanagari" -> transliterateDevanagari(token)
+                "Telugu" -> transliterateTelugu(token)
+                "Kannada" -> transliterateKannada(token)
+                "Malayalam" -> transliterateMalayalam(token)
+                "Bengali" -> transliterateBengali(token)
+                "Gurmukhi" -> transliterateGurmukhi(token)
+                "Gujarati" -> transliterateGujarati(token)
+                "Odia" -> transliterateOdia(token)
+                else -> token
+            }
+        }
+    }
+
+    private fun detectScript(text: String): String? = text.firstNotNullOfOrNull { char ->
+        when (Character.UnicodeScript.of(char.code)) {
+            Character.UnicodeScript.TAMIL -> "Tamil"
+            Character.UnicodeScript.DEVANAGARI -> "Devanagari"
+            Character.UnicodeScript.TELUGU -> "Telugu"
+            Character.UnicodeScript.KANNADA -> "Kannada"
+            Character.UnicodeScript.MALAYALAM -> "Malayalam"
+            Character.UnicodeScript.BENGALI -> "Bengali"
+            Character.UnicodeScript.GURMUKHI -> "Gurmukhi"
+            Character.UnicodeScript.GUJARATI -> "Gujarati"
+            Character.UnicodeScript.ORIYA -> "Odia"
+            else -> null
         }
     }
 

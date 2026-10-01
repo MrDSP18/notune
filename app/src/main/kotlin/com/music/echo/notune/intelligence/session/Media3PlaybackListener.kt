@@ -29,6 +29,8 @@ class Media3PlaybackListener @Inject constructor(
 ) : Player.Listener {
 
     private var currentMediaId: String? = null
+    private var currentTitle: String = ""
+    private var currentArtist: String = ""
     private var trackStartTimestampMs: Long = System.currentTimeMillis()
     private var lastReportedPositionMs: Long = 0L
 
@@ -37,23 +39,29 @@ class Media3PlaybackListener @Inject constructor(
         val title = mediaItem.mediaMetadata.title?.toString() ?: "Unknown Track"
         val artist = mediaItem.mediaMetadata.artist?.toString() ?: "Unknown Artist"
 
-        if (currentMediaId != null && currentMediaId != id) {
+        if (currentMediaId == id && (reason == Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT ||
+                reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO)) {
+            intelligenceEngine.recordFeedback(UserEvent.Replay(trackId = id, title = currentTitle, artistName = currentArtist))
+            personalMusicSession.onTrackReplayed()
+        } else if (currentMediaId != null && currentMediaId != id) {
             val durationSec = (System.currentTimeMillis() - trackStartTimestampMs) / 1000f
             if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
                 // Track completed normally
                 intelligenceEngine.recordFeedback(
-                    UserEvent.Completed(trackId = currentMediaId!!, title = title, artistName = artist)
+                    UserEvent.Completed(trackId = currentMediaId!!, title = currentTitle, artistName = currentArtist)
                 )
             } else if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK) {
                 // Skip event
                 intelligenceEngine.recordFeedback(
-                    UserEvent.Skip(trackId = currentMediaId!!, title = title, artistName = artist, playedDurationSec = durationSec)
+                    UserEvent.Skip(trackId = currentMediaId!!, title = currentTitle, artistName = currentArtist, playedDurationSec = durationSec)
                 )
                 personalMusicSession.onTrackSkipped()
             }
         }
 
         currentMediaId = id
+        currentTitle = title
+        currentArtist = artist
         trackStartTimestampMs = System.currentTimeMillis()
 
         val track = QueueTrack(
