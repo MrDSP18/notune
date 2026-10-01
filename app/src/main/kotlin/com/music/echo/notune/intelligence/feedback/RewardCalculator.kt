@@ -21,9 +21,15 @@ class RewardCalculator @Inject constructor() {
                 else if (event.playedDurationSec < 30f) -1.0f
                 else -0.3f
             }
-            is UserEvent.Dislike -> -2.5f
-            is UserEvent.TeachRule -> 0.0f
-            is UserEvent.ToggleTasteExclusion -> 0.0f
+            is UserEvent.Favorited -> +1.8f
+            is UserEvent.Unfavorited -> -1.5f
+            is UserEvent.EarlySkip -> -1.8f
+            is UserEvent.Shared -> +2.0f
+            is UserEvent.Downloaded -> +2.2f
+            is UserEvent.AddedToPlaylist -> +1.5f
+            is UserEvent.RecommendationAccepted -> +1.5f
+            is UserEvent.RecommendationRejected -> -1.2f
+            else -> 0.1f
         }
     }
 }
