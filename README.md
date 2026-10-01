@@ -31,7 +31,7 @@
 - **OLED Optimization**: Pure black backgrounds with stark high-contrast accents.
 
 ### 🎵 Pro Playback
-- **Ad-Free Streaming**: Listen to any song from YouTube Music without interruptions.
+- **Unified Music Streaming**: Stream and discover tracks across your local library and authorized online catalog providers.
 - **High-Fidelity Audio**: Native support for Opus and high-bitrate streams.
 - **Gapless & Crossfade**: Seamless transitions between your tracks.
 - **Offline Mode**: Download and play music directly from your device.
