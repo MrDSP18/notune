@@ -61,7 +61,8 @@ class NotuneIntelligenceEngine @Inject constructor(
     val teachNotuneEngine: TeachNotuneEngine,
     val recommendationEngine: RecommendationEngine,
     val recommendationExplanation: RecommendationExplanation,
-    val tasteExplanation: TasteExplanation
+    val tasteExplanation: TasteExplanation,
+    val coordinator: NotuneIntelligenceCoordinator
 ) {
 
     val userDnaFlow: StateFlow<NotuneUserDNA> = tasteProfileStore.userDna

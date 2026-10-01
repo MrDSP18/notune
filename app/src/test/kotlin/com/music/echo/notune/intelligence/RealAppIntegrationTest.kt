@@ -6,11 +6,13 @@ import com.music.echo.notune.intelligence.explanation.TasteExplanation
 import com.music.echo.notune.intelligence.feedback.FeedbackProcessor
 import com.music.echo.notune.intelligence.feedback.RewardCalculator
 import com.music.echo.notune.intelligence.feedback.SkipReasonAnalyzer
-import com.music.echo.notune.intelligence.feedback.UserEvent
+import com.music.echo.notune.intelligence.intent.IntentEngine
 import com.music.echo.notune.intelligence.musicbrain.EnergyEngine
 import com.music.echo.notune.intelligence.musicbrain.LanguageEngine
 import com.music.echo.notune.intelligence.musicbrain.MoodEngine
 import com.music.echo.notune.intelligence.musicbrain.MusicBrain
+import com.music.echo.notune.intelligence.musicbrain.MusicClassifierEngine
+import com.music.echo.notune.intelligence.musicbrain.MusicIdentityEngine
 import com.music.echo.notune.intelligence.musicbrain.MusicStateEngine
 import com.music.echo.notune.intelligence.musicbrain.SimilarityEngine
 import com.music.echo.notune.intelligence.musicbrain.TrackEmbedding
@@ -18,13 +20,18 @@ import com.music.echo.notune.intelligence.personalization.InstantOverrideAction
 import com.music.echo.notune.intelligence.personalization.PreferenceDecay
 import com.music.echo.notune.intelligence.personalization.PreferenceLearner
 import com.music.echo.notune.intelligence.personalization.SessionOverrideEngine
+import com.music.echo.notune.intelligence.personalization.StructuredTasteModel
 import com.music.echo.notune.intelligence.personalization.TasteProfileStore
 import com.music.echo.notune.intelligence.personalization.TeachNotuneEngine
 import com.music.echo.notune.intelligence.queue.AdaptiveQueueEngine
-import com.music.echo.notune.intelligence.queue.NotuneFlowMode
+import com.music.echo.notune.intelligence.queue.AdaptiveQueueOrchestrator
+import com.music.echo.notune.intelligence.queue.NaturalLanguageQueueController
 import com.music.echo.notune.intelligence.queue.QueueTrack
 import com.music.echo.notune.intelligence.queue.RepetitionController
 import com.music.echo.notune.intelligence.queue.TransitionScorer
+import com.music.echo.notune.intelligence.recommendation.CandidateEngine
+import com.music.echo.notune.intelligence.recommendation.CentralizedRankingEngine
+import com.music.echo.notune.intelligence.recommendation.DiversityController
 import com.music.echo.notune.intelligence.recommendation.ExplorationEngine
 import com.music.echo.notune.intelligence.recommendation.RecommendationEngine
 import com.music.echo.notune.intelligence.search.PersonalizedSearchEngine
@@ -32,8 +39,10 @@ import com.music.echo.notune.intelligence.search.SearchCandidate
 import com.music.echo.notune.intelligence.search.SearchIntentParser
 import com.music.echo.notune.intelligence.search.SearchQualityGate
 import com.music.echo.notune.intelligence.session.PersonalMusicSession
+import com.music.echo.notune.intelligence.tools.AiToolExecutor
+import echo.music.iad1tya.notune.provider.ProviderRegistry
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -80,6 +89,34 @@ class RealAppIntegrationTest {
 
         val dnaInitializer = com.music.echo.notune.intelligence.personalization.MusicDnaInitializer(null, null, null)
 
+        val userMemoryEngine = com.music.echo.notune.intelligence.memory.UserMemoryEngine()
+        val unifiedContextEngine = com.music.echo.notune.intelligence.context.UnifiedContextEngine(null, adaptiveQueueEngine, tasteProfileStore, userMemoryEngine)
+        val providerRegistry = mockk<ProviderRegistry>(relaxed = true)
+
+        val musicIdentityEngine = MusicIdentityEngine()
+        val candidateEngine = CandidateEngine(providerRegistry, musicIdentityEngine, userMemoryEngine)
+        val musicClassifierEngine = MusicClassifierEngine()
+        val centralizedRankingEngine = CentralizedRankingEngine(musicClassifierEngine, tasteProfileStore)
+        val diversityController = DiversityController()
+        val adaptiveQueueOrchestrator = AdaptiveQueueOrchestrator(adaptiveQueueEngine)
+        val naturalLanguageQueueController = NaturalLanguageQueueController(adaptiveQueueOrchestrator)
+        val structuredTasteModel = StructuredTasteModel(userMemoryEngine)
+        val feedbackEngine = com.music.echo.notune.intelligence.feedback.FeedbackEngine(rewardCalculator, userMemoryEngine, structuredTasteModel)
+        val aiToolExecutor = AiToolExecutor()
+        val intentEngine = IntentEngine()
+
+        val coordinator = NotuneIntelligenceCoordinator(
+            intentEngine,
+            unifiedContextEngine,
+            candidateEngine,
+            centralizedRankingEngine,
+            diversityController,
+            naturalLanguageQueueController,
+            adaptiveQueueOrchestrator,
+            feedbackEngine,
+            aiToolExecutor
+        )
+
         intelligenceEngine = NotuneIntelligenceEngine(
             tasteProfileStore = tasteProfileStore,
             musicDnaInitializer = dnaInitializer,
@@ -95,7 +132,8 @@ class RealAppIntegrationTest {
             teachNotuneEngine = teachNotuneEngine,
             recommendationEngine = recommendationEngine,
             recommendationExplanation = recommendationExplanation,
-            tasteExplanation = tasteExplanation
+            tasteExplanation = tasteExplanation,
+            coordinator = coordinator
         )
     }
 

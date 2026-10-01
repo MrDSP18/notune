@@ -2,6 +2,8 @@ package com.music.echo.notune.intelligence.memory
 
 import kotlinx.serialization.Serializable
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import javax.inject.Singleton
 
 enum class MemorySource {
     EXPLICIT, BEHAVIORAL, INFERRED
@@ -61,7 +63,8 @@ data class MusicMemory(
     val totalShares: Int = 0
 )
 
-class UserMemoryEngine {
+@Singleton
+class UserMemoryEngine @Inject constructor() {
 
     private val _memories = mutableMapOf<String, MemoryItem>()
 
