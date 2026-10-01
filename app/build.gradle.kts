@@ -71,6 +71,7 @@ android {
 
     defaultConfig {
         applicationId = "echo.music.iad1tya"
+        applicationIdSuffix = ".v2"
         minSdk = 26
         targetSdk = 36
         versionCode = 156
