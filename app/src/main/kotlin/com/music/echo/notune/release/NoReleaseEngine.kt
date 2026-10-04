@@ -22,6 +22,10 @@ object NoReleaseEngine {
     const val CURRENT_VERSION_CODE = 30100
     const val CURRENT_VERSION_NAME = "3.1.0"
 
+    fun getReleaseCheckUrl(channel: String = "stable"): String {
+        return com.music.echo.notune.config.PlatformConfig.latestReleaseEndpoint(channel = channel)
+    }
+
     fun checkForUpdate(latestRelease: ReleaseInfo): UpdateCheckResult {
         if (!latestRelease.approved) {
             return UpdateCheckResult(
