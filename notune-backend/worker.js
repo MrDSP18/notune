@@ -157,6 +157,102 @@ export default {
       }
     }
 
+    // POST /api/v1/recommendations/adaptive - Compute Contextual Queue Recommendations
+    if (path === "/api/v1/recommendations/adaptive" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        const currentSong = body.currentSong || "track_1";
+        const mood = body.mood || "chill";
+        
+        const recommendations = [
+          {
+            id: "rec_" + Math.random().toString(36).substring(2, 7),
+            title: "Neon Sub-Bass Drift",
+            artist: "NØ AI Recommendations",
+            album: "Adaptive Session",
+            audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+            artwork: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop",
+            score: 0.94
+          },
+          {
+            id: "rec_" + Math.random().toString(36).substring(2, 7),
+            title: "Acoustic Horizon (Ambient)",
+            artist: "Pradeep Kumar • Acoustic Rationale",
+            album: "Strings & Solitude",
+            audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+            artwork: "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=400&auto=format&fit=crop",
+            score: 0.89
+          }
+        ];
+
+        return new Response(
+          JSON.stringify({ success: true, recommendations, context: { currentSong, mood } }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (err) {
+        return new Response(
+          JSON.stringify({ success: false, error: err.message }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // GET /api/v1/social/feed - Social Feed & User Activity
+    if (path === "/api/v1/social/feed") {
+      const feedItems = [
+        {
+          id: "feed_1",
+          user: "Dharan (MrDSP18)",
+          avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop",
+          action: "is listening in Room NIGHT",
+          trackTitle: "Hosanna",
+          trackArtist: "A.R. Rahman",
+          timestamp: "2 mins ago"
+        },
+        {
+          id: "feed_2",
+          user: "Alex Rivera",
+          avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop",
+          action: "liked track",
+          trackTitle: "Cybernetic Resonance",
+          trackArtist: "NØ AI Engine",
+          timestamp: "15 mins ago"
+        }
+      ];
+
+      return new Response(
+        JSON.stringify({ success: true, feed: feedItems }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // GET /api/v1/profiles/:userId - User Profile & Music DNA
+    if (path.startsWith("/api/v1/profiles/")) {
+      const parts = path.split("/");
+      const userId = parts[4] || "me";
+
+      const profile = {
+        userId,
+        displayName: userId === "me" ? "Guest Listener" : `User ${userId}`,
+        avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop",
+        musicDna: {
+          melody: 37,
+          indie: 22,
+          hipHop: 16,
+          retro: 13,
+          experimental: 12
+        },
+        likedCount: 14,
+        followersCount: 8,
+        followingCount: 12
+      };
+
+      return new Response(
+        JSON.stringify({ success: true, profile }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Universal NØ Link Router (/s/:id, /p/:id, /r/:id, /u/:id)
     if (path.startsWith("/s/") || path.startsWith("/p/") || path.startsWith("/r/") || path.startsWith("/u/")) {
       const parts = path.split("/").filter(Boolean);
@@ -196,8 +292,9 @@ export default {
     }
 
     return new Response(
-      JSON.stringify({ service: "notune-api", status: "online", endpoints: ["/health", "/ready", "/api/v1/metrics", "/api/v1/version", "/api/v1/releases/latest", "/api/v1/shares"] }),
+      JSON.stringify({ service: "notune-api", status: "online", endpoints: ["/health", "/ready", "/api/v1/metrics", "/api/v1/version", "/api/v1/releases/latest", "/api/v1/shares", "/api/v1/social/feed", "/api/v1/recommendations/adaptive"] }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   },
 };
+
