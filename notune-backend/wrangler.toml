@@ -2,12 +2,12 @@
 name = "notune-api"
 main = "worker.js"
 compatibility_date = "2026-10-04"
-account_id = "${CLOUDFLARE_ACCOUNT_ID}"
+
 
 [[d1_databases]]
 binding = "DB"
 database_name = "notune-db"
-database_id = "${CLOUDFLARE_D1_DATABASE_ID}"
+database_id = "39d9cfd0-f146-42df-80c5-4d5254ce7b42"
 
 [vars]
 ENVIRONMENT = "production"

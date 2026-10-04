@@ -2,7 +2,7 @@
 name = "notune"
 main = "notune-backend/worker.js"
 compatibility_date = "2026-09-14"
-account_id = "${CLOUDFLARE_ACCOUNT_ID}"
+
 
 [vars]
 ENVIRONMENT = "production"
