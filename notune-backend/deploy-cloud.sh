@@ -4,9 +4,18 @@
 
 set -e
 
+# Auto-load NVM if present to ensure Node.js v22+ is used
+export NVM_DIR="$HOME/.nvm"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+    \. "$NVM_DIR/nvm.sh"
+    nvm use 22 &> /dev/null || nvm use default &> /dev/null
+fi
+
 echo "======================================================="
 echo "   NØTUNE Cloudflare Production Deployment Helper    "
 echo "======================================================="
+
+echo "📦 Node.js Version: $(node -v)"
 
 # 1. Check Wrangler CLI Installation
 if ! command -v npx &> /dev/null; then
