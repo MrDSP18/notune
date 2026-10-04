@@ -164,6 +164,35 @@ android {
         }
     }
 
+    val releaseKeystorePath = System.getenv("NOTUNE_RELEASE_KEYSTORE_PATH")
+        ?: localProperties.getProperty("NOTUNE_RELEASE_KEYSTORE_PATH")
+        ?: System.getenv("KEYSTORE_PATH")
+
+    val releaseKeystoreFile = when {
+        !releaseKeystorePath.isNullOrBlank() -> file(releaseKeystorePath)
+        rootProject.file("keystore.jks").exists() -> rootProject.file("keystore.jks")
+        file("keystore/release.keystore").exists() -> file("keystore/release.keystore")
+        else -> null
+    }
+
+    val releaseStorePassword = System.getenv("NOTUNE_RELEASE_KEYSTORE_PASSWORD")
+        ?: localProperties.getProperty("NOTUNE_RELEASE_KEYSTORE_PASSWORD")
+        ?: System.getenv("STORE_PASSWORD")
+
+    val releaseKeyAlias = System.getenv("NOTUNE_RELEASE_KEY_ALIAS")
+        ?: localProperties.getProperty("NOTUNE_RELEASE_KEY_ALIAS")
+        ?: System.getenv("KEY_ALIAS")
+
+    val releaseKeyPassword = System.getenv("NOTUNE_RELEASE_KEY_PASSWORD")
+        ?: localProperties.getProperty("NOTUNE_RELEASE_KEY_PASSWORD")
+        ?: System.getenv("KEY_PASSWORD")
+
+    val hasProductionSigningConfig = releaseKeystoreFile != null &&
+            releaseKeystoreFile.exists() &&
+            !releaseStorePassword.isNullOrBlank() &&
+            !releaseKeyAlias.isNullOrBlank() &&
+            !releaseKeyPassword.isNullOrBlank()
+
     signingConfigs {
         val userDebugKeystore = file("${System.getProperty("user.home")}/.android/debug.keystore")
         val projectDebugKeystore = rootProject.file("debug.keystore")
@@ -197,24 +226,12 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
-        create("release") {
-            val keystoreFile = rootProject.file("keystore.jks")
-            val localKeystore = file("keystore/release.keystore")
-            if (keystoreFile.exists()) {
-                storeFile = keystoreFile
-                storePassword = System.getenv("STORE_PASSWORD")
-                keyAlias = System.getenv("KEY_ALIAS")
-                keyPassword = System.getenv("KEY_PASSWORD")
-            } else if (localKeystore.exists()) {
-                storeFile = localKeystore
-                storePassword = System.getenv("STORE_PASSWORD")
-                keyAlias = System.getenv("KEY_ALIAS")
-                keyPassword = System.getenv("KEY_PASSWORD")
-            } else {
-                storeFile = activeDebugKeystore
-                storePassword = "android"
-                keyAlias = "androiddebugkey"
-                keyPassword = "android"
+        if (hasProductionSigningConfig) {
+            create("release") {
+                storeFile = releaseKeystoreFile
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
             }
         }
         getByName("debug") {
@@ -231,7 +248,22 @@ android {
             isShrinkResources = true
             isCrunchPngs = false
             isDebuggable = false
-            signingConfig = signingConfigs.getByName("release")
+            if (hasProductionSigningConfig) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                signingConfig = null
+                val requireSigning = System.getenv("REQUIRE_PRODUCTION_SIGNING") == "true" || project.hasProperty("requireProductionSigning")
+                if (requireSigning) {
+                    throw GradleException("PRODUCTION SIGNING STATUS: BLOCKED — Production keystore and credentials are required but missing.")
+                } else {
+                    logger.warn("==========================================================================")
+                    logger.warn("PRODUCTION SIGNING STATUS: BLOCKED — PRODUCTION KEYSTORE REQUIRED")
+                    logger.warn("No production signing credentials found in environment or local.properties.")
+                    logger.warn("Release build will produce an UNSIGNED APK.")
+                    logger.warn("To enable production signing, set: NOTUNE_RELEASE_KEYSTORE_PATH, NOTUNE_RELEASE_KEYSTORE_PASSWORD, NOTUNE_RELEASE_KEY_ALIAS, NOTUNE_RELEASE_KEY_PASSWORD")
+                    logger.warn("==========================================================================")
+                }
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
