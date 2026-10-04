@@ -167,6 +167,10 @@
                 <data android:pathPrefix="/room/" />
                 <data android:pathPrefix="/user/" />
                 <data android:pathPrefix="/mix/" />
+                <data android:pathPrefix="/s/" />
+                <data android:pathPrefix="/p/" />
+                <data android:pathPrefix="/r/" />
+                <data android:pathPrefix="/u/" />
             </intent-filter>
 
             <!-- Youtube filter -->

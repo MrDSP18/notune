@@ -19,6 +19,25 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
+    // GET /.well-known/assetlinks.json - Android Digital Asset Links Endpoint
+    if (path === "/.well-known/assetlinks.json") {
+      const assetLinks = [
+        {
+          "relation": ["delegate_permission/common.handle_all_urls"],
+          "target": {
+            "namespace": "android_app",
+            "package_name": "com.music.echo",
+            "sha256_cert_fingerprints": [
+              "14:6D:E9:7D:01:DF:7B:64:9C:2C:9A:8A:78:B4:73:96:AC:DE:69:B6:8C:1A:1D:95:86:14:0A:74:61:94:0A:7B"
+            ]
+          }
+        }
+      ];
+      return new Response(JSON.stringify(assetLinks), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
     // GET /health - Basic Worker Liveness Check
     if (path === "/health" || path === "/api/v1/health") {
       return new Response(
