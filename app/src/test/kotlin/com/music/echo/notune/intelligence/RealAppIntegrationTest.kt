@@ -28,7 +28,9 @@ import com.music.echo.notune.intelligence.queue.AdaptiveQueueOrchestrator
 import com.music.echo.notune.intelligence.queue.NaturalLanguageQueueController
 import com.music.echo.notune.intelligence.queue.QueueTrack
 import com.music.echo.notune.intelligence.queue.RepetitionController
+import com.music.echo.notune.intelligence.queue.TransitionEngine
 import com.music.echo.notune.intelligence.queue.TransitionScorer
+import com.music.echo.notune.intelligence.session.SessionSeedManager
 import com.music.echo.notune.intelligence.recommendation.CandidateEngine
 import com.music.echo.notune.intelligence.recommendation.CentralizedRankingEngine
 import com.music.echo.notune.intelligence.recommendation.DiversityController
@@ -73,8 +75,10 @@ class RealAppIntegrationTest {
 
         val contextEngine = ContextEngine()
         val transitionScorer = TransitionScorer()
+        val transitionEngine = TransitionEngine(transitionScorer)
         val repetitionController = RepetitionController()
-        val adaptiveQueueEngine = AdaptiveQueueEngine(musicBrain, transitionScorer, repetitionController, tasteProfileStore)
+        val sessionSeedManager = SessionSeedManager()
+        val adaptiveQueueEngine = AdaptiveQueueEngine(musicBrain, transitionScorer, transitionEngine, repetitionController, tasteProfileStore, sessionSeedManager)
 
         val rewardCalculator = RewardCalculator()
         val feedbackProcessor = FeedbackProcessor(rewardCalculator, preferenceLearner, tasteProfileStore, teachNotuneEngine)
@@ -98,7 +102,7 @@ class RealAppIntegrationTest {
         val musicClassifierEngine = MusicClassifierEngine()
         val centralizedRankingEngine = CentralizedRankingEngine(musicClassifierEngine, tasteProfileStore)
         val diversityController = DiversityController()
-        val adaptiveQueueOrchestrator = AdaptiveQueueOrchestrator(adaptiveQueueEngine)
+        val adaptiveQueueOrchestrator = AdaptiveQueueOrchestrator(adaptiveQueueEngine, sessionSeedManager)
         val naturalLanguageQueueController = NaturalLanguageQueueController(adaptiveQueueOrchestrator)
         val structuredTasteModel = StructuredTasteModel(userMemoryEngine)
         val feedbackEngine = com.music.echo.notune.intelligence.feedback.FeedbackEngine(rewardCalculator, userMemoryEngine, structuredTasteModel)

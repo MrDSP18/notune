@@ -127,44 +127,72 @@ fun LyricsStudioContainer(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Synchronized Karaoke Lyrics List
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            itemsIndexed(lyricLines) { index, line ->
-                val isActive = index == activeLineIndex
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            if (isActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                            else Color.Transparent
-                        )
-                        .clickable { onLineClick(index) }
-                        .padding(12.dp)
-                ) {
+        if (lyricLines.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = if (selectedLanguage == "Original" || line.translatedText == null) line.originalText else line.translatedText,
-                        style = if (isActive) MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Black,
-                            fontSize = 22.sp
-                        ) else MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 17.sp
+                        text = "LYRICS UNAVAILABLE",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontFamily = NothingFont,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.5.sp
                         ),
-                        color = if (isActive) MaterialTheme.colorScheme.primary else Color(0xFFD4D4D8)
+                        color = Color.Gray
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "No authorized lyrics found for this track. AI does not hallucinate copyrighted lyrics.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.DarkGray,
+                        fontWeight = FontWeight.Normal
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                itemsIndexed(lyricLines) { index, line ->
+                    val isActive = index == activeLineIndex
 
-                    line.romanizedText?.let { roman ->
-                        if (selectedLanguage != "Original") {
-                            Text(
-                                text = "Pronunciation: $roman",
-                                style = MaterialTheme.typography.bodySmall.copy(fontFamily = NothingFont),
-                                color = Color(0xFF71717A),
-                                modifier = Modifier.padding(top = 2.dp)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (isActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                else Color.Transparent
                             )
+                            .clickable { onLineClick(index) }
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = if (selectedLanguage == "Original" || line.translatedText == null) line.originalText else line.translatedText,
+                            style = if (isActive) MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Black,
+                                fontSize = 22.sp
+                            ) else MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 17.sp
+                            ),
+                            color = if (isActive) MaterialTheme.colorScheme.primary else Color(0xFFD4D4D8)
+                        )
+
+                        line.romanizedText?.let { roman ->
+                            if (selectedLanguage != "Original") {
+                                Text(
+                                    text = "Pronunciation: $roman",
+                                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = NothingFont),
+                                    color = Color(0xFF71717A),
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
                         }
                     }
                 }
