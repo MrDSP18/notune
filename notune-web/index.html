@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NØTUNE — Your Music. Your World.</title>
+  <meta name="description" content="NØTUNE Personal Music OS — On-device AI, universal music sharing, realtime rooms, and zero cloud LLM cost.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="glow-bg"></div>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="brand">
+      <span class="logo-dot">●</span>
+      <span class="logo-text">NØTUNE</span>
+      <span class="badge">V3 OS</span>
+    </div>
+    <nav class="nav-links">
+      <a href="#player" class="nav-item active">Web Player</a>
+      <a href="#rooms" class="nav-item">Realtime Rooms</a>
+      <a href="#releases" class="nav-item">Releases</a>
+      <a href="/download" class="btn-download-sm" id="nav-download-btn">Get APK</a>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1 class="hero-title">YOUR MUSIC. <span class="highlight">YOUR WORLD.</span></h1>
+    <p class="hero-subtitle">The open, zero-cloud-LLM Personal Music OS powered by on-device NØ AI, universal link sharing, and instant room synchronization.</p>
+    
+    <div class="link-input-group">
+      <input type="text" id="share-code-input" placeholder="Paste NØ Link or Code (e.g. s/8F92K, r/NIGHT)" autocomplete="off">
+      <button id="resolve-btn" class="btn-primary">Resolve & Play</button>
+    </div>
+  </section>
+
+  <!-- Web Player Section -->
+  <section id="player" class="section-container">
+    <div class="player-card glass-panel">
+      <div class="player-left">
+        <div class="art-wrapper">
+          <div class="art-placeholder" id="artwork">🎵</div>
+          <div class="wave-equalizer" id="equalizer">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="player-right">
+        <div class="track-info">
+          <h2 id="track-title">Hosanna</h2>
+          <p id="track-artist">A.R. Rahman • Wind (Tamil)</p>
+          <span class="badge-tag" id="track-tag">NØ AI SEED READY</span>
+        </div>
+
+        <!-- Audio Player Controls -->
+        <audio id="audio-element" preload="metadata"></audio>
+        
+        <div class="progress-bar-container">
+          <span id="current-time">0:00</span>
+          <input type="range" id="seek-bar" value="0" min="0" max="100">
+          <span id="duration">3:45</span>
+        </div>
+
+        <div class="controls-row">
+          <button class="ctrl-btn" id="prev-btn">⏮</button>
+          <button class="ctrl-btn main-play" id="play-btn">▶</button>
+          <button class="ctrl-btn" id="next-btn">⏭</button>
+          <button class="ctrl-btn" id="like-btn">❤️</button>
+          <a id="open-app-btn" class="btn-secondary" href="notune://open">Open in App</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Realtime Rooms Section -->
+  <section id="rooms" class="section-container">
+    <div class="glass-panel room-panel">
+      <div class="room-header">
+        <div>
+          <h3>NØ REALTIME ROOM <span class="live-indicator">LIVE</span></h3>
+          <p id="room-subtitle">Connecting via Cloudflare WebSocket Hibernation Engine...</p>
+        </div>
+        <div class="listener-count" id="active-count">1 Listening</div>
+      </div>
+      
+      <div class="room-state-box">
+        <div class="state-row">
+          <span>Room Code:</span> <code id="room-code-display">ROOM123</code>
+        </div>
+        <div class="state-row">
+          <span>Sequence:</span> <code id="room-seq-display">#12</code>
+        </div>
+        <div class="state-row">
+          <span>Governor Load:</span> <span class="gov-badge green" id="gov-badge">GREEN</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Releases & Download Center -->
+  <section id="releases" class="section-container">
+    <div class="glass-panel release-panel">
+      <div class="release-info">
+        <h3>NØTUNE V3.1.0 Universal FOSS Release</h3>
+        <p>100% On-device LiteRT-LM runtime, no paid API keys, zero tracking.</p>
+        <div class="sha-box">
+          <span>SHA-256:</span>
+          <code id="sha-hash">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code>
+        </div>
+      </div>
+      <a href="https://github.com/MrDSP18/notune/releases/download/v3.1.0/notune-v3.1.0-universal-debug.apk" class="btn-primary btn-large" id="download-apk-btn">⚡ DOWNLOAD FOSS APK</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>NØTUNE Personal Music OS • Created by Dharan Sundarapandiyan (MrDSP18) • Open Source & Serverless</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
