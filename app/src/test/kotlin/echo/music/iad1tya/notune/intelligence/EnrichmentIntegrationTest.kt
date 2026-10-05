@@ -425,4 +425,18 @@ class EnrichmentIntegrationTest {
         assertNotNull(results)
         assertTrue(results.isNotEmpty())
     }
+
+    @Test
+    fun test51_nullableLanguageBackendSearchSafety() = runBlocking {
+        val nullLangIdentity = SongIdentity(
+            cleanTitle = "Null Lang Track",
+            cleanArtist = "Null Lang Artist",
+            language = null
+        )
+        val results = backendProvider.searchSong(nullLangIdentity)
+        assertNotNull(results)
+        assertTrue(results.isNotEmpty())
+        val details = results.first().songDetails
+        assertNotNull(details)
+    }
 }

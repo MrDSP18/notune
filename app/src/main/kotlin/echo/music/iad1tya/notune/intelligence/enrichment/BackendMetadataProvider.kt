@@ -57,7 +57,11 @@ class BackendMetadataProvider @Inject constructor() : MetadataProvider {
 
                     val songId = songObj.optString("id", "backend_${title.hashCode()}")
                     val parsedTitle = songObj.optString("title", title)
-                    val parsedLang = songObj.optString("language", identity.language)
+                    val parsedLang = if (songObj.has("language") && !songObj.isNull("language")) {
+                        songObj.optString("language").ifEmpty { identity.language }
+                    } else {
+                        identity.language
+                    }
                     val parsedDuration = songObj.optLong("duration", duration)
 
                     val artistsList = mutableListOf<PersonDetails>()
