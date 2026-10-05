@@ -35,32 +35,38 @@ jobs:
         run: chmod +x gradlew
 
       - name: Decode Production Keystore
-        if: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_BASE64 != '' || secrets.KEYSTORE_BASE64 != '' }}
         env:
-          KS_B64: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_BASE64 != '' && secrets.NOTUNE_RELEASE_KEYSTORE_BASE64 || secrets.KEYSTORE_BASE64 }}
+          KS_1: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_BASE64 }}
+          KS_2: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          echo "$KS_B64" | base64 -d > keystore.jks
-          echo "NOTUNE_RELEASE_KEYSTORE_PATH=$GITHUB_WORKSPACE/keystore.jks" >> $GITHUB_ENV
+          KS_B64="${KS_1:-$KS_2}"
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > keystore.jks
+            echo "NOTUNE_RELEASE_KEYSTORE_PATH=$GITHUB_WORKSPACE/keystore.jks" >> $GITHUB_ENV
+          fi
 
       - name: Run Unit Tests
         run: ./gradlew testUniversalFossDebugUnitTest --no-daemon
 
       - name: Build Universal FOSS Release APK
         env:
-          NOTUNE_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_PASSWORD || secrets.STORE_PASSWORD }}
-          NOTUNE_RELEASE_KEY_ALIAS: ${{ secrets.NOTUNE_RELEASE_KEY_ALIAS || secrets.KEY_ALIAS }}
-          NOTUNE_RELEASE_KEY_PASSWORD: ${{ secrets.NOTUNE_RELEASE_KEY_PASSWORD || secrets.KEY_PASSWORD }}
-          KEYSTORE_BASE64: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_BASE64 || secrets.KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_PASSWORD || secrets.STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.NOTUNE_RELEASE_KEY_ALIAS || secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.NOTUNE_RELEASE_KEY_PASSWORD || secrets.KEY_PASSWORD }}
-          REQUIRE_PRODUCTION_SIGNING: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_BASE64 != '' || secrets.KEYSTORE_BASE64 != '' }}
+          NOTUNE_RELEASE_KEYSTORE_BASE64: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_BASE64 }}
+          NOTUNE_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_PASSWORD }}
+          NOTUNE_RELEASE_KEY_ALIAS: ${{ secrets.NOTUNE_RELEASE_KEY_ALIAS }}
+          NOTUNE_RELEASE_KEY_PASSWORD: ${{ secrets.NOTUNE_RELEASE_KEY_PASSWORD }}
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          REQUIRE_PRODUCTION_SIGNING: "true"
         run: ./gradlew assembleUniversalFossRelease --no-daemon
 
       - name: Verify APK Signature & Compute Release SHA-256
         env:
-          ALIAS: ${{ secrets.NOTUNE_RELEASE_KEY_ALIAS || secrets.KEY_ALIAS }}
-          PASS: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_PASSWORD || secrets.STORE_PASSWORD }}
+          A1: ${{ secrets.NOTUNE_RELEASE_KEY_ALIAS }}
+          A2: ${{ secrets.KEY_ALIAS }}
+          P1: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_PASSWORD }}
+          P2: ${{ secrets.STORE_PASSWORD }}
         run: |
           APK_PATH="app/build/outputs/apk/universalFoss/release/app-universal-foss-release.apk"
           SHA256=$(sha256sum "$APK_PATH" | awk '{print $1}')
@@ -73,6 +79,8 @@ jobs:
 
           # Extract public certificate fingerprint if keystore exists
           if [ -f keystore.jks ]; then
+            ALIAS="${A1:-$A2}"
+            PASS="${P1:-$P2}"
             FINGERPRINT=$(keytool -list -v -keystore keystore.jks -alias "$ALIAS" -storepass "$PASS" | grep "SHA256:" | head -n 1 | awk '{print $2}')
             echo "CERT_FINGERPRINT=$FINGERPRINT" >> $GITHUB_ENV
             echo "Certificate SHA-256 Fingerprint: $FINGERPRINT"
