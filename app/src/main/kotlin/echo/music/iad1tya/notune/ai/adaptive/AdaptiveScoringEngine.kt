@@ -43,34 +43,54 @@ class AdaptiveScoringEngine(
         // 7. Skip Penalty
         val skipPenalty = if (request.skippedTracks.contains(candidate.trackId)) abs(config.skipPenalty) else 0.0f
 
-        // 8. Artist Fatigue
-        val artistCount = recentArtistCounts[candidate.artist.lowercase().trim()] ?: 0
-        val artistFatigue = if (artistCount >= config.artistRepetitionLimit) abs(config.artistFatiguePenalty) else 0.0f
+        // 8. Explicit User Intent Boost
+        val intentBoost = calculateIntentBoost(candidate, request.userIntent)
 
-        // 9. Genre Fatigue
+        // 9. Artist Fatigue (Softened if explicit user intent is active)
+        val artistCount = recentArtistCounts[candidate.artist.lowercase().trim()] ?: 0
+        val baseArtistFatigue = if (artistCount >= config.artistRepetitionLimit) abs(config.artistFatiguePenalty) else 0.0f
+        val artistFatigue = if (request.userIntent.type != UserIntentType.NONE && intentBoost > 0f) {
+            baseArtistFatigue * 0.2f // Scale down fatigue penalty when user explicitly chose this intent
+        } else {
+            baseArtistFatigue
+        }
+
+        // 10. Genre Fatigue
         val genreKey = candidate.genre?.lowercase()?.trim() ?: ""
         val genreCount = if (genreKey.isNotEmpty()) recentGenreCounts[genreKey] ?: 0 else 0
         val genreFatigue = if (genreCount >= 3) abs(config.genreFatiguePenalty) else 0.0f
 
-        // 10. Repetition Penalty (Recently played track)
+        // 11. Repetition Penalty (Recently played track)
         val recentlyPlayed = request.history.any { it.trackId == candidate.trackId }
         val repetitionPenalty = if (recentlyPlayed) abs(config.recentTrackRepetitionPenalty) else 0.0f
 
+        // 12. Deep Knowledge Graph Relationship Boosts (Composer, Movie, Singer, Lyricist)
+        val composerBoost = if (!candidate.composer.isNullOrBlank() && current?.composer.equals(candidate.composer, ignoreCase = true)) config.composerMatchWeight else 0.0f
+        val movieBoost = if (!candidate.movieTitle.isNullOrBlank() && current?.movieTitle.equals(candidate.movieTitle, ignoreCase = true)) config.movieMatchWeight else 0.0f
+        val singerBoost = if (!candidate.singer.isNullOrBlank() && current?.singer.equals(candidate.singer, ignoreCase = true)) config.singerMatchWeight else 0.0f
+        val lyricistBoost = if (!candidate.lyricist.isNullOrBlank() && current?.lyricist.equals(candidate.lyricist, ignoreCase = true)) config.lyricistMatchWeight else 0.0f
+        val relationshipBoost = composerBoost + movieBoost + singerBoost + lyricistBoost
+
         // Combine into raw score according to formula:
-        // score = similarity + moodFit + energyFit + tempoFit + userPreference + replayPreference - skipPenalty - artistFatigue - genreFatigue - repetitionPenalty
+        // score = similarity + moodFit + energyFit + tempoFit + userPreference + replayPreference + intentBoost + relationshipBoost - skipPenalty - artistFatigue - genreFatigue - repetitionPenalty
         val rawScore = (similarity * config.similarityWeight) +
                 (moodFit * config.valenceMatchWeight) +
                 (energyFit * config.energyMatchWeight) +
                 (tempoFit * config.tempoMatchWeight) +
                 (userPreference * config.userPreferenceWeight) +
-                replayPreference -
+                replayPreference +
+                intentBoost +
+                relationshipBoost -
                 skipPenalty -
                 artistFatigue -
                 genreFatigue -
                 repetitionPenalty
 
         val finalScore = max(0.0f, min(1.0f, rawScore))
-        val reason = generateExplainabilityReason(candidate, current, request, moodFit, energyFit, userPreference, replayPreference, skipPenalty)
+        val reason = generateExplainabilityReason(
+            candidate, current, request, moodFit, energyFit, userPreference,
+            replayPreference, skipPenalty, intentBoost, composerBoost, movieBoost
+        )
 
         return ScoredTrack(
             track = candidate,
@@ -78,6 +98,22 @@ class AdaptiveScoringEngine(
             reason = reason,
             similarity = similarity
         )
+    }
+
+    private fun calculateIntentBoost(candidate: AdaptiveTrackContext, intent: UserIntent): Float {
+        if (intent.type == UserIntentType.NONE) return 0.0f
+        val target = intent.targetName ?: intent.targetId ?: return 0.0f
+
+        val isMatch = when (intent.type) {
+            UserIntentType.ARTIST -> candidate.artist.contains(target, ignoreCase = true)
+            UserIntentType.ALBUM -> candidate.album?.contains(target, ignoreCase = true) == true
+            UserIntentType.PLAYLIST -> candidate.genre?.contains(target, ignoreCase = true) == true || candidate.artist.contains(target, ignoreCase = true)
+            UserIntentType.SONG -> candidate.trackId == target || candidate.title.contains(target, ignoreCase = true)
+            UserIntentType.ROOM -> true
+            UserIntentType.NONE -> false
+        }
+
+        return if (isMatch) intent.intentWeight else 0.0f
     }
 
     /**
@@ -173,9 +209,15 @@ class AdaptiveScoringEngine(
         energyFit: Float,
         userPreference: Float,
         replayPreference: Float,
-        skipPenalty: Float
+        skipPenalty: Float,
+        intentBoost: Float,
+        composerBoost: Float = 0.0f,
+        movieBoost: Float = 0.0f
     ): String {
         return when {
+            intentBoost > 0.5f -> "Preserving your explicit ${request.userIntent.type.name.lowercase()} intent"
+            movieBoost > 0.0f -> "From the same movie soundtrack (${candidate.movieTitle})"
+            composerBoost > 0.0f -> "Composed by ${candidate.composer}"
             userPreference > 0.7f -> "Based on your liked tracks"
             replayPreference > 0.0f -> "Because you replayed this track recently"
             skipPenalty > 0.0f -> "Low confidence due to recent skip"

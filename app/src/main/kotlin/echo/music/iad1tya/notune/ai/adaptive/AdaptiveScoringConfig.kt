@@ -19,5 +19,9 @@ data class AdaptiveScoringConfig(
     val valenceMatchWeight: Float = 0.20f,
     val energyMatchWeight: Float = 0.20f,
     val tempoMatchWeight: Float = 0.15f,
-    val userPreferenceWeight: Float = 0.15f
+    val userPreferenceWeight: Float = 0.15f,
+    val composerMatchWeight: Float = 0.15f,
+    val movieMatchWeight: Float = 0.20f,
+    val singerMatchWeight: Float = 0.10f,
+    val lyricistMatchWeight: Float = 0.05f
 )

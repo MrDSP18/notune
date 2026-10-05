@@ -8,6 +8,10 @@ data class AdaptiveTrackContext(
     val title: String,
     val artist: String,
     val album: String? = null,
+    val composer: String? = null,
+    val lyricist: String? = null,
+    val singer: String? = null,
+    val movieTitle: String? = null,
     val genre: String? = null,
     val language: String? = null,
     val bpm: Float? = null,
@@ -27,6 +31,26 @@ data class AdaptiveRoomContext(
 )
 
 /**
+ * Explicit user intent for playback session (Album, Playlist, Artist, Song, Room).
+ * Explicit intent takes precedence over learned preferences.
+ */
+enum class UserIntentType {
+    NONE,
+    ALBUM,
+    PLAYLIST,
+    ARTIST,
+    SONG,
+    ROOM
+}
+
+data class UserIntent(
+    val type: UserIntentType = UserIntentType.NONE,
+    val targetId: String? = null,
+    val targetName: String? = null,
+    val intentWeight: Float = 0.8f
+)
+
+/**
  * Unified request payload passed to NØ AI recommendation engine.
  */
 data class RecommendationRequest(
@@ -40,6 +64,7 @@ data class RecommendationRequest(
     val likedTrackIds: Set<String> = emptySet(),
     val dislikedTrackIds: Set<String> = emptySet(),
     val playlistContextId: String? = null,
+    val userIntent: UserIntent = UserIntent(),
     val mood: String? = null,
     val energy: Float? = null,
     val tempoBpm: Float? = null,
