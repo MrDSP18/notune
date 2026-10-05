@@ -56,9 +56,7 @@ fun PersonDetailsScreen(
         ) {
             when (val state = uiState) {
                 is KnowledgeUiState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
+                    PersonDetailsSkeleton()
                 }
                 is KnowledgeUiState.Error -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -176,5 +174,46 @@ fun PersonHeaderCard(person: PersonDetails) {
                 AssistChip(onClick = {}, label = { Text(person.roleName) })
             }
         }
+    }
+}
+
+@Composable
+fun PersonDetailsSkeleton() {
+    echo.music.iad1tya.ui.component.shimmer.ShimmerHost(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .align(Alignment.CenterHorizontally)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        echo.music.iad1tya.ui.component.shimmer.TextPlaceholder(
+            height = 24.dp,
+            modifier = Modifier
+                .fillMaxWidth(0.5f)
+                .align(Alignment.CenterHorizontally),
+            shape = RoundedCornerShape(4.dp)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(140.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        )
     }
 }

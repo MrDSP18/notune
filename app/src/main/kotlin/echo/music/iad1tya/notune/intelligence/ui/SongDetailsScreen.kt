@@ -79,16 +79,7 @@ fun SongDetailsScreen(
         ) {
             when (val state = uiState) {
                 is KnowledgeUiState.Loading -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        CircularProgressIndicator()
-                        Text("Resolving Music Knowledge Graph...", style = MaterialTheme.typography.bodyMedium)
-                    }
+                    SongDetailsSkeleton()
                 }
                 is KnowledgeUiState.Error -> {
                     Column(
@@ -120,13 +111,19 @@ fun SongDetailsScreen(
                                     // Play song without disrupting queue
                                 },
                                 onArtistClick = { personId ->
-                                    navController.navigate("person/$personId")
+                                    if (!personId.isNullOrBlank()) {
+                                        navController.safeNavigateEntity("person/$personId")
+                                    }
                                 },
                                 onMovieClick = { movieId ->
-                                    navController.navigate("movie/$movieId")
+                                    if (!movieId.isNullOrBlank()) {
+                                        navController.safeNavigateEntity("movie/$movieId")
+                                    }
                                 },
                                 onAlbumClick = { albumId ->
-                                    navController.navigate("album/$albumId")
+                                    if (!albumId.isNullOrBlank()) {
+                                        navController.safeNavigateEntity("album/$albumId")
+                                    }
                                 }
                             )
                         }
@@ -148,7 +145,9 @@ fun SongDetailsScreen(
                             CreditsCard(
                                 credits = song.credits,
                                 onPersonClick = { personId ->
-                                    navController.navigate("person/$personId")
+                                    if (!personId.isNullOrBlank()) {
+                                        navController.safeNavigateEntity("person/$personId")
+                                    }
                                 }
                             )
                         }
@@ -160,7 +159,9 @@ fun SongDetailsScreen(
                                     movieId = song.movieId ?: "movie_unknown",
                                     movieTitle = song.movieTitle ?: "Unknown Movie",
                                     onMovieClick = { movieId ->
-                                        navController.navigate("movie/$movieId")
+                                        if (!movieId.isNullOrBlank()) {
+                                            navController.safeNavigateEntity("movie/$movieId")
+                                        }
                                     }
                                 )
                             }
@@ -172,7 +173,9 @@ fun SongDetailsScreen(
                                 RelatedSongsSection(
                                     relatedSongs = song.relatedSongs,
                                     onSongClick = { relatedSongId ->
-                                        navController.navigate("song_details/$relatedSongId")
+                                        if (!relatedSongId.isNullOrBlank()) {
+                                            navController.safeNavigateEntity("song_details/$relatedSongId")
+                                        }
                                     }
                                 )
                             }
@@ -185,6 +188,96 @@ fun SongDetailsScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun SongDetailsSkeleton() {
+    echo.music.iad1tya.ui.component.shimmer.ShimmerHost(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Box(
+            modifier = Modifier
+                .size(200.dp)
+                .align(Alignment.CenterHorizontally)
+                .clip(RoundedCornerShape(20.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        echo.music.iad1tya.ui.component.shimmer.TextPlaceholder(
+            height = 24.dp,
+            modifier = Modifier
+                .fillMaxWidth(0.6f)
+                .align(Alignment.CenterHorizontally),
+            shape = RoundedCornerShape(4.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        echo.music.iad1tya.ui.component.shimmer.TextPlaceholder(
+            height = 16.dp,
+            modifier = Modifier
+                .fillMaxWidth(0.4f)
+                .align(Alignment.CenterHorizontally),
+            shape = RoundedCornerShape(4.dp)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(80.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(80.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+        echo.music.iad1tya.ui.component.shimmer.TextPlaceholder(height = 18.dp, modifier = Modifier.fillMaxWidth(0.3f))
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+        }
+    }
+}
+
+fun NavController.safeNavigateEntity(route: String) {
+    if (route.isBlank()) return
+    val currentRoute = currentBackStackEntry?.destination?.route
+    if (currentRoute == route) return
+    try {
+        navigate(route) {
+            launchSingleTop = true
+        }
+    } catch (e: Exception) {
+        // Safe navigation fallback
     }
 }
 
