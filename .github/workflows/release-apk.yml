@@ -1,52 +1,109 @@
-name: Release Direct APK Build
+name: Release Production APK Build & Verification
 
 on:
   push:
     tags:
       - 'v*'
     branches:
-      - main
+      - release/notune-final
+      - develop/notune-v3.2
   workflow_dispatch:
+
+env:
+  JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
+  GRADLE_OPTS: "-Djava.awt.headless=true -Dorg.gradle.daemon=false"
 
 permissions:
   contents: write
 
 jobs:
-  build-apk:
-    name: Build & Publish Direct APK Asset
+  verify-and-release:
+    name: Verify, Build & Publish Signed Production Release APK
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
           cache: 'gradle'
 
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
 
-      - name: Build Universal FOSS Debug APK
-        run: ./gradlew :app:assembleUniversalFossDebug --no-daemon
+      - name: Decode Production Keystore
+        env:
+          KS_1: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_BASE64 }}
+          KS_2: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          KS_B64="${KS_1:-$KS_2}"
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > keystore.jks
+            echo "NOTUNE_RELEASE_KEYSTORE_PATH=$GITHUB_WORKSPACE/keystore.jks" >> $GITHUB_ENV
+          fi
+
+      - name: Run Unit Tests
+        run: ./gradlew testUniversalFossDebugUnitTest --no-daemon
+
+      - name: Build Universal FOSS Release APK
+        env:
+          NOTUNE_RELEASE_KEYSTORE_BASE64: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_BASE64 }}
+          NOTUNE_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_PASSWORD }}
+          NOTUNE_RELEASE_KEY_ALIAS: ${{ secrets.NOTUNE_RELEASE_KEY_ALIAS }}
+          NOTUNE_RELEASE_KEY_PASSWORD: ${{ secrets.NOTUNE_RELEASE_KEY_PASSWORD }}
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          REQUIRE_PRODUCTION_SIGNING: "true"
+        run: ./gradlew assembleUniversalFossRelease --no-daemon
+
+      - name: Verify APK Signature & Compute Release SHA-256
+        env:
+          A1: ${{ secrets.NOTUNE_RELEASE_KEY_ALIAS }}
+          A2: ${{ secrets.KEY_ALIAS }}
+          P1: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_PASSWORD }}
+          P2: ${{ secrets.STORE_PASSWORD }}
+        run: |
+          APK_PATH="app/build/outputs/apk/universalFoss/release/app-universal-foss-release.apk"
+          SHA256=$(sha256sum "$APK_PATH" | awk '{print $1}')
+          echo "APK_SHA256=$SHA256" >> $GITHUB_ENV
+          echo "Release APK SHA-256: $SHA256"
+
+          # Verify APK signature using apksigner
+          BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | tail -n 1)
+          $BUILD_TOOLS_DIR/apksigner verify --verbose "$APK_PATH"
+
+          # Extract public certificate fingerprint if keystore exists
+          if [ -f keystore.jks ]; then
+            ALIAS="${A1:-$A2}"
+            PASS="${P1:-$P2}"
+            FINGERPRINT=$(keytool -list -v -keystore keystore.jks -alias "$ALIAS" -storepass "$PASS" | grep "SHA256:" | head -n 1 | awk '{print $2}')
+            echo "CERT_FINGERPRINT=$FINGERPRINT" >> $GITHUB_ENV
+            echo "Certificate SHA-256 Fingerprint: $FINGERPRINT"
+          fi
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NOTUNE-v2.0-Universal
-          path: app/build/outputs/apk/universalFoss/debug/app-universal-foss-debug.apk
+          name: app-universal-foss-release.apk
+          path: app/build/outputs/apk/universalFoss/release/app-universal-foss-release.apk
 
-      - name: Create GitHub Release & Attach Direct APK Asset
+      - name: Create GitHub Release & Attach Artifact
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           tag_name: ${{ github.ref_name }}
-          name: NØTUNE v2.0.0 Universal Release
+          name: NØTUNE ${{ github.ref_name }} Release
+          body: |
+            ### 📱 Official NØTUNE Production Release (${{ github.ref_name }})
+            - **Release Artifact**: `app-universal-foss-release.apk`
+            - **SHA-256 Checksum**: `${{ env.APK_SHA256 }}`
           draft: false
           prerelease: false
-          files: app/build/outputs/apk/universalFoss/debug/app-universal-foss-debug.apk
+          files: app/build/outputs/apk/universalFoss/release/app-universal-foss-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

@@ -541,15 +541,41 @@ class HomeViewModel @Inject constructor(
             launch(Dispatchers.IO) { loadSimilarRecommendations() }
             launch(Dispatchers.IO) {
                 YouTube.home().onSuccess { page ->
-                    homePage.value = page.copy(
-                        sections = page.sections.mapNotNull { section ->
-                            val filteredItems = section.items
-                                .filterExplicit(hideExplicit)
-                                .filterVideoSongs(hideVideoSongs)
-                                .filterYoutubeShorts(hideYoutubeShorts)
-                            if (filteredItems.isEmpty()) null else section.copy(items = filteredItems)
+                    val processedSections = page.sections.mapNotNull { section ->
+                        val filteredItems = section.items
+                            .filterExplicit(hideExplicit)
+                            .filterVideoSongs(hideVideoSongs)
+                            .filterYoutubeShorts(hideYoutubeShorts)
+                        if (filteredItems.isEmpty()) null else section.copy(items = filteredItems)
+                    }
+                    homePage.value = page.copy(sections = processedSections)
+
+                    if (quickPicks.value.isNullOrEmpty()) {
+                        val homeSongs = processedSections.flatMap { it.items }
+                            .filterIsInstance<SongItem>()
+                            .distinctBy { it.id }
+                            .map { songItem ->
+                                Song(
+                                    song = echo.music.iad1tya.db.entities.SongEntity(
+                                        id = songItem.id,
+                                        title = songItem.title,
+                                        duration = songItem.duration ?: 0,
+                                        thumbnailUrl = songItem.thumbnail,
+                                        isLocal = false
+                                    ),
+                                    artists = songItem.artists.map { a ->
+                                        echo.music.iad1tya.db.entities.ArtistEntity(
+                                            id = a.id ?: "artist_${a.name.hashCode()}",
+                                            name = a.name,
+                                            isLocal = false
+                                        )
+                                    }
+                                )
+                            }
+                        if (homeSongs.isNotEmpty()) {
+                            quickPicks.value = homeSongs.take(20)
                         }
-                    )
+                    }
                 }.onFailure { reportException(it) }
             }
             launch(Dispatchers.IO) {

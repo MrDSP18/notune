@@ -541,6 +541,7 @@ val PreferredLyricsProviderKey = stringPreferencesKey("lyricsProvider")
 val LyricsProviderOrderKey = stringPreferencesKey("lyricsProviderOrder")
 val QueueEditLockKey = booleanPreferencesKey("queueEditLockV2")
 val RandomizeHomeOrderKey = booleanPreferencesKey("randomizeHomeOrder")
+val HomeOrderKey = stringPreferencesKey("homeOrder")
 val AlbumCanvasEnabledKey = booleanPreferencesKey("albumCanvasEnabled")
 
 val ShowLikedPlaylistKey = booleanPreferencesKey("show_liked_playlist")
@@ -1121,6 +1122,23 @@ val ExperimentalAnimationsKey = booleanPreferencesKey("experimentalAnimations")
 
 val SelectedLogoKey = stringPreferencesKey("selected_logo")
 val WidgetStyleKey = stringPreferencesKey("widget_style")
+val OsPersonalityKey = stringPreferencesKey("os_personality")
+
+enum class OsPersonality {
+    AUTO,
+    PIXEL,
+    SAMSUNG,
+    NOTHING,
+    HYPEROS,
+    OXYGENOS,
+    COLOROS,
+    ORIGINOS,
+    REALME,
+    MOTOROLA,
+    ZENUI,
+    NOTUNE_ORIGINAL
+}
+
 
 enum class ThemePreset {
     NOTHING,

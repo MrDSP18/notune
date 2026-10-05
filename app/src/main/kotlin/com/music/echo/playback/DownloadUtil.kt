@@ -122,7 +122,10 @@ constructor(
                     .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
             )
         ) { dataSpec ->
-            val mediaId = dataSpec.key ?: error("No media id")
+            val rawMediaId = dataSpec.key
+                ?: dataSpec.uri.toString().takeIf { it.isNotEmpty() && it != "about:blank" }
+                ?: return@Factory dataSpec
+            val mediaId = rawMediaId.removePrefix("yt_").removePrefix("local_").substringAfterLast("/")
 
             songUrlCache["${mediaId}_${downloadQuality.name}"]?.takeIf { it.second > System.currentTimeMillis() }?.let {
                 return@Factory dataSpec.withUri(it.first.toUri())
@@ -260,7 +263,10 @@ constructor(
         }
     }
 
-    fun getDownload(songId: String): Flow<Download?> = downloads.map { it[songId] }
+    fun getDownload(songId: String): Flow<Download?> = downloads.map { map ->
+        val cleanId = songId.removePrefix("yt_").removePrefix("local_")
+        map[songId] ?: map[cleanId] ?: map["yt_$cleanId"]
+    }
 
     fun release() {
         scope.cancel()

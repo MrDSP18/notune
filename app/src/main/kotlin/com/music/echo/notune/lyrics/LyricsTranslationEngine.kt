@@ -49,7 +49,7 @@ class LyricsTranslationEngine @Inject constructor(
         return lines.map { line ->
             val translatedText = ruleBasedTranslate(line.originalText, targetLanguage)
             line.copy(
-                translatedText = translatedText,
+                translatedText = translatedText.takeIf { it != line.originalText },
                 transformationVersion = 1
             )
         }

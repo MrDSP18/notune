@@ -7,13 +7,13 @@ Keep this file up to date — it's the fastest way to give the agent full contex
 ## 🚀 Development Rules & Guidelines
 
 ### Identity Rule: NØTUNE Platform
-All branding, strings, and UI elements **must** use the **NØTUNE** identity. Never refer to "NØTUNE" or "NØTUNE" in user-facing content. The aesthetic is strictly minimalist, technical, and industrial.
+All branding, strings, and UI elements **must** use the **NØTUNE** identity. The aesthetic is strictly minimalist, technical, and industrial.
 
 ### UI Rule: Custom Industrial Aesthetic
 All UI work **must** match the **NØTUNE** design language:
 - **Sharp Geometry**: Preferred 0dp-4dp corners. Use `rememberArtworkShape` for consistency.
 - **Glassmorphism**: Use translucent surfaces with technical outlines.
-- **Monochrome + Nothing Red**: Background is strictly black (`#000000`), accents are Nothing Red (`#FF0031`).
+- **Monochrome + NØTUNE Red**: Background is strictly black (`#000000`), accents are NØTUNE Red (`#FF0031`).
 - **Dot Matrix Typography**: Use `NothingFont` for all headers and labels.
 
 ### AI Architecture Rule: Multi-Provider & Tool-Calling

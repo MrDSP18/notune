@@ -711,8 +711,12 @@ class MainActivity : ComponentActivity() {
                         currentRoute?.startsWith("artist/") == true
                 }
 
-                val isLandscape = configuration.containerDpSize.width > configuration.containerDpSize.height
-                val showRail = isLandscape && !inSearchScreen && currentRoute != "ambient_mode"
+                val windowInfo = echo.music.iad1tya.ui.adaptive.rememberAdaptiveWindowInfo(
+                    availableWidthDp = maxWidth,
+                    availableHeightDp = maxHeight
+                )
+                val isLandscape = windowInfo.isLandscape
+                val showRail = (windowInfo.useNavigationRail || windowInfo.useThreeColumnLayout) && !inSearchScreen && currentRoute != "ambient_mode"
 
                 val navPadding = if (shouldShowNavigationBar && !showRail) {
                     NavigationBarHeight + FloatingToolbarBottomPadding
@@ -856,6 +860,19 @@ class MainActivity : ComponentActivity() {
                 var showWelcomeDialog by remember { mutableStateOf(false) }
                 val googleAuthManager = remember { GoogleAuthManager(applicationContext) }
                 val googleAccount by googleAuthManager.googleAccountFlow.collectAsState(initial = GoogleUserAccount())
+                var showGoogleAuthPopup by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(!googleAccount.isLoggedIn) }
+
+                LaunchedEffect(googleAccount) {
+                    if (googleAccount.isLoggedIn) {
+                        showGoogleAuthPopup = false
+                        if (googleAccount.name.isNotBlank()) {
+                            homeViewModel.accountName.value = googleAccount.name
+                        }
+                        if (googleAccount.photoUrl.isNotBlank()) {
+                            homeViewModel.accountImageUrl.value = googleAccount.photoUrl
+                        }
+                    }
+                }
 
                 LaunchedEffect(lastOpenedVersionCode) {
                     if (lastOpenedVersionCode < BuildConfig.VERSION_CODE) {
@@ -1216,8 +1233,12 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    if (!googleAccount.isLoggedIn) {
-                        GoogleLoginPopupDialog(authManager = googleAuthManager, onLoginSuccess = { })
+                    if (showGoogleAuthPopup && !googleAccount.isLoggedIn) {
+                        GoogleLoginPopupDialog(
+                            authManager = googleAuthManager,
+                            onLoginSuccess = { showGoogleAuthPopup = false },
+                            onDismiss = { showGoogleAuthPopup = false }
+                        )
                     }
 
                     if (showWelcomeDialog) {
@@ -1248,16 +1269,37 @@ class MainActivity : ComponentActivity() {
         if (uri == null) return
         intent.data = null
         intent.removeExtra(Intent.EXTRA_TEXT)
+
+        val deepLink = DeepLinkParser.parse(uri)
+        val pathSegments = uri.pathSegments
+        val path = pathSegments.firstOrNull()?.lowercase()
+        val host = uri.host?.lowercase()
         val coroutineScope = lifecycle.coroutineScope
-        val listenCode = uri.getQueryParameter("code") ?: uri.getQueryParameter("room") ?: uri.pathSegments.getOrNull(1)
-        val isListenLink = uri.pathSegments.firstOrNull() == "listen" || uri.host?.equals("listen", ignoreCase = true) == true || uri.host?.equals("github.com", ignoreCase = true) == true || !listenCode.isNullOrBlank()
-        if (!listenCode.isNullOrBlank() && isListenLink) {
-            val username = dataStore.get(ListenTogetherUsernameKey, "").ifBlank { "Guest" }
-            listenTogetherManager.joinRoom(listenCode, username)
+
+        if (deepLink.kind == DeepLinkTarget.Kind.ROOM) {
+            val roomCode = deepLink.roomCode
+            if (!roomCode.isNullOrBlank()) {
+                val username = dataStore.get(ListenTogetherUsernameKey, "").ifBlank { "Guest" }
+                listenTogetherManager.joinRoom(roomCode, username)
+            } else {
+                Timber.w("Room link did not include a room code: $uri")
+            }
             return
         }
-        when (val path = uri.pathSegments.firstOrNull()) {
-            "playlist" -> uri.getQueryParameter("list")?.let { playlistId ->
+
+        when (deepLink.kind) {
+            DeepLinkTarget.Kind.SONG -> deepLink.id?.let { songId ->
+                coroutineScope.launch(Dispatchers.IO) {
+                    YouTube.queue(listOf(songId), null).onSuccess { queue ->
+                        withContext(Dispatchers.Main) {
+                            var attempts = 0
+                            while (connectionManager.playerConnection.value == null && attempts < 20) { delay(100); attempts++ }
+                            connectionManager.playerConnection.value?.playQueue(YouTubeQueue(WatchEndpoint(videoId = queue.firstOrNull()?.id), queue.firstOrNull()?.toMediaMetadata()))
+                        }
+                    }.onFailure { reportException(it) }
+                }
+            }
+            DeepLinkTarget.Kind.PLAYLIST -> deepLink.id?.let { playlistId ->
                 if (playlistId.startsWith("OLAK5uy_")) {
                     coroutineScope.launch(Dispatchers.IO) {
                         YouTube.albumSongs(playlistId).onSuccess { songs ->
@@ -1266,27 +1308,25 @@ class MainActivity : ComponentActivity() {
                     }
                 } else navController.navigate("online_playlist/$playlistId")
             }
-            "browse" -> uri.lastPathSegment?.let { browseId -> navController.navigate("album/$browseId") }
-            "channel", "c" -> uri.lastPathSegment?.let { artistId -> navController.navigate("artist/$artistId") }
-            "search" -> uri.getQueryParameter("q")?.let { navController.navigate("search/${URLEncoder.encode(it, "UTF-8")}") }
-            else -> {
-                val videoId = when {
-                    path == "watch" -> uri.getQueryParameter("v")
-                    uri.host == "youtu.be" || uri.host == "share.notune.fun" -> uri.pathSegments.firstOrNull()
-                    else -> null
-                }
+            DeepLinkTarget.Kind.ALBUM -> deepLink.id?.let { albumId -> navController.navigate("album/$albumId") }
+            DeepLinkTarget.Kind.ARTIST -> deepLink.id?.let { artistId -> navController.navigate("artist/$artistId") }
+            DeepLinkTarget.Kind.SEARCH -> deepLink.id?.let { navController.navigate("search/${URLEncoder.encode(it, "UTF-8")}") }
+            DeepLinkTarget.Kind.MIX -> deepLink.id?.let { mixId -> navController.navigate("online_playlist/$mixId") }
+            DeepLinkTarget.Kind.YOUTUBE_VIDEO -> deepLink.id?.let { videoId ->
                 val playlistId = uri.getQueryParameter("list")
-                if (videoId != null) {
-                    coroutineScope.launch(Dispatchers.IO) {
-                        YouTube.queue(listOf(videoId), playlistId).onSuccess { queue ->
-                            withContext(Dispatchers.Main) {
-                                var attempts = 0
-                                while (connectionManager.playerConnection.value == null && attempts < 20) { delay(100); attempts++ }
-                                connectionManager.playerConnection.value?.playQueue(YouTubeQueue(WatchEndpoint(videoId = queue.firstOrNull()?.id, playlistId = playlistId), queue.firstOrNull()?.toMediaMetadata()))
-                            }
-                        }.onFailure { reportException(it) }
-                    }
-                } else if (playlistId != null) {
+                coroutineScope.launch(Dispatchers.IO) {
+                    YouTube.queue(listOf(videoId), playlistId).onSuccess { queue ->
+                        withContext(Dispatchers.Main) {
+                            var attempts = 0
+                            while (connectionManager.playerConnection.value == null && attempts < 20) { delay(100); attempts++ }
+                            connectionManager.playerConnection.value?.playQueue(YouTubeQueue(WatchEndpoint(videoId = queue.firstOrNull()?.id, playlistId = playlistId), queue.firstOrNull()?.toMediaMetadata()))
+                        }
+                    }.onFailure { reportException(it) }
+                }
+            }
+            DeepLinkTarget.Kind.UNKNOWN -> {
+                val playlistId = uri.getQueryParameter("list")
+                if (playlistId != null) {
                     coroutineScope.launch(Dispatchers.IO) {
                         YouTube.queue(null, playlistId).onSuccess { queue ->
                             val firstItem = queue.firstOrNull()
@@ -1297,6 +1337,8 @@ class MainActivity : ComponentActivity() {
                             }
                         }.onFailure { reportException(it) }
                     }
+                } else if (path == "user" || path == "profile") {
+                    Timber.w("Profile deep links are not available in this build: $uri")
                 }
             }
         }
