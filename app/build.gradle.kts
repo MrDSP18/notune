@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
+import java.util.Base64
 import java.net.URL
 
 val localProperties = Properties()
@@ -168,7 +169,24 @@ android {
         ?: localProperties.getProperty("NOTUNE_RELEASE_KEYSTORE_PATH")
         ?: System.getenv("KEYSTORE_PATH")
 
+    val releaseKeystoreBase64 = System.getenv("NOTUNE_RELEASE_KEYSTORE_BASE64")
+        ?: localProperties.getProperty("NOTUNE_RELEASE_KEYSTORE_BASE64")
+
+    val decodedKeystoreFile = if (!releaseKeystoreBase64.isNullOrBlank()) {
+        val tmpDir = file("${layout.buildDirectory.get()}/tmp")
+        tmpDir.mkdirs()
+        val ksFile = file("${tmpDir.absolutePath}/decoded_release.keystore")
+        try {
+            val bytes = Base64.getDecoder().decode(releaseKeystoreBase64.trim())
+            ksFile.writeBytes(bytes)
+            ksFile
+        } catch (_: Exception) {
+            null
+        }
+    } else null
+
     val releaseKeystoreFile = when {
+        decodedKeystoreFile != null && decodedKeystoreFile.exists() -> decodedKeystoreFile
         !releaseKeystorePath.isNullOrBlank() -> file(releaseKeystorePath)
         rootProject.file("keystore.jks").exists() -> rootProject.file("keystore.jks")
         file("keystore/release.keystore").exists() -> file("keystore/release.keystore")
