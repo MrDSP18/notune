@@ -41,4 +41,23 @@ class PlatformProductionTest {
         assertNotNull(state)
         assertEquals("NØ AI Lite", state?.model?.name)
     }
+
+    @Test
+    fun testListenTogetherReconnectJitterBoundedBackoff() {
+        val mockContext = io.mockk.mockk<android.content.Context>(relaxed = true)
+        val client = echo.music.iad1tya.listentogether.ListenTogetherClient(
+            context = mockContext
+        )
+        // Test attempt 1 with zero jitter
+        val delay1Min = client.calculateBackoffDelay(attempt = 1, randomFactor = 0.0)
+        assertTrue("Attempt 1 min delay should be >= 1000ms", delay1Min >= 1000L)
+
+        // Test attempt 1 with max jitter
+        val delay1Max = client.calculateBackoffDelay(attempt = 1, randomFactor = 1.0)
+        assertTrue("Attempt 1 max delay with jitter should be > min delay", delay1Max > delay1Min)
+
+        // Test exponential capping
+        val delayMaxAttempt = client.calculateBackoffDelay(attempt = 10, randomFactor = 0.0)
+        assertTrue("Capped delay should not exceed 120s", delayMaxAttempt <= 120000L)
+    }
 }
