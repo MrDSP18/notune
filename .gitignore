@@ -48,6 +48,7 @@ app/google-services.json
 *.bks
 
 # Temporary test homes & scratch
+.gradle_user_home/
 .android/
 .android_home/
 .gradle_home/
