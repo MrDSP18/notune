@@ -439,4 +439,44 @@ class EnrichmentIntegrationTest {
         val details = results.first().songDetails
         assertNotNull(details)
     }
+
+    @Test
+    fun test52_regionalSoundtrackResolutionTuning() {
+        // Test regional language & soundtrack suffix normalization
+        val identity = normalizer.normalize("Kaavaalaa [From \"Jailer\"] (Tamil)", "Anirudh Ravichander")
+        assertEquals("Kaavaalaa", identity.cleanTitle)
+        assertEquals("Jailer", identity.cleanMovie)
+
+        // Evaluate confidence matching with token-set similarity
+        val candidate = SongDetails(
+            songId = "c1",
+            title = "Kaavaalaa (Original Motion Picture Soundtrack)",
+            artists = listOf(PersonDetails(personId = "a1", name = "Anirudh Ravichander")),
+            movieTitle = "Jailer",
+            source = MetadataSource.BACKEND
+        )
+        val match = confidenceEngine.evaluateMatch(identity, candidate, "test_provider")
+        assertTrue(confidenceEngine.isMatchValidForAttachment(match))
+        assertTrue(match.confidenceScore >= 0.75f)
+    }
+
+    @Test
+    fun test53_offlineCacheTtlGracePeriodAndCategoryStats() {
+        val song = SongDetails(songId = "s_grace", title = "Grace Track", source = MetadataSource.LOCAL)
+        cacheManager.putSong(song, ttlMs = 0L) // 0ms TTL to force expiration immediately
+        Thread.sleep(5)
+
+        // Expired but within offline grace period should be returned when allowStale=true
+        val staleSong = cacheManager.getSong("s_grace", allowStale = true)
+        assertNotNull(staleSong)
+
+        // Strict non-stale fetch should return null for expired item
+        val strictSong = cacheManager.getSong("s_grace", allowStale = false)
+        assertNull(strictSong)
+
+        // Verify category stats & selective clear
+        assertEquals(1, cacheManager.getSongCacheSize())
+        cacheManager.clearSongs()
+        assertEquals(0, cacheManager.getSongCacheSize())
+    }
 }

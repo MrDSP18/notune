@@ -11,9 +11,12 @@ import javax.inject.Singleton
 data class CachedItem<T>(
     val value: T,
     val cachedAt: Long = System.currentTimeMillis(),
-    val ttlMs: Long = 86_400_000L // 24 hours default TTL
+    val ttlMs: Long = 86_400_000L, // 24 hours default TTL
+    val gracePeriodMs: Long = 30 * 86_400_000L // 30 days offline grace period
 ) {
     fun isExpired(): Boolean = System.currentTimeMillis() - cachedAt > ttlMs
+    fun isStale(): Boolean = isExpired()
+    fun isWithinGracePeriod(): Boolean = System.currentTimeMillis() - cachedAt <= (ttlMs + gracePeriodMs)
 }
 
 /**
@@ -35,6 +38,7 @@ class MetadataCacheManager @Inject constructor() {
     fun getSong(songId: String, allowStale: Boolean = true): SongDetails? {
         val entry = songCache[songId] ?: return null
         if (!allowStale && entry.isExpired()) return null
+        if (allowStale && !entry.isWithinGracePeriod()) return null
         return entry.value
     }
 
@@ -45,6 +49,7 @@ class MetadataCacheManager @Inject constructor() {
     fun getArtist(artistId: String, allowStale: Boolean = true): ArtistDetails? {
         val entry = artistCache[artistId] ?: return null
         if (!allowStale && entry.isExpired()) return null
+        if (allowStale && !entry.isWithinGracePeriod()) return null
         return entry.value
     }
 
@@ -55,6 +60,7 @@ class MetadataCacheManager @Inject constructor() {
     fun getAlbum(albumId: String, allowStale: Boolean = true): AlbumDetails? {
         val entry = albumCache[albumId] ?: return null
         if (!allowStale && entry.isExpired()) return null
+        if (allowStale && !entry.isWithinGracePeriod()) return null
         return entry.value
     }
 
@@ -65,6 +71,7 @@ class MetadataCacheManager @Inject constructor() {
     fun getMovie(movieId: String, allowStale: Boolean = true): MovieDetails? {
         val entry = movieCache[movieId] ?: return null
         if (!allowStale && entry.isExpired()) return null
+        if (allowStale && !entry.isWithinGracePeriod()) return null
         return entry.value
     }
 
@@ -75,8 +82,22 @@ class MetadataCacheManager @Inject constructor() {
     fun getPerson(personId: String, allowStale: Boolean = true): PersonDetails? {
         val entry = personCache[personId] ?: return null
         if (!allowStale && entry.isExpired()) return null
+        if (allowStale && !entry.isWithinGracePeriod()) return null
         return entry.value
     }
+
+    fun getSongCacheSize(): Int = songCache.size
+    fun getArtistCacheSize(): Int = artistCache.size
+    fun getAlbumCacheSize(): Int = albumCache.size
+    fun getMovieCacheSize(): Int = movieCache.size
+    fun getPersonCacheSize(): Int = personCache.size
+    fun getTotalCacheEntries(): Int = songCache.size + artistCache.size + albumCache.size + movieCache.size + personCache.size
+
+    fun clearSongs() = songCache.clear()
+    fun clearArtists() = artistCache.clear()
+    fun clearAlbums() = albumCache.clear()
+    fun clearMovies() = movieCache.clear()
+    fun clearPeople() = personCache.clear()
 
     fun clearAll() {
         songCache.clear()
