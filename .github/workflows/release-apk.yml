@@ -54,7 +54,7 @@ jobs:
           STORE_PASSWORD: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_PASSWORD || secrets.STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.NOTUNE_RELEASE_KEY_ALIAS || secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.NOTUNE_RELEASE_KEY_PASSWORD || secrets.KEY_PASSWORD }}
-          REQUIRE_PRODUCTION_SIGNING: ${{ (secrets.NOTUNE_RELEASE_KEYSTORE_BASE64 != '' || secrets.KEYSTORE_BASE64 != '') && 'true' || 'false' }}
+          REQUIRE_PRODUCTION_SIGNING: ${{ secrets.NOTUNE_RELEASE_KEYSTORE_BASE64 != '' || secrets.KEYSTORE_BASE64 != '' }}
         run: ./gradlew assembleUniversalFossRelease --no-daemon
 
       - name: Verify APK Signature & Compute Release SHA-256
