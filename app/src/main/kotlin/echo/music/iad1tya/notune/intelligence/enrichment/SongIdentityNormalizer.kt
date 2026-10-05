@@ -13,7 +13,7 @@ import javax.inject.Singleton
 class SongIdentityNormalizer @Inject constructor() {
 
     private val noisySuffixesRegex = Regex(
-        "(?i)\\s*[\\[(](official\\s*(audio|video|music\\s*video|lyric\\s*video|full\\s*video|hd|4k)?|lyric\\s*video|remastered(\\s*\\d{4})?|video\\s*song|full\\s*song|audio|hd|4k)[\\])]\\s*"
+        "(?i)\\s*[\\[(](official\\s*(audio|video|music\\s*video|lyric\\s*video|full\\s*video|hd|4k)?|lyric\\s*video|remastered(\\s*\\d{4})?|video\\s*song|full\\s*song|audio|hd|4k|original\\s*motion\\s*picture\\s*soundtrack|soundtrack|ost|tamil|telugu|hindi|malayalam|kannada|bengali|marathi|punjabi|gujarati|odia|assamese)[\\])]\\s*"
     )
 
     private val moviePatternRegex = Regex(

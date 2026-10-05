@@ -25,19 +25,33 @@ class ConfidenceEngine @Inject constructor() {
         var score = 0.0f
 
         // Title match (0.45 weight)
-        val titleSim = calculateLevenshteinSimilarity(
+        val normalizer = SongIdentityNormalizer()
+        val candidateIdentity = normalizer.normalize(candidate.title, candidate.artists.firstOrNull()?.name ?: "")
+        val candidateTitleToUse = if (candidateIdentity.cleanTitle.isNotBlank()) candidateIdentity.cleanTitle else candidate.title
+
+        val titleLev = calculateLevenshteinSimilarity(
             target.cleanTitle.lowercase(),
-            candidate.title.lowercase()
+            candidateTitleToUse.lowercase()
         )
+        val titleToken = calculateTokenSetSimilarity(
+            target.cleanTitle.lowercase(),
+            candidateTitleToUse.lowercase()
+        )
+        val titleSim = maxOf(titleLev, titleToken)
         score += titleSim * 0.45f
         if (titleSim >= 0.80f) matchingFields.add("title")
 
         // Artist match (0.35 weight)
         val candidateArtist = candidate.artists.firstOrNull()?.name ?: ""
-        val artistSim = calculateLevenshteinSimilarity(
+        val artistLev = calculateLevenshteinSimilarity(
             target.cleanArtist.lowercase(),
             candidateArtist.lowercase()
         )
+        val artistToken = calculateTokenSetSimilarity(
+            target.cleanArtist.lowercase(),
+            candidateArtist.lowercase()
+        )
+        val artistSim = maxOf(artistLev, artistToken)
         score += artistSim * 0.35f
         if (artistSim >= 0.75f) matchingFields.add("artist")
 
@@ -121,5 +135,14 @@ class ConfidenceEngine @Inject constructor() {
 
         val maxLen = max(len1, len2)
         return (1.0f - distance[len1][len2].toFloat() / maxLen).coerceIn(0.0f, 1.0f)
+    }
+
+    private fun calculateTokenSetSimilarity(s1: String, s2: String): Float {
+        val tokens1 = s1.lowercase().split(Regex("[^\\p{L}\\p{N}]+")).filter { it.isNotBlank() }.toSet()
+        val tokens2 = s2.lowercase().split(Regex("[^\\p{L}\\p{N}]+")).filter { it.isNotBlank() }.toSet()
+        if (tokens1.isEmpty() || tokens2.isEmpty()) return 0.0f
+        val intersection = tokens1.intersect(tokens2).size.toFloat()
+        val union = tokens1.union(tokens2).size.toFloat()
+        return if (union > 0f) (intersection / union).coerceIn(0.0f, 1.0f) else 0.0f
     }
 }
