@@ -60,9 +60,7 @@ fun MovieDetailsScreen(
         ) {
             when (val state = uiState) {
                 is KnowledgeUiState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
+                    MovieDetailsSkeleton()
                 }
                 is KnowledgeUiState.Error -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -105,7 +103,9 @@ fun MovieDetailsScreen(
                                     leadActresses = movie.leadActresses,
                                     cast = movie.cast,
                                     onPersonClick = { personId ->
-                                        navController.navigate("person/$personId")
+                                        if (!personId.isNullOrBlank()) {
+                                            navController.safeNavigateEntity("person/$personId")
+                                        }
                                     }
                                 )
                             }
@@ -118,13 +118,59 @@ fun MovieDetailsScreen(
                                 musicDirectors = movie.musicDirectors,
                                 producers = movie.producers,
                                 onPersonClick = { personId ->
-                                    navController.navigate("person/$personId")
+                                    if (!personId.isNullOrBlank()) {
+                                        navController.safeNavigateEntity("person/$personId")
+                                    }
                                 }
                             )
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun MovieDetailsSkeleton() {
+    echo.music.iad1tya.ui.component.shimmer.ShimmerHost(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        echo.music.iad1tya.ui.component.shimmer.TextPlaceholder(height = 20.dp, modifier = Modifier.fillMaxWidth(0.5f))
+        Spacer(modifier = Modifier.height(8.dp))
+        echo.music.iad1tya.ui.component.shimmer.TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.9f))
+        Spacer(modifier = Modifier.height(4.dp))
+        echo.music.iad1tya.ui.component.shimmer.TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.7f))
+        Spacer(modifier = Modifier.height(20.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            )
         }
     }
 }
