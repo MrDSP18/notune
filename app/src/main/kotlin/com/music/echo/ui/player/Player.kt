@@ -2351,7 +2351,7 @@ fun BottomSheetPlayer(
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.skip_previous),
-                                    contentDescription = stringResource(R.string.action_skip_previous),
+                                    contentDescription = stringResource(R.string.previous),
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
@@ -2444,7 +2444,7 @@ fun BottomSheetPlayer(
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.skip_next),
-                                    contentDescription = stringResource(R.string.action_skip_next),
+                                    contentDescription = stringResource(R.string.next),
                                     modifier = Modifier.size(32.dp)
                                 )
                             }

@@ -257,9 +257,6 @@
     <string name="undo">Undo</string>
 
     <!-- Player -->
-    <string name="lyrics">Lyrics</string>
-    <string name="action_skip_previous">Previous</string>
-    <string name="action_skip_next">Next</string>
     <string name="lyrics_not_found">Lyrics not found</string>
     <string name="sleep_timer">Sleep timer</string>
     <string name="end_of_song">End of song</string>
