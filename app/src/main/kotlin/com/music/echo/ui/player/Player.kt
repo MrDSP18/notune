@@ -1839,7 +1839,7 @@ fun BottomSheetPlayer(
                                                 navController = navController,
                                                 playerBottomSheetState = state,
                                                 onShowDetailsDialog = {
-                                                    mediaMetadata.id.let {
+                                                    mediaMetadata?.id?.let {
                                                         bottomSheetPageState.show {
                                                             ShowMediaInfo(it)
                                                         }
@@ -2555,7 +2555,7 @@ fun BottomSheetPlayer(
                                             navController = navController,
                                             playerBottomSheetState = state,
                                             onShowDetailsDialog = {
-                                                mediaMetadata.id.let {
+                                                mediaMetadata?.id?.let {
                                                     bottomSheetPageState.show {
                                                         ShowMediaInfo(it)
                                                     }
