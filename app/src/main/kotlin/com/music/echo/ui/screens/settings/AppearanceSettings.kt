@@ -229,7 +229,7 @@ highlightKey: String? = null) {
     )
     val (playerStyle, onPlayerStyleChange) = rememberEnumPreference(
         PlayerStyleKey,
-        defaultValue = PlayerStyleVariant.MINIMAL
+        defaultValue = PlayerStyleVariant.LUX
     )
     val (lyricsPosition, onLyricsPositionChange) = rememberEnumPreference(
         LyricsTextPositionKey,
