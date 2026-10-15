@@ -138,11 +138,13 @@ private fun calculateThumbnailDimensions(
     cornerRadius: Dp = 2.dp, // Sharper for Nothing
     isLandscape: Boolean = false
 ): ThumbnailDimensions {
-    val maxAllowedHeight = if (isLandscape) containerHeight else (containerHeight - 180.dp).coerceAtLeast(140.dp)
+    val headerAllowance = if (isLandscape) 0.dp else 44.dp
+    val availableHeight = (containerHeight - headerAllowance).coerceAtLeast(100.dp)
+    val availableWidth = (containerWidth - (horizontalPadding * 2)).coerceAtLeast(100.dp)
     val effectiveSize = if (isLandscape) {
-        (minOf(containerWidth, containerHeight) - (horizontalPadding * 2)).coerceAtLeast(120.dp)
+        minOf(availableWidth, availableHeight).coerceIn(120.dp, 380.dp)
     } else {
-        minOf(containerWidth - (horizontalPadding * 2), maxAllowedHeight).coerceAtLeast(140.dp)
+        minOf(availableWidth, availableHeight).coerceIn(140.dp, 360.dp)
     }
     return ThumbnailDimensions(
         itemWidth = containerWidth,
@@ -401,9 +403,7 @@ fun Thumbnail(
             visible = error == null && !(playerBackground == PlayerBackgroundStyle.APPLE_MUSIC && !isLandscape),
             enter = fadeIn(),
             exit = fadeOut(),
-            modifier = Modifier
-                .fillMaxSize()
-                .then(if (!isLandscape) Modifier.statusBarsPadding() else Modifier),
+            modifier = Modifier.fillMaxSize(),
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
