@@ -104,6 +104,8 @@ import echo.music.iad1tya.constants.SwipeLyricsKey
 import echo.music.iad1tya.constants.SwipeToRemoveSongKey
 import echo.music.iad1tya.constants.SwipeToSongKey
 import echo.music.iad1tya.constants.ThumbnailCornerRadiusKey
+import echo.music.iad1tya.constants.PlayerStyleKey
+import echo.music.iad1tya.constants.PlayerStyleVariant
 
 import echo.music.iad1tya.constants.UseNewPlayerDesignKey
 import echo.music.iad1tya.ui.component.ThumbnailCornerRadiusModal
@@ -224,6 +226,10 @@ highlightKey: String? = null) {
     val (playerButtonsStyle, onPlayerButtonsStyleChange) = rememberEnumPreference(
         PlayerButtonsStyleKey,
         defaultValue = PlayerButtonsStyle.DEFAULT
+    )
+    val (playerStyle, onPlayerStyleChange) = rememberEnumPreference(
+        PlayerStyleKey,
+        defaultValue = PlayerStyleVariant.MINIMAL
     )
     val (lyricsPosition, onLyricsPositionChange) = rememberEnumPreference(
         LyricsTextPositionKey,
@@ -365,6 +371,10 @@ highlightKey: String? = null) {
     }
 
     var showPlayerButtonsStyleDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    var showPlayerStyleDialog by rememberSaveable {
         mutableStateOf(false)
     }
 
@@ -576,6 +586,20 @@ highlightKey: String? = null) {
                     PlayerButtonsStyle.TERTIARY -> stringResource(R.string.tertiary_color_style)
                 }
             }
+        )
+    }
+
+    if (showPlayerStyleDialog) {
+        EnumDialog(
+            onDismiss = { showPlayerStyleDialog = false },
+            onSelect = {
+                onPlayerStyleChange(it)
+                showPlayerStyleDialog = false
+            },
+            title = "Player Style",
+            current = playerStyle,
+            values = PlayerStyleVariant.entries,
+            valueText = { it.title }
         )
     }
 
@@ -1182,6 +1206,13 @@ highlightKey: String? = null) {
         Material3SettingsGroup(scrollState = scrollState, 
             title = stringResource(R.string.player),
             items = listOfNotNull(
+                Material3SettingsItem(
+                    isHighlighted = (highlightKey == "Player Style"),
+                    icon = painterResource(R.drawable.play),
+                    title = { Text("Player Style") },
+                    description = { Text(playerStyle.title) },
+                    onClick = { showPlayerStyleDialog = true }
+                ),
                 Material3SettingsItem(
     isHighlighted = (highlightKey == "Apple Music Inspired"),
                     icon = painterResource(R.drawable.apple_music_me),
