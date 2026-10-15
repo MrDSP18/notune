@@ -241,7 +241,7 @@ fun LuxPlayerContent(
                 Spacer(Modifier.height(6.dp))
 
                 Text(
-                    text = mediaMetadata.artist.uppercase(),
+                    text = mediaMetadata.artists.joinToString(", ") { it.name }.uppercase(),
                     fontSize = if (isCompact) 11.5.sp else 12.5.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 2.sp,
