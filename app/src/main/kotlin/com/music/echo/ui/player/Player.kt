@@ -76,9 +76,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.runtime.produceState
 import androidx.compose.material3.Slider
@@ -196,6 +198,8 @@ import echo.music.iad1tya.notune.isBuds
 import echo.music.iad1tya.notune.isSpeaker
 import echo.music.iad1tya.notune.AudioDeviceBottomSheet
 import echo.music.iad1tya.ui.component.BottomSheet
+import com.music.echo.ui.player.lux.LuxPlayerContent
+import com.music.echo.ui.player.lux.LuxDesignTokens
 import echo.music.iad1tya.ui.component.BottomSheetState
 import echo.music.iad1tya.ui.component.CastButton
 import echo.music.iad1tya.ui.component.LocalBottomSheetPageState
@@ -306,7 +310,7 @@ fun BottomSheetPlayer(
     val showLyricsOnPlayer by rememberPreference(ShowLyricsOnPlayerKey, false)
     val playerStyle by rememberEnumPreference(
         key = PlayerStyleKey,
-        defaultValue = PlayerStyleVariant.MINIMAL
+        defaultValue = PlayerStyleVariant.LUX
     )
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val isLocalMedia = mediaMetadata?.id?.isLocalMediaId() == true
@@ -358,7 +362,9 @@ fun BottomSheetPlayer(
             val insetsController = WindowCompat.getInsetsController(window, window.decorView)
 
             val isLocal = mediaMetadata?.id?.isLocalMediaId() == true
-            if (isLocal || playerBackground in listOf(PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT, PlayerBackgroundStyle.GLOW_ANIMATED, PlayerBackgroundStyle.APPLE_MUSIC, PlayerBackgroundStyle.LIVE_MESH)) {
+            if (playerStyle == PlayerStyleVariant.LUX) {
+                insetsController.isAppearanceLightStatusBars = true
+            } else if (isLocal || playerBackground in listOf(PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT, PlayerBackgroundStyle.GLOW_ANIMATED, PlayerBackgroundStyle.APPLE_MUSIC, PlayerBackgroundStyle.LIVE_MESH)) {
                 insetsController.isAppearanceLightStatusBars = false
             } else {
                 insetsController.isAppearanceLightStatusBars = !useDarkTheme
@@ -451,6 +457,8 @@ fun BottomSheetPlayer(
         mutableStateOf<Long?>(null)
     }
 
+    var isAutomixDebugExpanded by rememberSaveable { mutableStateOf(false) }
+
     val automixDebugOverlay: @Composable () -> Unit = {
         if (automixDebugOverlayEnabled) {
             automixDebug?.let { dbg ->
@@ -460,32 +468,63 @@ fun BottomSheetPlayer(
                 )
                 Column(
                     modifier = Modifier
-                        .padding(horizontal = PlayerHorizontalPadding, vertical = 4.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(Color.Black.copy(alpha = 0.45f))
-                        .padding(6.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = PlayerHorizontalPadding, vertical = 2.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color.Black.copy(alpha = 0.65f))
+                        .border(0.5.dp, NothingRed.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
+                        .clickable { isAutomixDebugExpanded = !isAutomixDebugExpanded }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .animateContentSize()
                 ) {
-                    Text("AUTOMIX  ${dbg.status}", style = mono, color = Color.White)
-                    Text(
-                        "out: ${dbg.outBpm?.let { "%.1f bpm".format(it) } ?: "—"}" +
-                                (dbg.outConfidence?.let { "  conf %.2f".format(it) } ?: "") +
-                                (dbg.outMixOutMs?.takeIf { it > 0 }?.let { "  mixOut ${makeTimeString(it)}" } ?: ""),
-                        style = mono, color = Color.White.copy(alpha = 0.85f)
-                    )
-                    Text(
-                        "in:  ${dbg.inBpm?.let { "%.1f bpm".format(it) } ?: "—"}" +
-                                (dbg.inConfidence?.let { "  conf %.2f".format(it) } ?: "") +
-                                (dbg.inMixInMs?.takeIf { it > 0 }?.let { "  mixIn ${makeTimeString(it)}" } ?: ""),
-                        style = mono, color = Color.White.copy(alpha = 0.85f)
-                    )
-                    if (dbg.triggerTimeMs != null) {
-                        val remainingS = ((dbg.triggerTimeMs - (sliderPosition ?: effectivePosition)) / 1000).coerceAtLeast(0)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(NothingRed)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                text = "AUTOMIX: ${dbg.status.uppercase()}",
+                                style = mono.copy(fontWeight = FontWeight.Bold),
+                                color = Color.White
+                            )
+                        }
                         Text(
-                            "mix @ ${makeTimeString(dbg.triggerTimeMs)} (in ${remainingS}s)" +
-                                    (dbg.incomingStartMs?.let { "  from ${makeTimeString(it)}" } ?: "") +
-                                    (dbg.tempoRatio?.let { "  ×%.3f".format(it) } ?: ""),
+                            text = if (isAutomixDebugExpanded) "LESS ▲" else "MORE ▼",
+                            style = mono.copy(fontSize = 8.sp),
+                            color = Color.White.copy(alpha = 0.6f)
+                        )
+                    }
+                    if (isAutomixDebugExpanded) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "out: ${dbg.outBpm?.let { "%.1f bpm".format(it) } ?: "—"}" +
+                                    (dbg.outConfidence?.let { "  conf %.2f".format(it) } ?: "") +
+                                    (dbg.outMixOutMs?.takeIf { it > 0 }?.let { "  mixOut ${makeTimeString(it)}" } ?: ""),
                             style = mono, color = Color.White.copy(alpha = 0.85f)
                         )
+                        Text(
+                            "in:  ${dbg.inBpm?.let { "%.1f bpm".format(it) } ?: "—"}" +
+                                    (dbg.inConfidence?.let { "  conf %.2f".format(it) } ?: "") +
+                                    (dbg.inMixInMs?.takeIf { it > 0 }?.let { "  mixIn ${makeTimeString(it)}" } ?: ""),
+                            style = mono, color = Color.White.copy(alpha = 0.85f)
+                        )
+                        if (dbg.triggerTimeMs != null) {
+                            val remainingS = ((dbg.triggerTimeMs - (sliderPosition ?: effectivePosition)) / 1000).coerceAtLeast(0)
+                            Text(
+                                "mix @ ${makeTimeString(dbg.triggerTimeMs)} (in ${remainingS}s)" +
+                                        (dbg.incomingStartMs?.let { "  from ${makeTimeString(it)}" } ?: "") +
+                                        (dbg.tempoRatio?.let { "  ×%.3f".format(it) } ?: ""),
+                                style = mono, color = Color.White.copy(alpha = 0.85f)
+                            )
+                        }
                     }
                 }
             }
@@ -905,6 +944,7 @@ fun BottomSheetPlayer(
 
 
     val bottomSheetBackgroundColor = when {
+        playerStyle == PlayerStyleVariant.LUX -> LuxDesignTokens.Background
         playerStyle == PlayerStyleVariant.STITCH -> Color(0xFF131313)
         isLocalMedia -> Color.Black
         playerBackground in listOf(PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT, PlayerBackgroundStyle.GLOW_ANIMATED, PlayerBackgroundStyle.APPLE_MUSIC) ->
@@ -922,7 +962,20 @@ fun BottomSheetPlayer(
         state = state,
         modifier = modifier,
         background = {
-            if (playerStyle == PlayerStyleVariant.STITCH) {
+            if (playerStyle == PlayerStyleVariant.LUX) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    LuxDesignTokens.BackgroundGradientTop,
+                                    LuxDesignTokens.BackgroundGradientBottom
+                                )
+                            )
+                        )
+                )
+            } else if (playerStyle == PlayerStyleVariant.STITCH) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -1412,7 +1465,69 @@ fun BottomSheetPlayer(
             label = "playPauseRoundness",
         )
 
-        if (playerStyle == PlayerStyleVariant.STITCH && mediaMetadata != null) {
+        if (playerStyle == PlayerStyleVariant.LUX && mediaMetadata != null) {
+            val lyrics by playerConnection.currentLyrics.collectAsState(initial = null)
+            val lyricsLines = remember(lyrics) {
+                lyrics?.lyrics?.lines()?.filter { it.isNotBlank() } ?: emptyList()
+            }
+            val shuffleModeEnabled by playerConnection.shuffleModeEnabled.collectAsState()
+
+            LuxPlayerContent(
+                mediaMetadata = mediaMetadata!!,
+                position = effectivePosition,
+                duration = duration,
+                isPlaying = effectiveIsPlaying,
+                isLiked = currentSong?.song?.liked == true,
+                shuffleModeEnabled = shuffleModeEnabled,
+                repeatMode = repeatMode,
+                bluetoothDeviceName = bluetoothDeviceName,
+                lyricsLines = lyricsLines,
+                onPlayPauseClick = playerConnection::togglePlayPause,
+                onPreviousClick = playerConnection::seekToPrevious,
+                onNextClick = playerConnection::seekToNext,
+                onSeek = { seekTime -> playerConnection.player.seekTo(seekTime) },
+                onCollapseClick = { state.collapseSoft() },
+                onFavoriteClick = playerConnection::toggleLike,
+                onShuffleClick = {
+                    if (!isListenTogetherGuest) {
+                        playerConnection.player.shuffleModeEnabled = !shuffleModeEnabled
+                    }
+                },
+                onRepeatClick = {
+                    if (!isListenTogetherGuest) {
+                        playerConnection.player.repeatMode = when (repeatMode) {
+                            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                            Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                            else -> Player.REPEAT_MODE_OFF
+                        }
+                    }
+                },
+                onLyricsClick = { showInlineLyrics = !showInlineLyrics },
+                onQueueClick = {
+                    playerScope.launch {
+                        queueSheetState.expandSoft()
+                    }
+                },
+                onMoreClick = {
+                    menuState.show {
+                        PlayerMenu(
+                            mediaMetadata = mediaMetadata!!,
+                            navController = navController,
+                            playerBottomSheetState = state,
+                            onShowDetailsDialog = {
+                                mediaMetadata?.id?.let {
+                                    bottomSheetPageState.show {
+                                        ShowMediaInfo(it)
+                                    }
+                                }
+                            },
+                            onDismiss = menuState::dismiss,
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        } else if (playerStyle == PlayerStyleVariant.STITCH && mediaMetadata != null) {
             val playbackStateForStitch by playbackViewModel.playbackState.collectAsState()
             
             StitchPlayerContent(
@@ -1478,13 +1593,16 @@ fun BottomSheetPlayer(
                     AnimatedContent(
                         targetState = mediaMetadata.title,
                         transitionSpec = { fadeIn() togetherWith fadeOut() },
-                        label = "",
+                        label = "PlayerSongTitle",
                     ) { title ->
+                        val formattedTitle = formatPlayerTitle(title)
+                        val letterSpacing = getPlayerLetterSpacing(title)
+                        val isIndic = title.any { it.code in 0x0900..0x0DFF }
                         Text(
-                            text = title.uppercase(),
+                            text = formattedTitle,
                             style = MaterialTheme.typography.titleLarge.copy(
-                                fontFamily = NothingFont,
-                                letterSpacing = 2.sp,
+                                fontFamily = if (isIndic) FontFamily.Default else NothingFont,
+                                letterSpacing = letterSpacing,
                                 fontWeight = FontWeight.Normal
                             ),
                             maxLines = 1,
@@ -1492,7 +1610,7 @@ fun BottomSheetPlayer(
                             color = Color.White,
                             modifier =
                                 Modifier
-                                    .basicMarquee(iterations = 1, initialDelayMillis = 3000, velocity = 30.dp)
+                                    .basicMarquee(iterations = Int.MAX_VALUE, initialDelayMillis = 2500, repeatDelayMillis = 2500, velocity = 30.dp)
                                     .combinedClickable(
                                         enabled = true,
                                         indication = null,
@@ -1528,8 +1646,18 @@ fun BottomSheetPlayer(
                                 mediaMetadata.artists.forEachIndexed { index, artist ->
                                     val tag = "artist_${artist.id.orEmpty()}"
                                     pushStringAnnotation(tag = tag, annotation = artist.id.orEmpty())
-                                    withStyle(SpanStyle(color = Color.White.copy(alpha = 0.7f), fontSize = 14.sp, fontFamily = NothingFont, letterSpacing = 1.sp)) {
-                                        append(artist.name.uppercase())
+                                    val formattedArtist = formatPlayerTitle(artist.name)
+                                    val letterSpacing = getPlayerLetterSpacing(artist.name)
+                                    val isArtistIndic = artist.name.any { it.code in 0x0900..0x0DFF }
+                                    withStyle(
+                                        SpanStyle(
+                                            color = Color.White.copy(alpha = 0.7f),
+                                            fontSize = 14.sp,
+                                            fontFamily = if (isArtistIndic) FontFamily.Default else NothingFont,
+                                            letterSpacing = letterSpacing
+                                        )
+                                    ) {
+                                        append(formattedArtist)
                                     }
                                     pop()
                                     if (index != mediaMetadata.artists.lastIndex) append(", ")
@@ -1539,7 +1667,7 @@ fun BottomSheetPlayer(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .basicMarquee(iterations = 1, initialDelayMillis = 3000, velocity = 30.dp)
+                                    .basicMarquee(iterations = Int.MAX_VALUE, initialDelayMillis = 2500, repeatDelayMillis = 2500, velocity = 30.dp)
                                     .padding(end = 12.dp)
                             ) {
                                 var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
@@ -1791,7 +1919,7 @@ fun BottomSheetPlayer(
                                                 navController = navController,
                                                 playerBottomSheetState = state,
                                                 onShowDetailsDialog = {
-                                                    mediaMetadata.id.let {
+                                                    mediaMetadata?.id?.let {
                                                         bottomSheetPageState.show {
                                                             ShowMediaInfo(it)
                                                         }
@@ -2303,7 +2431,7 @@ fun BottomSheetPlayer(
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.skip_previous),
-                                    contentDescription = null,
+                                    contentDescription = stringResource(R.string.previous),
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
@@ -2396,8 +2524,134 @@ fun BottomSheetPlayer(
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.skip_next),
-                                    contentDescription = null,
+                                    contentDescription = stringResource(R.string.next),
                                     modifier = Modifier.size(32.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(14.dp))
+
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = PlayerHorizontalPadding + 8.dp)
+                        ) {
+                            val shuffleModeEnabled by playerConnection.shuffleModeEnabled.collectAsState()
+                            IconButton(
+                                onClick = {
+                                    if (!isListenTogetherGuest) {
+                                        playerConnection.player.shuffleModeEnabled = !shuffleModeEnabled
+                                    }
+                                },
+                                enabled = !isListenTogetherGuest,
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(if (shuffleModeEnabled) R.drawable.shuffle_on else R.drawable.shuffle),
+                                    contentDescription = stringResource(if (shuffleModeEnabled) R.string.action_shuffle_off else R.string.action_shuffle_on),
+                                    tint = if (shuffleModeEnabled) NothingRed else textButtonColor.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+
+                            val repeatMode by playerConnection.repeatMode.collectAsState()
+                            IconButton(
+                                onClick = {
+                                    if (!isListenTogetherGuest) {
+                                        playerConnection.player.toggleRepeatMode()
+                                    }
+                                },
+                                enabled = !isListenTogetherGuest,
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(
+                                        when (repeatMode) {
+                                            androidx.media3.common.Player.REPEAT_MODE_ONE -> R.drawable.repeat_one_on
+                                            androidx.media3.common.Player.REPEAT_MODE_ALL -> R.drawable.repeat_on
+                                            else -> R.drawable.repeat
+                                        }
+                                    ),
+                                    contentDescription = stringResource(
+                                        when (repeatMode) {
+                                            androidx.media3.common.Player.REPEAT_MODE_ONE -> R.string.repeat_mode_one
+                                            androidx.media3.common.Player.REPEAT_MODE_ALL -> R.string.repeat_mode_all
+                                            else -> R.string.repeat_mode_off
+                                        }
+                                    ),
+                                    tint = if (repeatMode != androidx.media3.common.Player.REPEAT_MODE_OFF) NothingRed else textButtonColor.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+
+                            IconButton(
+                                onClick = { showInlineLyrics = !showInlineLyrics },
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.lyrics),
+                                    contentDescription = stringResource(R.string.lyrics),
+                                    tint = if (showInlineLyrics) NothingRed else textButtonColor.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+
+                            IconButton(
+                                onClick = { navController.navigate("settings/equalizer") },
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.equalizer),
+                                    contentDescription = stringResource(R.string.equalizer),
+                                    tint = textButtonColor.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+
+                            IconButton(
+                                onClick = {
+                                    playerScope.launch {
+                                        queueSheetState.expandSoft()
+                                    }
+                                },
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.queue_music),
+                                    contentDescription = stringResource(R.string.queue),
+                                    tint = textButtonColor.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+
+                            IconButton(
+                                onClick = {
+                                    menuState.show {
+                                        OldPlayerMenu(
+                                            mediaMetadata = mediaMetadata,
+                                            navController = navController,
+                                            playerBottomSheetState = state,
+                                            onShowDetailsDialog = {
+                                                mediaMetadata?.id?.let {
+                                                    bottomSheetPageState.show {
+                                                        ShowMediaInfo(it)
+                                                    }
+                                                }
+                                            },
+                                            onDismiss = menuState::dismiss
+                                        )
+                                    }
+                                },
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.more_vert),
+                                    contentDescription = stringResource(R.string.more_options),
+                                    tint = textButtonColor.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
                         }
@@ -2641,7 +2895,7 @@ fun BottomSheetPlayer(
                         }
 
                         AnimatedVisibility(
-                            visible = !useNewPlayerDesign && bluetoothDeviceName != null,
+                            visible = bluetoothDeviceName != null,
                             enter = fadeIn(tween(400)) + expandVertically(tween(400)),
                             exit = fadeOut(tween(400)) + shrinkVertically(tween(400)),
                             label = "BluetoothInfoVisibility"
@@ -2776,7 +3030,7 @@ fun BottomSheetPlayer(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier =
                         Modifier
-                            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
+                            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top))
                             .padding(bottom = bottomPadding)
                             .animateContentSize(),
                 ) {
@@ -2789,7 +3043,7 @@ fun BottomSheetPlayer(
                             fontSize = 12.sp
                         ),
                         color = Color.White.copy(alpha = 0.4f),
-                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
                     )
 
                     Box(
@@ -2837,7 +3091,7 @@ fun BottomSheetPlayer(
                         ControlsContent(mediaMetadata!!)
                     }
 
-                    Spacer(Modifier.height(if (useNewPlayerDesign) 30.dp else 8.dp))
+                    Spacer(Modifier.height(10.dp))
                 }
             }
         }
@@ -3135,4 +3389,14 @@ private fun BackgroundVideoView(
         },
         modifier = modifier.alpha(alpha)
     )
+}
+
+internal fun formatPlayerTitle(text: String): String {
+    val hasIndic = text.any { it.code in 0x0900..0x0DFF }
+    return if (hasIndic) text else text.uppercase()
+}
+
+internal fun getPlayerLetterSpacing(text: String): androidx.compose.ui.unit.TextUnit {
+    val hasIndic = text.any { it.code in 0x0900..0x0DFF }
+    return if (hasIndic) 0.sp else 1.5.sp
 }
