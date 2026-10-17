@@ -68,4 +68,16 @@ class LyricsPipelineTest {
         assertEquals(LyricsLanguage.TAMIL, ta)
         assertEquals("தமிழ்", ta.nativeName)
     }
+
+    @Test
+    fun testFlexibleLrcTimestampParsing() {
+        val lineRegex = echo.music.iad1tya.lyrics.LyricsUtils.LINE_REGEX
+        val timeRegex = echo.music.iad1tya.lyrics.LyricsUtils.TIME_REGEX
+
+        val sampleLrcLine1 = "[01:23.45] Flexible Timestamp Line"
+        val sampleLrcLine2 = "[1:23:456] Single Digit Minute Line"
+
+        assertTrue(lineRegex.matches(sampleLrcLine1))
+        assertTrue(lineRegex.matches(sampleLrcLine2))
+    }
 }

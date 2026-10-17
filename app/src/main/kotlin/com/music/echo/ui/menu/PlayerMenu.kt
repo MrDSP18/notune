@@ -746,8 +746,8 @@ fun PlayerMenu(
                         }
                     ),
                     Material3MenuItemData(
-                        title = { Text(text = stringResource(R.string.details)) },
-                        description = { Text(text = stringResource(R.string.details_desc)) },
+                        title = { Text(text = "Deep Song Intelligence") },
+                        description = { Text(text = "Song details, credits, movie cast & NØ AI context") },
                         icon = {
                             Icon(
                                 painter = painterResource(R.drawable.info),

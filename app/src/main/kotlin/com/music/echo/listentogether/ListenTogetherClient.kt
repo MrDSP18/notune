@@ -409,11 +409,11 @@ class ListenTogetherClient @Inject constructor(
 
     
     
-    private fun calculateBackoffDelay(attempt: Int): Long {
-        val exponentialDelay = INITIAL_RECONNECT_DELAY_MS * (2 shl (minOf(attempt - 1, 4)))
+    fun calculateBackoffDelay(attempt: Int, randomFactor: Double = Math.random()): Long {
+        val attemptClamped = maxOf(1, attempt)
+        val exponentialDelay = INITIAL_RECONNECT_DELAY_MS * (1 shl minOf(attemptClamped - 1, 5))
         val cappedDelay = minOf(exponentialDelay, MAX_RECONNECT_DELAY_MS)
-        
-        val jitter = (cappedDelay * 0.2 * Math.random()).toLong()
+        val jitter = (cappedDelay * 0.25 * randomFactor.coerceIn(0.0, 1.0)).toLong()
         return cappedDelay + jitter
     }
 

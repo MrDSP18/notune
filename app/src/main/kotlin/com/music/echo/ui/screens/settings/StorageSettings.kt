@@ -555,6 +555,63 @@ fun StorageSettings(
                 )
             )
         )
+
+        val metadataCacheManager = remember(context) {
+            tryOrNull {
+                dagger.hilt.android.EntryPointAccessors.fromApplication(
+                    context.applicationContext,
+                    MetadataCacheEntryPoint::class.java
+                ).metadataCacheManager()
+            }
+        }
+        var clearMetadataCacheDialog by remember { mutableStateOf(false) }
+
+        if (clearMetadataCacheDialog) {
+            ActionPromptDialog(
+                title = "Clear Deep Metadata Cache",
+                onDismiss = { clearMetadataCacheDialog = false },
+                onConfirm = {
+                    metadataCacheManager?.clearAll()
+                    clearMetadataCacheDialog = false
+                },
+                onCancel = { clearMetadataCacheDialog = false },
+                content = {
+                    Text(text = "This will clear cached song intelligence, movie details, artist profiles, and credits. Offline basic music playback will not be affected.")
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        val metadataEntries = metadataCacheManager?.getTotalCacheEntries() ?: 0
+        Material3SettingsGroup(
+            scrollState = scrollState,
+            title = "Metadata & Intelligence Cache",
+            items = listOf(
+                Material3SettingsItem(
+                    isHighlighted = false,
+                    icon = painterResource(R.drawable.manage_search),
+                    title = { Text("Cached Deep Metadata") },
+                    description = {
+                        val songCount = metadataCacheManager?.getSongCacheSize() ?: 0
+                        val artistCount = metadataCacheManager?.getArtistCacheSize() ?: 0
+                        val movieCount = metadataCacheManager?.getMovieCacheSize() ?: 0
+                        val personCount = metadataCacheManager?.getPersonCacheSize() ?: 0
+                        Text("$metadataEntries total items ($songCount songs, $artistCount artists, $movieCount movies, $personCount credits)")
+                    }
+                ),
+                Material3SettingsItem(
+                    isHighlighted = false,
+                    icon = painterResource(R.drawable.clear_all),
+                    title = { Text("Clear Deep Metadata Cache") },
+                    description = { Text("Remove cached music intelligence metadata without affecting user playlists or history") },
+                    onClick = {
+                        clearMetadataCacheDialog = true
+                    }
+                )
+            )
+        )
+
         Spacer(Modifier.padding(bottom = 30.dp))
 
         Spacer(Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom)))
@@ -574,4 +631,10 @@ fun StorageSettings(
             }
         }
     )
+}
+
+@dagger.hilt.EntryPoint
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+interface MetadataCacheEntryPoint {
+    fun metadataCacheManager(): echo.music.iad1tya.notune.intelligence.enrichment.MetadataCacheManager
 }

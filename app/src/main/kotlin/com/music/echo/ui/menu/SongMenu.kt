@@ -930,9 +930,7 @@ fun SongMenu(
                             },
                             onClick = {
                                 onDismiss()
-                                bottomSheetPageState.show {
-                                    ShowMediaInfo(song.id)
-                                }
+                                navController.navigate("song_details/${song.id}")
                             }
                         )
                     )

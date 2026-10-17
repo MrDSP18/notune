@@ -39,12 +39,16 @@ lastfm-empty/build/
 # Copy google-services.json.template to google-services.json and fill in your values
 app/google-services.json
 
-# Signing keystores
+# Signing keystores and certificates
 *.jks
 *.keystore
-!persistent-debug.keystore
+*.p12
+*.pem
+*.pk8
+*.bks
 
 # Temporary test homes & scratch
+.gradle_user_home/
 .android/
 .android_home/
 .gradle_home/

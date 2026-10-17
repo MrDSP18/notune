@@ -1,0 +1,17 @@
+{
+  "name": "NØTUNE Personal Music OS",
+  "short_name": "NØTUNE",
+  "description": "NØTUNE Personal Music OS — On-device AI, high-fidelity sound, real-time synchronized lyrics, and live listening rooms.",
+  "start_url": "/player",
+  "display": "standalone",
+  "background_color": "#090A0F",
+  "theme_color": "#FF0031",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/MrDSP18/notune/main/fastlane/metadata/android/en-US/images/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

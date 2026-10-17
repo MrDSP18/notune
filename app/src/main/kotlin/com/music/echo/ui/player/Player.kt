@@ -3148,10 +3148,8 @@ fun MoreActionsButton(
                         navController = navController,
                         playerBottomSheetState = state,
                         onShowDetailsDialog = {
-                            mediaMetadata.id.let {
-                                bottomSheetPageState.show {
-                                    ShowMediaInfo(it)
-                                }
+                            mediaMetadata.id.let { songId ->
+                                navController.navigate("song_details/$songId")
                             }
                         },
                         onDismiss = menuState::dismiss
@@ -3192,10 +3190,8 @@ private fun PlayerMoreMenuButton(
                             navController = navController,
                             playerBottomSheetState = state,
                             onShowDetailsDialog = {
-                                mediaMetadata.id.let {
-                                    bottomSheetPageState.show {
-                                        ShowMediaInfo(it)
-                                    }
+                                mediaMetadata.id.let { songId ->
+                                    navController.navigate("song_details/$songId")
                                 }
                             },
                             onDismiss = menuState::dismiss,

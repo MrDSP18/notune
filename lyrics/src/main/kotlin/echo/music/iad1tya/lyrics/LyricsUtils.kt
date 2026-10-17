@@ -11,11 +11,11 @@ import java.util.Locale
 
 @Suppress("RegExpRedundantEscape")
 object LyricsUtils {
-    val LINE_REGEX = "((\\[\\d\\d:\\d\\d\\.\\d{2,3}\\] ?)+)(.+)".toRegex()
-    val TIME_REGEX = "\\[(\\d\\d):(\\d\\d)\\.(\\d{2,3})\\]".toRegex()
+    val LINE_REGEX = "((\\[\\d{1,2}:\\d{2}(?:[.:]\\d{1,4})?\\] ?)+)(.+)".toRegex()
+    val TIME_REGEX = "\\[(\\d{1,2}):(\\d{2})(?:[.:](\\d{1,4}))?\\]".toRegex()
     
     
-    private val RICH_SYNC_LINE_REGEX = "\\[(\\d{1,2}):(\\d{2})\\.(\\d{2,3})\\](.+)".toRegex()
+    private val RICH_SYNC_LINE_REGEX = "\\[(\\d{1,2}):(\\d{2})(?:[.:](\\d{1,4}))?\\](.+)".toRegex()
     private val RICH_SYNC_WORD_REGEX = "<(\\d{1,2}):(\\d{2})\\.(\\d{2,3})>\\s*([^<]+)".toRegex()
     
     
@@ -547,10 +547,13 @@ object LyricsUtils {
             .map { timeMatchResult ->
                 val min = timeMatchResult.groupValues[1].toLongOrNull() ?: 0L
                 val sec = timeMatchResult.groupValues[2].toLongOrNull() ?: 0L
-                val milString = timeMatchResult.groupValues[3]
-                var mil = milString.toLongOrNull() ?: 0L
-                if (milString.length == 2) {
-                    mil *= 10
+                val milString = timeMatchResult.groupValues.getOrNull(3) ?: ""
+                val mil = when (milString.length) {
+                    1 -> (milString.toLongOrNull() ?: 0L) * 100
+                    2 -> (milString.toLongOrNull() ?: 0L) * 10
+                    3 -> milString.toLongOrNull() ?: 0L
+                    4 -> (milString.take(3).toLongOrNull() ?: 0L)
+                    else -> 0L
                 }
                 val time = min * DateUtils.MINUTE_IN_MILLIS + sec * DateUtils.SECOND_IN_MILLIS + mil
                 LyricsEntry(time, text, words, agent = agent, isBackground = isBackground)
