@@ -198,6 +198,8 @@ import echo.music.iad1tya.notune.isBuds
 import echo.music.iad1tya.notune.isSpeaker
 import echo.music.iad1tya.notune.AudioDeviceBottomSheet
 import echo.music.iad1tya.ui.component.BottomSheet
+import com.music.echo.ui.player.lux.LuxPlayerContent
+import com.music.echo.ui.player.lux.LuxDesignTokens
 import echo.music.iad1tya.ui.component.BottomSheetState
 import echo.music.iad1tya.ui.component.CastButton
 import echo.music.iad1tya.ui.component.LocalBottomSheetPageState
@@ -308,7 +310,7 @@ fun BottomSheetPlayer(
     val showLyricsOnPlayer by rememberPreference(ShowLyricsOnPlayerKey, false)
     val playerStyle by rememberEnumPreference(
         key = PlayerStyleKey,
-        defaultValue = PlayerStyleVariant.MINIMAL
+        defaultValue = PlayerStyleVariant.LUX
     )
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val isLocalMedia = mediaMetadata?.id?.isLocalMediaId() == true
@@ -360,7 +362,9 @@ fun BottomSheetPlayer(
             val insetsController = WindowCompat.getInsetsController(window, window.decorView)
 
             val isLocal = mediaMetadata?.id?.isLocalMediaId() == true
-            if (isLocal || playerBackground in listOf(PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT, PlayerBackgroundStyle.GLOW_ANIMATED, PlayerBackgroundStyle.APPLE_MUSIC, PlayerBackgroundStyle.LIVE_MESH)) {
+            if (playerStyle == PlayerStyleVariant.LUX) {
+                insetsController.isAppearanceLightStatusBars = true
+            } else if (isLocal || playerBackground in listOf(PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT, PlayerBackgroundStyle.GLOW_ANIMATED, PlayerBackgroundStyle.APPLE_MUSIC, PlayerBackgroundStyle.LIVE_MESH)) {
                 insetsController.isAppearanceLightStatusBars = false
             } else {
                 insetsController.isAppearanceLightStatusBars = !useDarkTheme
@@ -940,6 +944,7 @@ fun BottomSheetPlayer(
 
 
     val bottomSheetBackgroundColor = when {
+        playerStyle == PlayerStyleVariant.LUX -> LuxDesignTokens.Background
         playerStyle == PlayerStyleVariant.STITCH -> Color(0xFF131313)
         isLocalMedia -> Color.Black
         playerBackground in listOf(PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT, PlayerBackgroundStyle.GLOW_ANIMATED, PlayerBackgroundStyle.APPLE_MUSIC) ->
@@ -957,7 +962,20 @@ fun BottomSheetPlayer(
         state = state,
         modifier = modifier,
         background = {
-            if (playerStyle == PlayerStyleVariant.STITCH) {
+            if (playerStyle == PlayerStyleVariant.LUX) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    LuxDesignTokens.BackgroundGradientTop,
+                                    LuxDesignTokens.BackgroundGradientBottom
+                                )
+                            )
+                        )
+                )
+            } else if (playerStyle == PlayerStyleVariant.STITCH) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -1447,7 +1465,69 @@ fun BottomSheetPlayer(
             label = "playPauseRoundness",
         )
 
-        if (playerStyle == PlayerStyleVariant.STITCH && mediaMetadata != null) {
+        if (playerStyle == PlayerStyleVariant.LUX && mediaMetadata != null) {
+            val lyrics by playerConnection.currentLyrics.collectAsState(initial = null)
+            val lyricsLines = remember(lyrics) {
+                lyrics?.lyrics?.lines()?.filter { it.isNotBlank() } ?: emptyList()
+            }
+            val shuffleModeEnabled by playerConnection.shuffleModeEnabled.collectAsState()
+
+            LuxPlayerContent(
+                mediaMetadata = mediaMetadata!!,
+                position = effectivePosition,
+                duration = duration,
+                isPlaying = effectiveIsPlaying,
+                isLiked = currentSong?.song?.liked == true,
+                shuffleModeEnabled = shuffleModeEnabled,
+                repeatMode = repeatMode,
+                bluetoothDeviceName = bluetoothDeviceName,
+                lyricsLines = lyricsLines,
+                onPlayPauseClick = playerConnection::togglePlayPause,
+                onPreviousClick = playerConnection::seekToPrevious,
+                onNextClick = playerConnection::seekToNext,
+                onSeek = { seekTime -> playerConnection.player.seekTo(seekTime) },
+                onCollapseClick = { state.collapseSoft() },
+                onFavoriteClick = playerConnection::toggleLike,
+                onShuffleClick = {
+                    if (!isListenTogetherGuest) {
+                        playerConnection.player.shuffleModeEnabled = !shuffleModeEnabled
+                    }
+                },
+                onRepeatClick = {
+                    if (!isListenTogetherGuest) {
+                        playerConnection.player.repeatMode = when (repeatMode) {
+                            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                            Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                            else -> Player.REPEAT_MODE_OFF
+                        }
+                    }
+                },
+                onLyricsClick = { showInlineLyrics = !showInlineLyrics },
+                onQueueClick = {
+                    playerScope.launch {
+                        queueSheetState.expandSoft()
+                    }
+                },
+                onMoreClick = {
+                    menuState.show {
+                        PlayerMenu(
+                            mediaMetadata = mediaMetadata!!,
+                            navController = navController,
+                            playerBottomSheetState = state,
+                            onShowDetailsDialog = {
+                                mediaMetadata?.id?.let {
+                                    bottomSheetPageState.show {
+                                        ShowMediaInfo(it)
+                                    }
+                                }
+                            },
+                            onDismiss = menuState::dismiss,
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        } else if (playerStyle == PlayerStyleVariant.STITCH && mediaMetadata != null) {
             val playbackStateForStitch by playbackViewModel.playbackState.collectAsState()
             
             StitchPlayerContent(
@@ -1839,7 +1919,7 @@ fun BottomSheetPlayer(
                                                 navController = navController,
                                                 playerBottomSheetState = state,
                                                 onShowDetailsDialog = {
-                                                    mediaMetadata.id.let {
+                                                    mediaMetadata?.id?.let {
                                                         bottomSheetPageState.show {
                                                             ShowMediaInfo(it)
                                                         }
@@ -2555,7 +2635,7 @@ fun BottomSheetPlayer(
                                             navController = navController,
                                             playerBottomSheetState = state,
                                             onShowDetailsDialog = {
-                                                mediaMetadata.id.let {
+                                                mediaMetadata?.id?.let {
                                                     bottomSheetPageState.show {
                                                         ShowMediaInfo(it)
                                                     }

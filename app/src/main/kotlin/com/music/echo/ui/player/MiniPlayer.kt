@@ -142,6 +142,9 @@ import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.ui.draw.drawBehind
 import kotlin.math.absoluteValue
 import echo.music.iad1tya.ui.component.Icon as MIcon
+import echo.music.iad1tya.constants.PlayerStyleKey
+import echo.music.iad1tya.constants.PlayerStyleVariant
+import com.music.echo.ui.player.lux.OrganicPebbleShape
 
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
@@ -860,6 +863,8 @@ private fun LegacyMiniMediaInfo(
 ) {
     val error by LocalPlayerConnection.current?.error?.collectAsState() ?: remember { mutableStateOf(null) }
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
+    val (playerStyle) = rememberEnumPreference(PlayerStyleKey, defaultValue = PlayerStyleVariant.LUX)
+    val thumbShape = if (playerStyle == PlayerStyleVariant.LUX) OrganicPebbleShape(1f) else RoundedCornerShape(ThumbnailCornerRadius)
     
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -869,7 +874,7 @@ private fun LegacyMiniMediaInfo(
             modifier = Modifier
                 .padding(6.dp)
                 .size(48.dp)
-                .clip(RoundedCornerShape(ThumbnailCornerRadius))
+                .clip(thumbShape)
         ) {
             Box(
                 modifier = Modifier

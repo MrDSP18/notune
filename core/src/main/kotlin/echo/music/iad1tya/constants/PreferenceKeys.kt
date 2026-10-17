@@ -140,6 +140,7 @@ enum class LogoVariant(val title: String) {
 }
 
 enum class PlayerStyleVariant(val title: String) {
+    LUX("luxTune"),
     MINIMAL("Minimal"),
     CLASSIC("Classic"),
     CINEMATIC("Cinematic"),
@@ -151,7 +152,7 @@ enum class PlayerStyleVariant(val title: String) {
     STITCH("Stitch & Tune");
 
     companion object {
-        fun fromName(name: String): PlayerStyleVariant = entries.find { it.name.equals(name, ignoreCase = true) } ?: MINIMAL
+        fun fromName(name: String): PlayerStyleVariant = entries.find { it.name.equals(name, ignoreCase = true) } ?: LUX
     }
 }
 

@@ -128,7 +128,7 @@ jobs:
 
     - name: Publish Public Direct APK Release (No Sign-in Required)
       uses: softprops/action-gh-release@v2
-      if: success()
+      if: success() && github.event_name != 'pull_request'
       with:
         tag_name: "latest"
         name: "NØTUNE Universal Direct Release"

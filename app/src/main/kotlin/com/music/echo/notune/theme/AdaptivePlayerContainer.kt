@@ -81,6 +81,33 @@ fun AdaptivePlayerPreview(
             Spacer(modifier = Modifier.height(16.dp))
 
             when (playerStyle) {
+                PlayerStyleVariant.LUX -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0xFFF4F4EE))
+                            .border(1.dp, Color(0x1F000000), RoundedCornerShape(20.dp))
+                            .padding(14.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(com.music.echo.ui.player.lux.OrganicPebbleShape(1f))
+                                .background(Color(0xFF1B1B1D)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("✦", fontSize = 22.sp, color = Color.White)
+                        }
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(songTitle.uppercase(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFF1B1B1D), letterSpacing = 1.sp)
+                            Text(artistName.uppercase(), style = MaterialTheme.typography.bodySmall, color = Color(0xFF86847D), letterSpacing = 1.5.sp)
+                        }
+                    }
+                }
+
                 PlayerStyleVariant.MINIMAL -> {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
