@@ -46,7 +46,7 @@ import echo.music.iad1tya.notune.intelligence.knowledge.*
 fun SongDetailsScreen(
     songId: String,
     navController: NavController,
-    viewModel: KnowledgeViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    viewModel: KnowledgeViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel()
 ) {
     val uiState by viewModel.songState.collectAsState()
     val playerConnection = LocalPlayerConnection.current
