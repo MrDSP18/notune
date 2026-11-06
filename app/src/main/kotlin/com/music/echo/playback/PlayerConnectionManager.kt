@@ -29,6 +29,7 @@ class PlayerConnectionManager @Inject constructor(
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             if (service is MusicBinder) {
+                _playerConnection.value?.dispose()
                 val connection = PlayerConnection(context, service, database, scope)
                 _playerConnection.value = connection
             }
