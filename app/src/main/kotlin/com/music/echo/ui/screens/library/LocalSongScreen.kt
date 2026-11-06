@@ -107,7 +107,7 @@ fun LocalSongScreen(
                     scrollBehavior = scrollBehavior
                 )
 
-                TabRow(
+                PrimaryTabRow(
                     selectedTabIndex = selectedTabIndex,
                     containerColor = Color.Black,
                     contentColor = Color.Red
