@@ -33,7 +33,8 @@ class GroqProvider @Inject constructor(
         prompt: String,
         modelId: String?,
         tools: List<AiTool>?,
-        systemInstruction: String?
+        systemInstruction: String?,
+        history: List<AiChatMessage>?
     ): Result<AiResponse> = runCatching {
         val apiKey = context.dataStore.get(GroqApiKey, "")
         val targetModel = modelId ?: "llama-3.3-70b-versatile"

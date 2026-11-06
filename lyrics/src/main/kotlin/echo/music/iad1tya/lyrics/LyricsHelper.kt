@@ -65,6 +65,12 @@ constructor(
             return LyricsWithProvider(cached.lyrics, cached.providerName)
         }
 
+        // Try local lyrics (.lrc companion file or embedded tag) first for local tracks / offline
+        val localLyrics = LocalLyricsResolver.resolveLocalLyrics(context, mediaMetadata.id)
+        if (!localLyrics.isNullOrBlank()) {
+            return LyricsWithProvider(localLyrics, "Local File")
+        }
+
         val isNetworkAvailable = try {
             networkConnectivity.isCurrentlyConnected()
         } catch (e: Exception) {

@@ -1640,6 +1640,10 @@ interface DatabaseDao {
     @Query("SELECT * FROM song WHERE isLocal = 1 ORDER BY title COLLATE NOCASE, id")
     fun localSongs(): Flow<List<Song>>
 
+    @Transaction
+    @Query("SELECT * FROM song WHERE isLocal = 1 ORDER BY title COLLATE NOCASE, id")
+    suspend fun getLocalSongsSync(): List<Song>
+
     @Query("SELECT id FROM song WHERE isLocal = 1")
     suspend fun localSongIds(): List<String>
 

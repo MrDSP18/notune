@@ -33,7 +33,8 @@ class GeminiProvider @Inject constructor(
         prompt: String,
         modelId: String?,
         tools: List<AiTool>?,
-        systemInstruction: String?
+        systemInstruction: String?,
+        history: List<AiChatMessage>?
     ): Result<AiResponse> = runCatching {
         val apiKey = context.dataStore.get(GeminiApiKey, "")
         val targetModel = modelId ?: "gemini-1.5-flash"

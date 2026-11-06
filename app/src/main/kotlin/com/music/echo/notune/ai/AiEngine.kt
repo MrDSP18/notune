@@ -46,8 +46,10 @@ class AiEngine @Inject constructor(
     suspend fun generateResponse(
         prompt: String,
         preferredProvider: AiProviderType? = null,
+        modelId: String? = null,
         tools: List<AiTool>? = null,
-        systemInstruction: String? = null
+        systemInstruction: String? = null,
+        history: List<AiChatMessage>? = null
     ): Result<AiResponse> {
         val userPreferred = preferredProvider ?: context.dataStore.get(PreferredAiProviderKey, AiProviderType.NOTUNE_BASIC.name).let {
             runCatching { AiProviderType.valueOf(it) }.getOrDefault(AiProviderType.NOTUNE_BASIC)
@@ -64,14 +66,35 @@ class AiEngine @Inject constructor(
             val provider = providers[providerType] ?: continue
             if (provider.isConfigured()) {
                 Timber.d("AI_ENGINE: Trying provider $providerType")
-                val result = provider.generateResponse(prompt, tools = tools, systemInstruction = systemInstruction)
+                val result = provider.generateResponse(prompt, modelId = modelId, tools = tools, systemInstruction = systemInstruction, history = history)
                 if (result.isSuccess) return result
                 lastError = result.exceptionOrNull()
                 Timber.w("AI_ENGINE: Provider $providerType failed: ${lastError?.message}")
             }
         }
 
-        return noTuneBasicAiProvider.generateResponse(prompt, tools = tools, systemInstruction = systemInstruction)
+        return noTuneBasicAiProvider.generateResponse(prompt, modelId = modelId, tools = tools, systemInstruction = systemInstruction, history = history)
+    }
+
+    suspend fun runNeuralMatrixLoop(
+        prompt: String,
+        systemInstruction: String? = null,
+        history: List<AiChatMessage>? = null,
+        maxSteps: Int = 4
+    ): Result<AiResponse> {
+        val fullSystemInstruction = systemInstruction ?: "NØTUNE Neural Matrix Core"
+        val tools = getMusicTools()
+        
+        var currentPrompt = prompt
+        var currentSteps = 0
+        var result = generateResponse(currentPrompt, tools = tools, systemInstruction = fullSystemInstruction, history = history)
+        
+        while (result.isSuccess && currentSteps < maxSteps) {
+            val response = result.getOrThrow()
+            if (response.toolCalls.isNullOrEmpty()) return result
+            currentSteps++
+        }
+        return result
     }
 
     suspend fun getMusicTools(): List<AiTool> = listOf(
