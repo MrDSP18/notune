@@ -81,6 +81,7 @@ import echo.music.iad1tya.constants.DeeplFormalityKey
 import echo.music.iad1tya.lyrics.LyricsTranslationHelper
 import echo.music.iad1tya.utils.rememberPreference
 import androidx.compose.runtime.collectAsState
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,7 +99,7 @@ fun LyricsMenu(
     val openRouterApiKey by rememberPreference(OpenRouterApiKey, "")
     val deeplApiKey by rememberPreference(DeeplApiKey, "")
     val aiProvider by rememberPreference(AiProviderKey, "OpenRouter")
-    val translateLanguage by rememberPreference(TranslateLanguageKey, "en")
+    var translateLanguage by rememberPreference(TranslateLanguageKey, "en")
     val translateMode by rememberPreference(TranslateModeKey, "Literal")
     var autoTranslate by rememberPreference(AutoTranslateKey, false)
     val openRouterBaseUrl by rememberPreference(OpenRouterBaseUrlKey, "https://openrouter.ai/api/v1/chat/completions")
@@ -113,6 +114,28 @@ fun LyricsMenu(
 
     var showEditDialog by rememberSaveable {
         mutableStateOf(false)
+    }
+
+    var showTranslationLanguageDialog by rememberSaveable { mutableStateOf(false) }
+    val translationLanguages = remember {
+        Locale.getISOLanguages().map { code -> code to Locale.forLanguageTag(code).getDisplayLanguage(Locale.getDefault()) }
+            .filter { (_, name) -> name.isNotBlank() }
+            .sortedBy { (_, name) -> name.lowercase(Locale.getDefault()) }
+    }
+
+    if (showTranslationLanguageDialog) {
+        ListDialog(onDismiss = { showTranslationLanguageDialog = false }) {
+            itemsIndexed(translationLanguages) { _, (code, name) ->
+                Text(
+                    text = "$name ($code)",
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        translateLanguage = code
+                        showTranslationLanguageDialog = false
+                    }.padding(horizontal = 20.dp, vertical = 12.dp),
+                    color = if (code == translateLanguage) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
     }
 
     if (showEditDialog) {
@@ -482,6 +505,18 @@ fun LyricsMenu(
                                         },
                                     )
                                 },
+                            )
+                        )
+                        add(
+                            Material3MenuItemData(
+                                title = { Text("Translation language") },
+                                icon = {
+                                    Icon(painter = painterResource(R.drawable.translate), contentDescription = null)
+                                },
+                                onClick = { showTranslationLanguageDialog = true },
+                                trailingContent = {
+                                    Text(Locale.forLanguageTag(translateLanguage).displayLanguage)
+                                }
                             )
                         )
                     }

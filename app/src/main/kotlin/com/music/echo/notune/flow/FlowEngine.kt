@@ -21,7 +21,8 @@ class FlowEngine @Inject constructor(
     private val candidateFilter: FlowCandidateFilter,
     private val candidateScorer: FlowCandidateScorer,
     private val queueOptimizer: FlowQueueOptimizer,
-    private val feedbackProcessor: FlowFeedbackProcessor
+    private val feedbackProcessor: FlowFeedbackProcessor,
+    private val languageSessionTracker: LanguageSessionTracker
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val generationIdCounter = AtomicLong(1L)
@@ -81,6 +82,10 @@ class FlowEngine @Inject constructor(
         }
     }
 
+    fun onSearchPerformed(query: String) {
+        feedbackProcessor.recordSearchQuery(query)
+    }
+
     fun onMoreLikeThis(
         currentTrack: MediaMetadata?,
         upcomingQueueTrackIds: List<String>,
@@ -121,6 +126,8 @@ class FlowEngine @Inject constructor(
 
             try {
                 val currentState = _flowState.value
+                val sessionProfile = languageSessionTracker.computeSessionProfile(feedbackProcessor.getRecentLanguages())
+
                 val rawCandidates = candidateGenerator.generateCandidates(
                     currentTrack = currentTrack,
                     mode = currentState.mode,
@@ -131,7 +138,8 @@ class FlowEngine @Inject constructor(
                     candidates = rawCandidates,
                     currentTrack = currentTrack,
                     activeQueueTrackIds = upcomingQueueTrackIds,
-                    recentlySkippedIds = feedbackProcessor.getRecentlySkippedTrackIds().keys.toList()
+                    recentlySkippedIds = feedbackProcessor.getRecentlySkippedTrackIds().keys.toList(),
+                    recommendationHistory = feedbackProcessor.getRecommendationHistory()
                 )
 
                 val scoredCandidates = candidateScorer.scoreCandidates(
@@ -140,9 +148,11 @@ class FlowEngine @Inject constructor(
                     mode = currentState.mode,
                     contextMode = currentState.contextMode,
                     discoveryRatio = currentState.discoveryRatio,
+                    sessionProfile = sessionProfile,
                     topArtistIds = feedbackProcessor.getBoostedArtistIds(),
                     favoriteTrackIds = feedbackProcessor.getFavoriteTrackIds(),
-                    recentlySkippedTrackIds = feedbackProcessor.getRecentlySkippedTrackIds()
+                    recentlySkippedTrackIds = feedbackProcessor.getRecentlySkippedTrackIds(),
+                    recommendationHistory = feedbackProcessor.getRecommendationHistory()
                 )
 
                 val diversifiedScores = candidateFilter.diversifyCandidates(scoredCandidates)
@@ -152,6 +162,11 @@ class FlowEngine @Inject constructor(
                     rankedCandidates = diversifiedScores,
                     generationId = genId
                 )
+
+                // Record recommendation history for newly recommended tracks
+                for (item in newQueue) {
+                    feedbackProcessor.recordRecommendation(item.mediaMetadata)
+                }
 
                 // Stale result protection
                 if (_flowState.value.generationId == genId) {

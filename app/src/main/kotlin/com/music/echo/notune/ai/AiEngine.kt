@@ -16,10 +16,6 @@ import javax.inject.Singleton
 
 import echo.music.iad1tya.notune.ai.providers.OpenRouterProvider
 import echo.music.iad1tya.notune.ai.providers.OllamaProvider
-import com.music.echo.notune.privacy.PrivateSessionManager
-import com.music.echo.notune.privacy.ai.AIPrivacyGateway
-import com.music.echo.notune.privacy.ai.AiPrivacyRequest
-import echo.music.iad1tya.constants.AiPersonalizationKey
 
 import echo.music.iad1tya.notune.ai.providers.NoTuneBasicAiProvider
 
@@ -30,9 +26,7 @@ class AiEngine @Inject constructor(
     private val groqProvider: GroqProvider,
     private val openRouterProvider: OpenRouterProvider,
     private val ollamaProvider: OllamaProvider,
-    private val noTuneBasicAiProvider: NoTuneBasicAiProvider,
-    private val privateSessionManager: PrivateSessionManager,
-    private val privacyGateway: AIPrivacyGateway,
+    private val noTuneBasicAiProvider: NoTuneBasicAiProvider
 ) {
     private val providers = mapOf(
         AiProviderType.NOTUNE_BASIC to noTuneBasicAiProvider,
@@ -68,20 +62,9 @@ class AiEngine @Inject constructor(
         
         for (providerType in chain) {
             val provider = providers[providerType] ?: continue
-            val privacyResult = privacyGateway.evaluate(
-                AiPrivacyRequest(
-                    prompt = prompt,
-                    provider = providerType,
-                    privateSession = privateSessionManager.isPrivateSession.value,
-                    aiPersonalizationEnabled = context.dataStore.get(AiPersonalizationKey, true),
-                ),
-            )
-            if (privacyResult.decision == com.music.echo.notune.privacy.ai.AiPrivacyDecision.DENY) {
-                return Result.failure(IllegalStateException(privacyResult.reason ?: "AI request denied by privacy policy"))
-            }
             if (provider.isConfigured()) {
                 Timber.d("AI_ENGINE: Trying provider $providerType")
-                val result = provider.generateResponse(privacyResult.prompt, tools = tools, systemInstruction = systemInstruction)
+                val result = provider.generateResponse(prompt, tools = tools, systemInstruction = systemInstruction)
                 if (result.isSuccess) return result
                 lastError = result.exceptionOrNull()
                 Timber.w("AI_ENGINE: Provider $providerType failed: ${lastError?.message}")

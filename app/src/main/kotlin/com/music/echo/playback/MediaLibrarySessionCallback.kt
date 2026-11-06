@@ -40,6 +40,7 @@ import echo.music.iad1tya.constants.SongSortType
 import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.db.entities.PlaylistEntity
 import echo.music.iad1tya.db.entities.Song
+import echo.music.iad1tya.extensions.playbackSeedUri
 import echo.music.iad1tya.extensions.toMediaItem
 import echo.music.iad1tya.extensions.toggleRepeatMode
 import echo.music.iad1tya.models.toMediaMetadata
@@ -1054,6 +1055,8 @@ constructor(
         return MediaItem
             .Builder()
             .setMediaId("$path/$id")
+            .setUri(playbackSeedUri(id))
+            .setCustomCacheKey(id)
             .setMediaMetadata(
                 MediaMetadata
                     .Builder()
@@ -1071,6 +1074,8 @@ constructor(
 
     private fun SongItem.toMediaItem(path: String) = MediaItem.Builder()
         .setMediaId("$path/$id")
+        .setUri(playbackSeedUri(id))
+        .setCustomCacheKey(id)
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setTitle(title)

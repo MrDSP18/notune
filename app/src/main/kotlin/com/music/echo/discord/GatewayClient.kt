@@ -76,7 +76,7 @@ class GatewayClient {
                 .build()
 
         wsSession =
-            httpClient!!.newWebSocket(
+            checkNotNull(httpClient) { "httpClient is not initialized" }.newWebSocket(
                 request,
                 object : WebSocketListener() {
                     override fun onOpen(
@@ -225,7 +225,7 @@ class GatewayClient {
             when (op) {
                 GatewayOp.HELLO -> {
                     helloTimerJob?.cancel()
-                    val dObj = d as JSONObject
+                    val dObj = d as? JSONObject ?: return
                     val interval = dObj.getInt("heartbeat_interval")
                     startHeartbeat(interval.toLong())
                     debug("HELLO received, heartbeat_interval=${interval}ms")

@@ -4,7 +4,8 @@ package echo.music.iad1tya.notune.ai.providers
 import android.content.Context
 import echo.music.iad1tya.constants.GroqApiKey
 import echo.music.iad1tya.notune.ai.*
-import com.music.echo.notune.privacy.security.SecureCredentialStore
+import echo.music.iad1tya.utils.dataStore
+import echo.music.iad1tya.utils.get
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -16,12 +17,11 @@ import javax.inject.Inject
 
 class GroqProvider @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val client: HttpClient,
-    private val credentials: SecureCredentialStore,
+    private val client: HttpClient
 ) : AiProvider {
     override val type: AiProviderType = AiProviderType.GROQ
 
-    override suspend fun isConfigured(): Boolean = credentials.get(GroqApiKey.name).isNotBlank()
+    override suspend fun isConfigured(): Boolean = context.dataStore.get(GroqApiKey, "").isNotBlank()
 
     override suspend fun getModels(): List<AiModel> = listOf(
         AiModel("llama-3.3-70b-versatile", "Llama 3.3 70B (Powerful)", listOf(ModelCapability.TEXT_GENERATION, ModelCapability.TOOL_USE)),
@@ -35,7 +35,7 @@ class GroqProvider @Inject constructor(
         tools: List<AiTool>?,
         systemInstruction: String?
     ): Result<AiResponse> = runCatching {
-        val apiKey = credentials.get(GroqApiKey.name)
+        val apiKey = context.dataStore.get(GroqApiKey, "")
         val targetModel = modelId ?: "llama-3.3-70b-versatile"
         val url = "https://api.groq.com/openai/v1/chat/completions"
 

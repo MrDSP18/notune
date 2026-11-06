@@ -1,4 +1,3 @@
-
 package echo.music.iad1tya.ui.theme
 
 import android.graphics.Bitmap
@@ -8,7 +7,9 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.SaverScope
@@ -18,7 +19,9 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.palette.graphics.Palette
 import com.materialkolor.score.Score
+import com.music.echo.ui.theme.NotuneThemeCatalog
 import com.music.echo.ui.theme.ThemeEngine
+import com.music.echo.ui.theme.tokens.LocalThemeTokens
 import echo.music.iad1tya.constants.AccentColorKey
 import echo.music.iad1tya.constants.ThemePreset
 import echo.music.iad1tya.constants.ThemePresetKey
@@ -41,21 +44,35 @@ fun notuneTheme(
     val customAccentColorInt by rememberPreference(AccentColorKey, NothingRed.toArgb())
     val customAccentColor = Color(customAccentColorInt)
 
-    val config = ThemeEngine.getThemeConfig(themePreset, customAccentColor)
+    val tokens = NotuneThemeCatalog.getTokens(themePreset, customAccentColor)
+    val isLight = themePreset == ThemePreset.SOLAR && !darkTheme
 
-    val colorScheme = darkColorScheme(
-        primary = config.primary,
-        onPrimary = config.onPrimary,
-        background = if (pureBlack) Color.Black else config.background,
-        surface = if (pureBlack) Color.Black else config.surface,
-        surfaceVariant = config.surfaceVariant,
-        outline = config.outline,
-        onBackground = Color.White,
-        onSurface = Color.White,
-        surfaceContainer = if (pureBlack) Color.Black else config.surface,
-        surfaceContainerHigh = if (pureBlack) Color.Black else config.surface,
-        surfaceContainerLow = if (pureBlack) Color.Black else config.surface
-    )
+    val colorScheme = if (isLight) {
+        lightColorScheme(
+            primary = tokens.colors.primary,
+            onPrimary = tokens.colors.onPrimary,
+            background = tokens.colors.background,
+            surface = tokens.colors.surface,
+            surfaceVariant = tokens.colors.surfaceVariant,
+            outline = tokens.colors.outline,
+            onBackground = tokens.colors.textPrimary,
+            onSurface = tokens.colors.textPrimary
+        )
+    } else {
+        darkColorScheme(
+            primary = tokens.colors.primary,
+            onPrimary = tokens.colors.onPrimary,
+            background = if (pureBlack) Color.Black else tokens.colors.background,
+            surface = if (pureBlack) Color.Black else tokens.colors.surface,
+            surfaceVariant = tokens.colors.surfaceVariant,
+            outline = tokens.colors.outline,
+            onBackground = tokens.colors.textPrimary,
+            onSurface = tokens.colors.textPrimary,
+            surfaceContainer = if (pureBlack) Color.Black else tokens.colors.surface,
+            surfaceContainerHigh = if (pureBlack) Color.Black else tokens.colors.surface,
+            surfaceContainerLow = if (pureBlack) Color.Black else tokens.colors.surface
+        )
+    }
 
     val typography = when (typographyStyle) {
         TypographyStyle.NOTHING_DOT_MATRIX -> AppTypography
@@ -64,24 +81,28 @@ fun notuneTheme(
         else -> AppTypography
     }
 
-    val shapes = if (themePreset == ThemePreset.NOTHING || themePreset == ThemePreset.NOTUNE_PURE) {
-        Shapes(
-            extraSmall = RoundedCornerShape(0.dp),
-            small = RoundedCornerShape(2.dp),
-            medium = RoundedCornerShape(4.dp),
-            large = RoundedCornerShape(8.dp),
-            extraLarge = RoundedCornerShape(12.dp)
-        )
-    } else {
-        MaterialTheme.shapes
-    }
+    val osPersonality by rememberEnumPreference(echo.music.iad1tya.constants.OsPersonalityKey, echo.music.iad1tya.constants.OsPersonality.AUTO)
+    val osTokens = com.music.echo.notune.os.NotuneOsAdapter.getTokens(osPersonality)
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = typography,
-        shapes = shapes,
-        content = content
+    val shapes = Shapes(
+        extraSmall = RoundedCornerShape((2 * osTokens.cornerScale).dp),
+        small = RoundedCornerShape((6 * osTokens.cornerScale).dp),
+        medium = RoundedCornerShape((12 * osTokens.cornerScale).dp),
+        large = RoundedCornerShape((20 * osTokens.cornerScale).dp),
+        extraLarge = RoundedCornerShape((28 * osTokens.cornerScale).dp)
     )
+
+    CompositionLocalProvider(
+        LocalThemeTokens provides tokens,
+        com.music.echo.notune.os.LocalOsPersonalityTokens provides osTokens
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = typography,
+            shapes = shapes,
+            content = content
+        )
+    }
 }
 
 fun Bitmap.extractThemeColor(): Color {
@@ -125,4 +146,3 @@ val ColorSaver = object : Saver<Color, Int> {
     override fun restore(value: Int): Color = Color(value)
     override fun SaverScope.save(value: Color): Int = value.toArgb()
 }
-

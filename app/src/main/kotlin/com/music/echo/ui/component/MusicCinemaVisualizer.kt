@@ -43,10 +43,14 @@ enum class CinemaTheme(val label: String, val bgColors: List<Color>, val accentC
 
 @Composable
 fun MusicCinemaVisualizer(
-    isPlaying: Boolean,
+    playbackState: echo.music.iad1tya.models.PlaybackState,
     modifier: Modifier = Modifier
 ) {
     var currentTheme by remember { mutableStateOf(CinemaTheme.CYBER) }
+    val isPlaying = playbackState.isPlaying
+    
+    val visualizerEngine = remember { echo.music.iad1tya.notune.audio.ProceduralVisualizerEngine() }
+    val bars = visualizerEngine.rememberWaveformFrame(playbackState)
 
     Box(
         modifier = modifier
@@ -55,26 +59,36 @@ fun MusicCinemaVisualizer(
                 brush = Brush.verticalGradient(currentTheme.bgColors)
             )
     ) {
-        // Animated Beat Particles & Waveform Canvas
+        // Animated Waveform Canvas
         Canvas(modifier = Modifier.fillMaxSize()) {
             val width = size.width
             val height = size.height
 
-            // Waveform
-            val bars = 32
-            val barWidth = width / bars
-            for (i in 0 until bars) {
-                val barHeight = if (isPlaying) {
-                    (height * 0.2f * Random.nextFloat()).coerceAtLeast(10f)
-                } else {
-                    12f
-                }
+            val barWidth = width / bars.size
+            bars.forEachIndexed { i, bar ->
+                val barHeight = height * bar.heightFactor
                 drawRect(
-                    color = currentTheme.accentColor.copy(alpha = 0.7f),
+                    color = currentTheme.accentColor.copy(alpha = bar.opacity),
                     topLeft = Offset(i * barWidth + 4f, height / 2 - barHeight / 2),
                     size = androidx.compose.ui.geometry.Size(barWidth - 8f, barHeight)
                 )
             }
+        }
+
+        // Truthful Labeling
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+                .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = "VISUALIZER: PROCEDURAL",
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
 
         // Theme Selector Header

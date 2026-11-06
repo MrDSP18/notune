@@ -28,6 +28,8 @@ import echo.music.iad1tya.constants.HideExplicitKey
 import echo.music.iad1tya.constants.HideVideoSongsKey
 import echo.music.iad1tya.constants.HideYoutubeShortsKey
 import echo.music.iad1tya.constants.InnerTubeCookieKey
+import echo.music.iad1tya.constants.VisitorDataKey
+import echo.music.iad1tya.constants.DataSyncIdKey
 import echo.music.iad1tya.constants.QuickPicks
 import echo.music.iad1tya.constants.QuickPicksKey
 import echo.music.iad1tya.db.MusicDatabase
@@ -541,15 +543,41 @@ class HomeViewModel @Inject constructor(
             launch(Dispatchers.IO) { loadSimilarRecommendations() }
             launch(Dispatchers.IO) {
                 YouTube.home().onSuccess { page ->
-                    homePage.value = page.copy(
-                        sections = page.sections.mapNotNull { section ->
-                            val filteredItems = section.items
-                                .filterExplicit(hideExplicit)
-                                .filterVideoSongs(hideVideoSongs)
-                                .filterYoutubeShorts(hideYoutubeShorts)
-                            if (filteredItems.isEmpty()) null else section.copy(items = filteredItems)
+                    val processedSections = page.sections.mapNotNull { section ->
+                        val filteredItems = section.items
+                            .filterExplicit(hideExplicit)
+                            .filterVideoSongs(hideVideoSongs)
+                            .filterYoutubeShorts(hideYoutubeShorts)
+                        if (filteredItems.isEmpty()) null else section.copy(items = filteredItems)
+                    }
+                    homePage.value = page.copy(sections = processedSections)
+
+                    if (quickPicks.value.isNullOrEmpty()) {
+                        val homeSongs = processedSections.flatMap { it.items }
+                            .filterIsInstance<SongItem>()
+                            .distinctBy { it.id }
+                            .map { songItem ->
+                                Song(
+                                    song = echo.music.iad1tya.db.entities.SongEntity(
+                                        id = songItem.id,
+                                        title = songItem.title,
+                                        duration = songItem.duration ?: 0,
+                                        thumbnailUrl = songItem.thumbnail,
+                                        isLocal = false
+                                    ),
+                                    artists = songItem.artists.map { a ->
+                                        echo.music.iad1tya.db.entities.ArtistEntity(
+                                            id = a.id ?: "artist_${a.name.hashCode()}",
+                                            name = a.name,
+                                            isLocal = false
+                                        )
+                                    }
+                                )
+                            }
+                        if (homeSongs.isNotEmpty()) {
+                            quickPicks.value = homeSongs.take(20)
                         }
-                    )
+                    }
                 }.onFailure { reportException(it) }
             }
             launch(Dispatchers.IO) {
@@ -691,22 +719,25 @@ class HomeViewModel @Inject constructor(
         
         viewModelScope.launch(Dispatchers.IO) {
             context.dataStore.data
-                .map { (try { it[InnerTubeCookieKey] } catch(e: Exception) { null }) }
-                .collect { cookie ->
-                    
+                .map { prefs ->
+                    Triple(
+                        (try { prefs[InnerTubeCookieKey] } catch(e: Exception) { null }),
+                        (try { prefs[VisitorDataKey] } catch(e: Exception) { null }),
+                        (try { prefs[DataSyncIdKey] } catch(e: Exception) { null })
+                    )
+                }
+                .collect { (cookie, visitorData, dataSyncId) ->
                     if (isProcessingAccountData) return@collect
 
-                    
                     lastProcessedCookie = cookie
                     isProcessingAccountData = true
 
                     try {
-                        if (cookie != null && cookie.isNotEmpty()) {
-
-                            
+                        if (!cookie.isNullOrEmpty()) {
                             YouTube.cookie = cookie
+                            YouTube.visitorData = visitorData
+                            YouTube.dataSyncId = dataSyncId
 
-                            
                             YouTube.accountInfo().onSuccess { info ->
                                 accountName.value = info.name
                                 accountImageUrl.value = info.thumbnailUrl

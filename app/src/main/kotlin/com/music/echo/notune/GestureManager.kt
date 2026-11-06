@@ -135,11 +135,11 @@ object GestureManager {
             GestureAction.PLAY_PAUSE      -> player.togglePlayPause()
 
             GestureAction.SEEK_FORWARD    -> {
-                val pos = player.player.currentPosition
-                player.seekTo((pos + 10_000L).coerceAtMost(player.player.duration.coerceAtLeast(0L)))
+                val pos = player.position.value
+                player.seekTo((pos + 10_000L).coerceAtMost(player.duration.value.coerceAtLeast(0L)))
             }
             GestureAction.SEEK_BACKWARD   -> {
-                val pos = player.player.currentPosition
+                val pos = player.position.value
                 player.seekTo((pos - 10_000L).coerceAtLeast(0L))
             }
 
@@ -169,11 +169,10 @@ object GestureManager {
                     androidx.media3.common.Player.REPEAT_MODE_ALL  -> androidx.media3.common.Player.REPEAT_MODE_ONE
                     else                                            -> androidx.media3.common.Player.REPEAT_MODE_OFF
                 }
-                player.player.repeatMode = next
+                player.setRepeatMode(next)
             }
             GestureAction.SHUFFLE_MODE    -> {
-                val enabled = !player.shuffleModeEnabled.value
-                player.player.shuffleModeEnabled = enabled
+                player.setShuffleModeEnabled(!player.shuffleModeEnabled.value)
             }
             GestureAction.ROOMS_LISTEN_TOGETHER -> onToggleQueue?.invoke()
             GestureAction.TRANSLATE_LYRICS -> onToggleLyrics?.invoke()

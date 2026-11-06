@@ -1,6 +1,9 @@
 package echo.music.iad1tya.ui.screens
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
+import androidx.datastore.preferences.core.edit
+import echo.music.iad1tya.utils.dataStore
+import kotlinx.coroutines.flow.first
 
 
 import androidx.activity.compose.BackHandler
@@ -19,6 +22,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -62,7 +66,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.surfaceColorAtElevation
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -92,6 +98,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.NavController
@@ -444,6 +451,7 @@ fun CommunityPlaylistCard(
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun DailyDiscoverCard(
@@ -562,6 +570,7 @@ fun DailyDiscoverCard(
 }
 
 
+
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeScreen(
@@ -569,6 +578,7 @@ fun HomeScreen(
     snackbarHostState: SnackbarHostState,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
+    val context = LocalContext.current
     val menuState = LocalMenuState.current
     val bottomSheetPageState = LocalBottomSheetPageState.current
     val database = LocalDatabase.current
@@ -608,6 +618,8 @@ fun HomeScreen(
     val innerTubeCookie by rememberPreference(InnerTubeCookieKey, "")
     val (randomizeHomeOrder) = rememberPreference(RandomizeHomeOrderKey, true)
     val (showSpeedDial) = rememberPreference(ShowSpeedDialKey, true)
+    val homeOrderPref by rememberPreference(echo.music.iad1tya.constants.HomeOrderKey, "")
+    var showHomeLayoutEditorDialog by remember { mutableStateOf(false) }
 
 
     val isLoggedIn = remember(innerTubeCookie) {
@@ -807,6 +819,7 @@ fun HomeScreen(
     }
 
     val homeSections = remember(
+        homeOrderPref,
         randomizeHomeOrder,
         randomSeed,
         speedDialItems,
@@ -842,44 +855,52 @@ fun HomeScreen(
 
         if (explorePage?.moodAndGenres != null) list.add(HomeSection.MoodAndGenres)
 
-        if (randomizeHomeOrder) {
+        if (homeOrderPref.isNotBlank()) {
+            val userOrder = homeOrderPref.split(",").map { it.trim() }
+            val orderedList = mutableListOf<HomeSection>()
+            userOrder.forEach { orderId ->
+                list.filter { section ->
+                    when (section) {
+                        HomeSection.SpeedDial -> orderId == "speed_dial" || orderId == "greeting"
+                        HomeSection.KeepListening -> orderId == "keep_listening"
+                        HomeSection.QuickPicks -> orderId == "quick_picks"
+                        HomeSection.DailyDiscover -> orderId == "daily_discover"
+                        HomeSection.MoodAndGenres -> orderId == "mood_and_genres"
+                        HomeSection.AccountPlaylists -> orderId == "account_playlists"
+                        HomeSection.AiRecommendations -> orderId == "ai_recommendations"
+                        HomeSection.ForgottenFavorites -> orderId == "forgotten_favorites"
+                        HomeSection.FromTheCommunity -> orderId == "from_the_community"
+                        else -> true
+                    }
+                }.forEach {
+                    if (!orderedList.contains(it)) orderedList.add(it)
+                }
+            }
+            list.forEach {
+                if (!orderedList.contains(it)) orderedList.add(it)
+            }
+            orderedList
+        } else if (randomizeHomeOrder) {
             list.sortedByDescending { section ->
-                
-                
-                
                 val sectionRandom = Random(randomSeed + section.id.hashCode())
-
-                
-                
                 val base = when (section) {
                     HomeSection.QuickPicks -> 10000
                     HomeSection.SpeedDial,
-                    HomeSection.DailyDiscover -> 500 
-
+                    HomeSection.DailyDiscover -> 500
                     HomeSection.KeepListening,
                     HomeSection.AccountPlaylists,
                     HomeSection.ForgottenFavorites,
-                    HomeSection.FromTheCommunity -> 300 
-
-                    else -> 100 
+                    HomeSection.FromTheCommunity -> 300
+                    else -> 100
                 }
-
                 val modifier = when (section) {
-                    
-                    
                     HomeSection.QuickPicks -> 0
                     HomeSection.SpeedDial,
                     HomeSection.DailyDiscover -> sectionRandom.nextInt(-200, 400)
-
-                    
-                    
-                    
                     HomeSection.KeepListening,
                     HomeSection.AccountPlaylists,
                     HomeSection.ForgottenFavorites,
                     HomeSection.FromTheCommunity -> sectionRandom.nextInt(-100, 400)
-
-                    
                     else -> sectionRandom.nextInt(-50, 50)
                 }
                 base + modifier
@@ -962,6 +983,113 @@ fun HomeScreen(
                     )
                 }
 
+                // NØTUNE NOW Context Engine Header
+                item {
+                    com.music.echo.notune.ui.home.NotuneNowHeader(
+                        currentSongTitle = mediaMetadata?.title ?: "Husn",
+                        currentArtistName = mediaMetadata?.artists?.joinToString(", ") { it.name } ?: "Anuv Jain",
+                        onPlayClick = {
+                            playerConnection.togglePlayPause()
+                        }
+                    )
+                }
+
+                // High Accessibility Module Matrix
+                item {
+                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "SYSTEM_MODULES // DATA_NODES",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontFamily = echo.music.iad1tya.ui.theme.NothingFont,
+                                    color = Color(0xFF71717A),
+                                    letterSpacing = 1.sp
+                                )
+                            )
+                            TextButton(
+                                onClick = { showHomeLayoutEditorDialog = true },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "[ EDIT LAYOUT ]",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontFamily = echo.music.iad1tya.ui.theme.NothingFont,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.sp
+                                    )
+                                )
+                            }
+                        }
+                        
+                        Row(modifier = Modifier.fillMaxWidth().height(100.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ModuleTile(
+                                label = "NEURAL_AGENT",
+                                subLabel = "Ask NØTUNE",
+                                icon = R.drawable.ic_echo_brain,
+                                color = Color(0xFFFF0031),
+                                onClick = { navController.navigate("notune/ask") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            ModuleTile(
+                                label = "SYNC_ROOM",
+                                subLabel = "Listen Together",
+                                icon = R.drawable.radio,
+                                color = Color(0xFF69D6E2),
+                                onClick = { navController.navigate("listen_together") },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        
+                        Spacer(Modifier.height(8.dp))
+                        
+                        Row(modifier = Modifier.fillMaxWidth().height(80.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ModuleTile(
+                                label = "DNA_MATRIX",
+                                subLabel = "Vibe Check",
+                                icon = R.drawable.biotech,
+                                onClick = { navController.navigate("notune/replay") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            ModuleTile(
+                                label = "ACOUSTIC_EQ",
+                                subLabel = "Equalizer",
+                                icon = R.drawable.tune,
+                                onClick = { navController.navigate("settings") },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth().height(80.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ModuleTile(
+                                label = "FLOW_OS",
+                                subLabel = "Toggle Flow",
+                                icon = R.drawable.tune,
+                                onClick = { 
+                                    scope.launch {
+                                        val current = context.dataStore.data.first()[echo.music.iad1tya.constants.FlowEnabledKey] ?: false
+                                        context.dataStore.edit { it[echo.music.iad1tya.constants.FlowEnabledKey] = !current }
+                                    }
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                            ModuleTile(
+                                label = "PROMPT_LAB",
+                                subLabel = "AI Playground",
+                                icon = R.drawable.sparks,
+                                onClick = { navController.navigate("notune/lab") },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     com.music.echo.notune.theme.VibeRadarCard(
@@ -974,6 +1102,26 @@ fun HomeScreen(
                         onAskClick = { navController.navigate("notune/ask") },
                         onLabClick = { navController.navigate("notune/lab") },
                         onReplayClick = { navController.navigate("notune/replay") }
+                    )
+                }
+
+                item {
+                    com.music.echo.notune.theme.NoTuneQuickActionMatrix(
+                        onActionClick = { actionId ->
+                            when (actionId) {
+                                "NEURAL_AGENT" -> navController.navigate("notune/ask")
+                                "SYNC_ROOM" -> navController.navigate("listen_together")
+                                "DNA_CHECK" -> navController.navigate("notune/replay")
+                                "FLOW_OS" -> {
+                                    scope.launch {
+                                        val current = context.dataStore.data.first()[echo.music.iad1tya.constants.FlowEnabledKey] ?: false
+                                        context.dataStore.edit { it[echo.music.iad1tya.constants.FlowEnabledKey] = !current }
+                                    }
+                                }
+                                "PLAYLIST_LAB" -> navController.navigate("notune/lab")
+                                "SYSTEM_CORE" -> navController.navigate("settings")
+                            }
+                        }
                     )
                 }
 
@@ -1241,9 +1389,10 @@ fun HomeScreen(
                                             .animateItem()
                                     ) { index ->
                                         val originalSong = distinctQuickPicks[index]
-                                        val song by database.song(originalSong.id)
+                                        val songState by database.song(originalSong.id)
                                             .collectAsState(initial = originalSong)
-                                        val isActive = song!!.id == mediaMetadata?.id
+                                        val currentSong = songState ?: originalSong
+                                        val isActive = currentSong.id == mediaMetadata?.id
 
                                         Box(
                                             modifier = Modifier
@@ -1259,14 +1408,14 @@ fun HomeScreen(
                                                         if (isActive) {
                                                             playerConnection.togglePlayPause()
                                                         } else {
-                                                            playerConnection.playQueue(YouTubeQueue.radio(song!!.toMediaMetadata()))
+                                                            playerConnection.playQueue(YouTubeQueue.radio(currentSong.toMediaMetadata()))
                                                         }
                                                     },
                                                     onLongClick = {
                                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                         menuState.show {
                                                             SongMenu(
-                                                                originalSong = song!!,
+                                                                originalSong = currentSong,
                                                                 navController = navController,
                                                                 onDismiss = menuState::dismiss
                                                             )
@@ -1276,7 +1425,7 @@ fun HomeScreen(
                                         ) {
                                             AsyncImage(
                                                 model = coil3.request.ImageRequest.Builder(LocalContext.current)
-                                                    .data(song!!.thumbnailUrl)
+                                                    .data(currentSong.thumbnailUrl)
                                                     .crossfade(true)
                                                     .build(),
                                                 contentDescription = null,
@@ -1325,14 +1474,14 @@ fun HomeScreen(
                                                     .padding(16.dp)
                                             ) {
                                                 Text(
-                                                    text = song!!.title,
+                                                    text = currentSong.title,
                                                     style = MaterialTheme.typography.titleMedium,
                                                     color = Color.White,
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis
                                                 )
                                                 Text(
-                                                    text = song!!.artists.joinToString { it.name },
+                                                    text = currentSong.artists.joinToString { it.name },
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     color = Color.White.copy(alpha = 0.7f),
                                                     maxLines = 1,
@@ -1566,13 +1715,14 @@ fun HomeScreen(
                                             items = forgottenFavorites.distinctBy { it.id },
                                             key = { _, it -> it.id }
                                         ) { index, originalSong ->
-                                            val song by database.song(originalSong.id)
+                                            val songState by database.song(originalSong.id)
                                                 .collectAsState(initial = originalSong)
+                                            val currentSong = songState ?: originalSong
 
                                             SongListItem(
-                                                song = song!!,
+                                                song = currentSong,
                                                 showInLibraryIcon = true,
-                                                isActive = song!!.id == mediaMetadata?.id,
+                                                isActive = currentSong.id == mediaMetadata?.id,
                                                 isPlaying = isPlaying,
                                                 isSwipeable = false,
                                                 shape = listItemShape(index = index % rows, count = rows),
@@ -1582,7 +1732,7 @@ fun HomeScreen(
                                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                             menuState.show {
                                                                 SongMenu(
-                                                                    originalSong = song!!,
+                                                                    originalSong = currentSong,
                                                                     navController = navController,
                                                                     onDismiss = menuState::dismiss
                                                                 )
@@ -1599,12 +1749,12 @@ fun HomeScreen(
                                                     .width(horizontalLazyGridItemWidth)
                                                     .combinedClickable(
                                                         onClick = {
-                                                            if (song!!.id == mediaMetadata?.id) {
+                                                            if (currentSong.id == mediaMetadata?.id) {
                                                                 playerConnection.togglePlayPause()
                                                             } else {
                                                                 playerConnection.playQueue(
                                                                     YouTubeQueue.radio(
-                                                                        song!!.toMediaMetadata()
+                                                                        currentSong.toMediaMetadata()
                                                                     )
                                                                 )
                                                             }
@@ -1613,7 +1763,7 @@ fun HomeScreen(
                                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                             menuState.show {
                                                                 SongMenu(
-                                                                    originalSong = song!!,
+                                                                    originalSong = currentSong,
                                                                     navController = navController,
                                                                     onDismiss = menuState::dismiss
                                                                 )
@@ -1926,6 +2076,59 @@ fun HomeScreen(
                 }
             }
 
+            if (showHomeLayoutEditorDialog) {
+                com.music.echo.notune.components.HomeLayoutEditorDialog(
+                    onDismiss = { showHomeLayoutEditorDialog = false }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModuleTile(
+    label: String,
+    subLabel: String,
+    icon: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    color: Color = Color.White
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.fillMaxHeight(),
+        shape = RoundedCornerShape(2.dp),
+        color = Color.White.copy(alpha = 0.05f),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+    ) {
+        Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(20.dp).align(Alignment.TopStart)
+            )
+            
+            Column(modifier = Modifier.align(Alignment.BottomStart)) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = echo.music.iad1tya.ui.theme.NothingFont,
+                        color = color.copy(alpha = 0.7f),
+                        fontSize = 8.sp,
+                        letterSpacing = 1.sp
+                    )
+                )
+                Text(
+                    text = subLabel.uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = echo.music.iad1tya.ui.theme.NothingFont,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                )
+            }
         }
     }
 }

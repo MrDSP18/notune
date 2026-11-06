@@ -18,32 +18,55 @@ class YouTubeQueue(
     private var retryCount = 0
     private val maxRetries = 3
 
+    init {
+        val cleanVideoId = endpoint.videoId?.removePrefix("yt_")?.removePrefix("local_")
+        var cleanPlaylistId = endpoint.playlistId?.removePrefix("yt_")?.removePrefix("local_")?.replace("RDAMVMyt_", "RDAMVM")?.replace("RDAMVMlocal_", "RDAMVM")
+        if (cleanPlaylistId.isNullOrEmpty() && !cleanVideoId.isNullOrEmpty()) {
+            cleanPlaylistId = "RDAMVM$cleanVideoId"
+        }
+        endpoint = endpoint.copy(videoId = cleanVideoId, playlistId = cleanPlaylistId)
+    }
+
     override suspend fun getInitialStatus(): Queue.Status {
         return withContext(IO) {
             var lastException: Throwable? = null
-            
-            
+
             for (attempt in 0..maxRetries) {
                 try {
                     val nextResult = YouTube.next(endpoint, continuation).getOrThrow()
-                    endpoint = nextResult.endpoint
-                    continuation = nextResult.continuation
-                    retryCount = 0
-                    return@withContext Queue.Status(
-                        title = nextResult.title,
-                        items = nextResult.items.map { it.toMediaItem() },
-                        mediaItemIndex = nextResult.currentIndex ?: 0,
-                    )
-                } catch (e: Exception) {
-                    lastException = e
-                    
-                    if (attempt == 0 && endpoint.videoId != null && endpoint.playlistId == null) {
+                    if (nextResult.items.isNotEmpty()) {
+                        endpoint = nextResult.endpoint
+                        continuation = nextResult.continuation
+                        retryCount = 0
+                        return@withContext Queue.Status(
+                            title = nextResult.title ?: preloadItem?.title,
+                            items = nextResult.items.map { it.toMediaItem() },
+                            mediaItemIndex = nextResult.currentIndex ?: 0,
+                        )
+                    } else if (attempt == 0 && endpoint.videoId != null) {
+                        // If radio playlist returned empty, fallback to videoId alone or retry
                         endpoint = WatchEndpoint(
                             videoId = endpoint.videoId,
-                            playlistId = "RDAMVM${endpoint.videoId}"
+                            playlistId = if (endpoint.playlistId != null) null else "RDAMVM${endpoint.videoId}"
+                        )
+                    }
+                } catch (e: Exception) {
+                    lastException = e
+
+                    if (attempt == 0 && endpoint.videoId != null) {
+                        endpoint = WatchEndpoint(
+                            videoId = endpoint.videoId,
+                            playlistId = if (endpoint.playlistId != null) null else "RDAMVM${endpoint.videoId}"
                         )
                     }
                 }
+            }
+            if (preloadItem != null) {
+                return@withContext Queue.Status(
+                    title = preloadItem.title,
+                    items = listOf(preloadItem.toMediaItem()),
+                    mediaItemIndex = 0
+                )
             }
             throw lastException ?: Exception("Failed to get initial status")
         }
@@ -78,7 +101,10 @@ class YouTubeQueue(
         
         fun radio(song: MediaMetadata): YouTubeQueue {
             return YouTubeQueue(
-                WatchEndpoint(videoId = song.id),
+                WatchEndpoint(
+                    videoId = song.id,
+                    playlistId = "RDAMVM${song.id}"
+                ),
                 song
             )
         }

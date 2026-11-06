@@ -17,11 +17,13 @@ import java.util.Locale
 val MediaItem.metadata: MediaMetadata?
     get() = localConfiguration?.tag as? MediaMetadata
 
-private fun playbackSeedUri(mediaId: String): String {
+fun playbackSeedUri(mediaId: String): String {
+    val cleanId = mediaId.removePrefix("yt_").removePrefix("local_")
     val scheme = mediaId.toUri().scheme?.lowercase(Locale.US)
-    return when (scheme) {
-        "content", "file", "android.resource", "http", "https" -> mediaId
-        else -> "https://music.youtube.com/watch?v=${Uri.encode(mediaId)}"
+    return when {
+        mediaId.startsWith("local_") -> "content://media/external/audio/media/$cleanId"
+        scheme in listOf("content", "file", "android.resource", "http", "https") -> mediaId
+        else -> "https://music.youtube.com/watch?v=${Uri.encode(cleanId)}"
     }
 }
 
@@ -35,7 +37,7 @@ fun Song.toMediaItem() = MediaItem.Builder()
             .setTitle(song.title)
             .setSubtitle(artists.joinToString { it.name })
             .setArtist(artists.joinToString { it.name })
-            .setArtworkUri(song.thumbnailUrl?.toUri())
+            .setArtworkUri(song.thumbnailUrl?.takeIf { it.isNotBlank() }?.toUri())
             .setAlbumTitle(song.albumName)
             .setAlbumArtist(artists.firstOrNull()?.name)
             .setDisplayTitle(song.title)
@@ -43,7 +45,7 @@ fun Song.toMediaItem() = MediaItem.Builder()
             .setIsBrowsable(false)
             .setIsPlayable(true)
             .setExtras(Bundle().apply {
-                putString("artwork_uri", song.thumbnailUrl)
+                song.thumbnailUrl?.takeIf { it.isNotBlank() }?.let { putString("artwork_uri", it) }
             })
             .build()
     )
@@ -59,7 +61,7 @@ fun SongItem.toMediaItem() = MediaItem.Builder()
             .setTitle(title)
             .setSubtitle(artists.joinToString { it.name })
             .setArtist(artists.joinToString { it.name })
-            .setArtworkUri(thumbnail.resize(1200, 1200).toUri())
+            .setArtworkUri(thumbnail.takeIf { it.isNotBlank() }?.resize(1200, 1200)?.toUri())
             .setAlbumTitle(album?.name)
             .setAlbumArtist(artists.firstOrNull()?.name)
             .setDisplayTitle(title)
@@ -67,7 +69,7 @@ fun SongItem.toMediaItem() = MediaItem.Builder()
             .setIsBrowsable(false)
             .setIsPlayable(true)
             .setExtras(Bundle().apply {
-                putString("artwork_uri", thumbnail.resize(1200, 1200))
+                thumbnail.takeIf { it.isNotBlank() }?.let { putString("artwork_uri", it.resize(1200, 1200)) }
             })
             .build()
     )
@@ -83,7 +85,7 @@ fun MediaMetadata.toMediaItem() = MediaItem.Builder()
             .setTitle(title)
             .setSubtitle(artists.joinToString { it.name })
             .setArtist(artists.joinToString { it.name })
-            .setArtworkUri(thumbnailUrl?.toUri())
+            .setArtworkUri(thumbnailUrl?.takeIf { it.isNotBlank() }?.toUri())
             .setAlbumTitle(album?.title)
             .setAlbumArtist(artists.firstOrNull()?.name)
             .setDisplayTitle(title)
@@ -91,7 +93,7 @@ fun MediaMetadata.toMediaItem() = MediaItem.Builder()
             .setIsBrowsable(false)
             .setIsPlayable(true)
             .setExtras(Bundle().apply {
-                thumbnailUrl?.let { putString("artwork_uri", it) }
+                thumbnailUrl?.takeIf { it.isNotBlank() }?.let { putString("artwork_uri", it) }
             })
             .build()
     )

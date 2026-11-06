@@ -37,9 +37,17 @@ interface AiProvider {
         prompt: String,
         modelId: String? = null,
         tools: List<AiTool>? = null,
-        systemInstruction: String? = null
+        systemInstruction: String? = null,
+        history: List<AiChatMessage>? = null
     ): Result<AiResponse>
 }
+
+@Serializable
+data class AiChatMessage(
+    val role: String,
+    val content: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
 
 data class AiResponse(
     val text: String,

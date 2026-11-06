@@ -21,7 +21,7 @@ import echo.music.iad1tya.constants.CardStyleVariant
 
 @Composable
 fun MusicCompatibilityScreen(
-    friendUsername: String = "Aarav Sharma",
+    friendUsername: String = "Friend",
     onStartListenTogether: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
@@ -66,6 +66,17 @@ fun MusicCompatibilityScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.weight(1f)
             ) {
+                if (!compat.hasSufficientData) {
+                    item {
+                        NoTuneSurfaceCard(cardStyle = CardStyleVariant.GLASS, modifier = Modifier.fillMaxWidth()) {
+                            Text("COMPATIBILITY UNAVAILABLE", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(compat.explanationText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    return@LazyColumn
+                }
+
                 // Match Header Card
                 item {
                     NoTuneSurfaceCard(cardStyle = CardStyleVariant.GLASS, modifier = Modifier.fillMaxWidth()) {

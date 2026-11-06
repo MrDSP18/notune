@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -26,81 +27,133 @@ fun NoTuneAIPromptCard(
     onLabClick: () -> Unit,
     onReplayClick: () -> Unit
 ) {
+    val nothingRed = Color(0xFFFF0031)
+    
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color.White.copy(alpha = 0.08f), Color.Transparent)
-                ),
-                shape = RoundedCornerShape(4.dp)
-            )
-            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
-            .padding(20.dp)
+            .background(Color(0xFF09090B), RoundedCornerShape(12.dp))
+            .border(1.dp, Color(0xFF27272A), RoundedCornerShape(12.dp))
+            .padding(16.dp)
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(
+                    painter = painterResource(R.drawable.commit), // terminal icon substitute
+                    contentDescription = null,
+                    tint = nothingRed,
+                    modifier = Modifier.size(14.dp)
+                )
                 Text(
-                    text = "HELLO, I AM NØTUNE",
-                    style = MaterialTheme.typography.titleMedium.copy(
+                    text = "CMD_PROMPT // PROMPT_READY",
+                    style = MaterialTheme.typography.labelSmall.copy(
                         fontFamily = NothingFont,
-                        letterSpacing = 2.sp,
-                        color = Color.White
+                        color = nothingRed,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
                     )
                 )
-                Text(
-                    text = "Your futuristic music ecosystem.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.5f)
-                )
             }
-            
-            Icon(
-                painter = painterResource(R.drawable.sparks),
-                contentDescription = null,
-                tint = Color(0xFFFF0031),
-                modifier = Modifier.size(32.dp)
+            Text(
+                text = "NEURAL_CORE: 98.4%",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontFamily = NothingFont,
+                    color = Color(0xFF69D6E2),
+                    fontSize = 10.sp
+                )
             )
         }
-        
-        Spacer(Modifier.height(24.dp))
-        
+
+        Spacer(Modifier.height(12.dp))
+
+        // Simulated Input Field
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF18181B))
+                .clickable { onAskClick() }
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.mic),
+                contentDescription = null,
+                tint = nothingRed,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = "Instruct agent (e.g. play ambient post-rock)...",
+                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = NothingFont),
+                color = Color.White.copy(alpha = 0.4f),
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // Quick Command Pills (Scrollable)
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Button(
-                onClick = onAskClick,
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(2.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
-            ) {
-                Text("ASK", style = MaterialTheme.typography.labelLarge.copy(fontFamily = NothingFont))
-            }
-
-            Button(
+            QuickActionPill(
+                label = "REPLAY",
+                icon = R.drawable.replay,
                 onClick = onReplayClick,
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(2.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.1f), contentColor = Color.White)
-            ) {
-                Text("REPLAY", style = MaterialTheme.typography.labelLarge.copy(fontFamily = NothingFont))
-            }
-            
-            OutlinedButton(
+                modifier = Modifier.weight(1f)
+            )
+            QuickActionPill(
+                label = "LAB",
+                icon = R.drawable.biotech,
                 onClick = onLabClick,
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(2.dp),
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
-            ) {
-                Text("LAB", style = MaterialTheme.typography.labelLarge.copy(fontFamily = NothingFont))
-            }
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuickActionPill(
+    label: String,
+    icon: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(36.dp),
+        shape = RoundedCornerShape(4.dp),
+        color = Color.White.copy(alpha = 0.05f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = Color(0xFFFF0031),
+                modifier = Modifier.size(14.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontFamily = NothingFont,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                ),
+                color = Color.White
+            )
         }
     }
 }

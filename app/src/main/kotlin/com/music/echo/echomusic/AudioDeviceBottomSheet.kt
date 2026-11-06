@@ -255,13 +255,16 @@ fun AudioDeviceBottomSheet(onDismiss: () -> Unit, modifier: Modifier = Modifier)
             }
         }
 
-        context.registerReceiver(
+        ContextCompat.registerReceiver(
+            context,
             volumeChangeReceiver,
-            IntentFilter("android.media.VOLUME_CHANGED_ACTION")
+            IntentFilter("android.media.VOLUME_CHANGED_ACTION"),
+            ContextCompat.RECEIVER_NOT_EXPORTED
         )
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            context.registerReceiver(
+            ContextCompat.registerReceiver(
+                context,
                 audioDeviceReceiver,
                 IntentFilter().apply {
                     addAction(AudioManager.ACTION_HEADSET_PLUG)
@@ -269,7 +272,8 @@ fun AudioDeviceBottomSheet(onDismiss: () -> Unit, modifier: Modifier = Modifier)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
                     }
-                }
+                },
+                ContextCompat.RECEIVER_NOT_EXPORTED
             )
         }
 
@@ -312,12 +316,14 @@ fun AudioDeviceBottomSheet(onDismiss: () -> Unit, modifier: Modifier = Modifier)
             }
         }
 
-        context.registerReceiver(
+        ContextCompat.registerReceiver(
+            context,
             bluetoothReceiver,
             IntentFilter().apply {
                 addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
                 addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
-            }
+            },
+            ContextCompat.RECEIVER_NOT_EXPORTED
         )
 
         val batteryPollingRunnable = object : Runnable {

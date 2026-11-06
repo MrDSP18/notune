@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NØTUNE — Free AI-Native Music Operating System</title>
+  <meta name="description" content="NØTUNE is a free, ad-free, AI-native music streaming platform with multi-source catalog, studio bass boost, live rooms, and intelligent recommendations.">
+  
+  <!-- OpenGraph / Social Sharing -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Listen on NØTUNE — Free AI Music OS">
+  <meta property="og:description" content="Experience high-fidelity 32-bit float audio, punchy sub-bass, live listening rooms, and AI DJ.">
+  <meta property="og:image" content="https://raw.githubusercontent.com/MrDSP18/notune/main/fastlane/metadata/android/en-US/images/featureGraphic.png">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-primary: #0A0C10;
+      --bg-secondary: #12161F;
+      --glass-bg: rgba(22, 27, 38, 0.7);
+      --accent-color: #6366F1;
+      --accent-gradient: linear-gradient(135deg, #6366F1 0%, #A855F7 50%, #EC4899 100%);
+      --text-main: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', 'Inter', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 40%);
+    }
+
+    .container {
+      max-width: 520px;
+      width: 100%;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 28px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .logo-container {
+      margin-bottom: 1.5rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      border-radius: 24px;
+      background: var(--accent-gradient);
+      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5);
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      fill: #FFFFFF;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+
+    .shared-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 1.25rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      text-align: left;
+    }
+
+    .shared-artwork {
+      width: 64px;
+      height: 64px;
+      border-radius: 14px;
+      background: #1F2937;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .shared-info {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .shared-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .shared-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 20px;
+      background: rgba(99, 102, 241, 0.2);
+      color: #818CF8;
+      margin-top: 6px;
+    }
+
+    .action-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 1rem 1.5rem;
+      border-radius: 16px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--accent-gradient);
+      color: #FFFFFF;
+      box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 25px -5px rgba(99, 102, 241, 0.6);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .features-list {
+      margin-top: 2.5rem;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      text-align: left;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .feature-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #818CF8;
+      flex-shrink: 0;
+    }
+
+    footer {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: #818CF8;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="logo-container">
+      <svg class="logo-icon" viewBox="0 0 24 24">
+        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+      </svg>
+    </div>
+
+    <h1>NØTUNE</h1>
+    <p class="subtitle">AI-Native Free Music Platform with High-Fidelity 32-Bit Sound</p>
+
+    <div class="shared-card" id="sharedCard">
+      <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=150&auto=format&fit=crop" class="shared-artwork" alt="Artwork" id="artworkImg">
+      <div class="shared-info">
+        <div class="shared-title" id="shareTitle">Shared Music Content</div>
+        <div class="shared-subtitle" id="shareSubtitle">Tap below to open in NØTUNE app</div>
+        <span class="badge" id="shareBadge">Shared Item</span>
+      </div>
+    </div>
+
+    <div class="action-group">
+      <a href="#" class="btn btn-primary" id="openAppBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+        Open in NØTUNE App
+      </a>
+      <a href="https://github.com/MrDSP18/notune/releases/latest" class="btn btn-secondary" id="downloadAppBtn" target="_blank">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
+        </svg>
+        Download Android APK
+      </a>
+    </div>
+
+    <div class="features-list">
+      <div class="feature-item"><span class="feature-dot"></span> 100% Free & Ad-Free</div>
+      <div class="feature-item"><span class="feature-dot"></span> 32-Bit Float Dynamic EQ</div>
+      <div class="feature-item"><span class="feature-dot"></span> NØTUNE AI Music OS</div>
+      <div class="feature-item"><span class="feature-dot"></span> Live Listening Rooms</div>
+    </div>
+  </div>
+
+  <footer>
+    NØTUNE Open-Source Music Platform &bull; <a href="https://github.com/MrDSP18/notune">GitHub Repository</a>
+  </footer>
+
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const pathname = window.location.pathname;
+
+      let deepLink = 'notune://';
+      let title = 'Shared Music Content';
+      let subtitle = 'Tap below to listen in NØTUNE';
+      let badge = 'Share Link';
+
+      if (params.has('code') || params.has('room') || pathname.includes('/listen')) {
+        const roomCode = params.get('code') || params.get('room') || pathname.split('/listen/')[1];
+        deepLink = `notune://listen?code=${encodeURIComponent(roomCode || '')}`;
+        title = `Live Listening Room: ${roomCode || 'Party'}`;
+        subtitle = 'Join real-time synced music stream';
+        badge = 'Live Room';
+      } else if (params.has('list') || pathname.includes('/playlist')) {
+        const listId = params.get('list') || pathname.split('/playlist/')[1];
+        deepLink = `notune://playlist?list=${encodeURIComponent(listId || '')}`;
+        title = 'Shared Playlist';
+        subtitle = 'Listen to shared tracks on NØTUNE';
+        badge = 'Playlist';
+      } else if (params.has('v') || pathname.includes('/watch')) {
+        const videoId = params.get('v') || pathname.split('/watch/')[1];
+        deepLink = `notune://watch?v=${encodeURIComponent(videoId || '')}`;
+        title = 'Shared Track';
+        subtitle = 'High-fidelity audio playback';
+        badge = 'Track';
+      }
+
+      document.getElementById('shareTitle').textContent = title;
+      document.getElementById('shareSubtitle').textContent = subtitle;
+      document.getElementById('shareBadge').textContent = badge;
+      document.getElementById('openAppBtn').href = deepLink;
+
+      // Deferred deep-linking auto-trigger on mobile devices
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isMobile && deepLink !== 'notune://') {
+        const start = Date.now();
+        window.location.href = deepLink;
+        
+        // If app opens, page freezes. If not opened within 1.5s, keep web landing page ready
+        setTimeout(function() {
+          if (Date.now() - start < 2000) {
+            console.log('App not installed, remaining on web download landing page.');
+          }
+        }, 1500);
+      }
+    })();
+  </script>
+
+</body>
+</html>

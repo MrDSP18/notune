@@ -140,6 +140,7 @@ enum class LogoVariant(val title: String) {
 }
 
 enum class PlayerStyleVariant(val title: String) {
+    LUX("luxTune"),
     MINIMAL("Minimal"),
     CLASSIC("Classic"),
     CINEMATIC("Cinematic"),
@@ -147,10 +148,11 @@ enum class PlayerStyleVariant(val title: String) {
     COMPACT("Compact"),
     GLASS("Glass"),
     TYPOGRAPHY("Typography"),
-    IMMERSIVE("Immersive");
+    IMMERSIVE("Immersive"),
+    STITCH("Stitch & Tune");
 
     companion object {
-        fun fromName(name: String): PlayerStyleVariant = entries.find { it.name.equals(name, ignoreCase = true) } ?: MINIMAL
+        fun fromName(name: String): PlayerStyleVariant = entries.find { it.name.equals(name, ignoreCase = true) } ?: LUX
     }
 }
 
@@ -540,6 +542,7 @@ val PreferredLyricsProviderKey = stringPreferencesKey("lyricsProvider")
 val LyricsProviderOrderKey = stringPreferencesKey("lyricsProviderOrder")
 val QueueEditLockKey = booleanPreferencesKey("queueEditLockV2")
 val RandomizeHomeOrderKey = booleanPreferencesKey("randomizeHomeOrder")
+val HomeOrderKey = stringPreferencesKey("homeOrder")
 val AlbumCanvasEnabledKey = booleanPreferencesKey("albumCanvasEnabled")
 
 val ShowLikedPlaylistKey = booleanPreferencesKey("show_liked_playlist")
@@ -1120,6 +1123,23 @@ val ExperimentalAnimationsKey = booleanPreferencesKey("experimentalAnimations")
 
 val SelectedLogoKey = stringPreferencesKey("selected_logo")
 val WidgetStyleKey = stringPreferencesKey("widget_style")
+val OsPersonalityKey = stringPreferencesKey("os_personality")
+
+enum class OsPersonality {
+    AUTO,
+    PIXEL,
+    SAMSUNG,
+    NOTHING,
+    HYPEROS,
+    OXYGENOS,
+    COLOROS,
+    ORIGINOS,
+    REALME,
+    MOTOROLA,
+    ZENUI,
+    NOTUNE_ORIGINAL
+}
+
 
 enum class ThemePreset {
     NOTHING,
@@ -1153,6 +1173,7 @@ enum class ThemePreset {
     VAPORWAVE,
     NORD,
     MATERIAL,
+    STITCH,
     CUSTOM
 }
 

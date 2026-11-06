@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
@@ -82,9 +83,13 @@ fun AskNoTuneScreen(
     Scaffold(
         topBar = {
             Column {
-                com.music.echo.notune.theme.SystemTelemetryHeader(
-                    title = "NØTUNE // AI DJ INTELLIGENCE",
-                    subtitle = "Voice & Neural Matrix"
+                com.music.echo.notune.ui.components.NotuneAIIndicator(
+                    isOnline = true,
+                    currentActivity = if (isTyping) "ANALYZING TASTE & SELECTING TRACKS" else "ONLINE / READY",
+                    contextEnergy = 72,
+                    contextMood = "CALM",
+                    queueSize = 18,
+                    modifier = Modifier.padding(8.dp)
                 )
                 TopAppBar(
                     title = {
@@ -108,6 +113,15 @@ fun AskNoTuneScreen(
                                 painter = androidx.compose.ui.res.painterResource(id = R.drawable.arrow_back),
                                 contentDescription = "Back",
                                 tint = Color.White
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.clearHistory() }) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Clear History",
+                                tint = Color.White.copy(alpha = 0.6f)
                             )
                         }
                     },

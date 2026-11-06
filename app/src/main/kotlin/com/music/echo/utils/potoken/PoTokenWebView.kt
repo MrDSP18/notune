@@ -85,7 +85,11 @@ class PoTokenWebView private constructor(
 
         scope.launch(exceptionHandler) {
             val html = withContext(Dispatchers.IO) {
-                webView.context.assets.open("po_token.html").bufferedReader().use { it.readText() }
+                try {
+                    webView.context.assets.open("po_token.html").bufferedReader().use { it.readText() }
+                } catch (e: Exception) {
+                    "<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body><script></script></body></html>"
+                }
             }
 
             // calls downloadAndRunBotguard() when the page has finished loading

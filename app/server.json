@@ -1,5 +1,34 @@
 {
-  "name": "Metrolist Server",
-  "region": "Poland",
-  "serverUrl": "wss://metroserverx.meowery.eu/ws"
+  "version": 1,
+  "minAppVersion": "2.0.0",
+  "serverUrl": "wss://notune.dharansundarapandiyan24.workers.dev/ws",
+  "endpoints": [
+    {
+      "name": "NØTUNE Cloudflare Edge Primary",
+      "url": "wss://notune.dharansundarapandiyan24.workers.dev/ws",
+      "priority": 1,
+      "protocol": 1,
+      "type": "PRIMARY_EDGE",
+      "enabled": true,
+      "region": "Global Edge"
+    },
+    {
+      "name": "NØTUNE Cloud Backend API",
+      "url": "wss://notune-backend-service.onrender.com/ws",
+      "priority": 2,
+      "protocol": 1,
+      "type": "PRIMARY_API",
+      "enabled": true,
+      "region": "Global Cloud"
+    },
+    {
+      "name": "Metrolist Server (Emergency Fallback)",
+      "url": "wss://metroserverx.meowery.eu/ws",
+      "priority": 99,
+      "protocol": 1,
+      "type": "EMERGENCY_FALLBACK",
+      "enabled": true,
+      "region": "Europe"
+    }
+  ]
 }

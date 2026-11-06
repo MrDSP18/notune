@@ -74,13 +74,40 @@ fun AdaptivePlayerPreview(
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, letterSpacing = 1.5.sp),
                         color = primaryColor
                     )
-                    AudioResolutionBadge(sampleRate = "96kHz", bitrate = "FLAC 24-BIT", format = "DSD")
+                    AudioResolutionBadge()
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             when (playerStyle) {
+                PlayerStyleVariant.LUX -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0xFFF4F4EE))
+                            .border(1.dp, Color(0x1F000000), RoundedCornerShape(20.dp))
+                            .padding(14.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(com.music.echo.ui.player.lux.OrganicPebbleShape(1f))
+                                .background(Color(0xFF1B1B1D)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("✦", fontSize = 22.sp, color = Color.White)
+                        }
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(songTitle.uppercase(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFF1B1B1D), letterSpacing = 1.sp)
+                            Text(artistName.uppercase(), style = MaterialTheme.typography.bodySmall, color = Color(0xFF86847D), letterSpacing = 1.5.sp)
+                        }
+                    }
+                }
+
                 PlayerStyleVariant.MINIMAL -> {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -197,6 +224,35 @@ fun AdaptivePlayerPreview(
                             Column {
                                 Text(songTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
                                 Text(artistName, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+
+                PlayerStyleVariant.STITCH -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Color(0xFF131313))
+                            .border(1.dp, Color(0xFF27272A), RoundedCornerShape(4.dp))
+                            .padding(16.dp)
+                    ) {
+                        NoTuneTelemetryHeader(section = "PREVIEW", status = "ACTIVE")
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .border(1.dp, Color(0xFF27272A), RoundedCornerShape(2.dp))
+                                    .padding(4.dp)
+                            ) {
+                                Box(modifier = Modifier.fillMaxSize().background(primaryColor))
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(songTitle.uppercase(), style = MaterialTheme.typography.titleMedium.copy(fontFamily = echo.music.iad1tya.ui.theme.NothingFont), fontWeight = FontWeight.Bold)
+                                Text(artistName.uppercase(), style = MaterialTheme.typography.bodySmall.copy(fontFamily = echo.music.iad1tya.ui.theme.NothingFont), color = primaryColor)
                             }
                         }
                     }

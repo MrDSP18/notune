@@ -1,5 +1,4 @@
 
-
 package echo.music.iad1tya.ui.player
 
 import android.content.res.Configuration
@@ -140,53 +139,22 @@ import echo.music.iad1tya.notune.isBluetoothHeadphoneConnected
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Speaker
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
-import kotlin.math.roundToInt
 import echo.music.iad1tya.ui.component.Icon as MIcon
+import echo.music.iad1tya.constants.PlayerStyleKey
+import echo.music.iad1tya.constants.PlayerStyleVariant
+import com.music.echo.ui.player.lux.OrganicPebbleShape
 
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Density
 
-import androidx.compose.ui.graphics.graphicsLayer
 import kotlin.math.cos
 import kotlin.math.sin
-
-private data class PolygonCookieShape(
-    val sides: Int,
-    val indent: Float
-) : Shape {
-    override fun createOutline(
-        size: Size,
-        layoutDirection: LayoutDirection,
-        density: Density
-    ): Outline {
-        val path = Path()
-        val maxRadius = minOf(size.width, size.height) / 2f
-        val cx = size.width / 2f
-        val cy = size.height / 2f
-
-        val steps = 120
-        for (i in 0..steps) {
-            val angle = i * Math.PI * 2 / steps
-            val r = maxRadius * (1f - indent + indent * cos(sides * angle))
-            val x = cx + r * cos(angle)
-            val y = cy + r * sin(angle)
-            if (i == 0) path.moveTo(x.toFloat(), y.toFloat())
-            else path.lineTo(x.toFloat(), y.toFloat())
-        }
-        path.close()
-        return Outline.Generic(path)
-    }
-}
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import echo.music.iad1tya.viewmodels.PlaybackViewModel
 
 @Stable
 class ProgressState(
@@ -270,7 +238,8 @@ private fun NewMiniPlayer(
     modifier: Modifier = Modifier
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
-    
+    val playbackViewModel: PlaybackViewModel = hiltViewModel()
+    val domainPlaybackState by playbackViewModel.playbackState.collectAsState()
     
     val pureBlack by rememberPreference(PureBlackMiniPlayerKey, defaultValue = false)
     val isSystemInDarkTheme = isSystemInDarkTheme()
@@ -281,8 +250,6 @@ private fun NewMiniPlayer(
     
     val miniPlayerBackground by rememberEnumPreference(MiniPlayerBackgroundStyleKey, defaultValue = PlayerBackgroundStyle.DEFAULT)
     
-    
-    val playbackState by playerConnection.playbackState.collectAsState()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val canSkipNext by playerConnection.canSkipNext.collectAsState()
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsState()
@@ -300,7 +267,6 @@ private fun NewMiniPlayer(
 
     
     val context = LocalContext.current
-    val isBluetoothConnected = isBluetoothHeadphoneConnected(context)
     var showAudioDeviceBottomSheet by remember { mutableStateOf(false) }
 
     
@@ -455,11 +421,22 @@ private fun NewMiniPlayer(
                     outlineColor = outlineColor,
                 )
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // Technical Status Light
+                Box(
+                    modifier = Modifier
+                        .size(4.dp)
+                        .clip(CircleShape)
+                        .background(if (playerConnection.player.playWhenReady) Color(0xFFFF0031) else Color(0xFF69D6E2))
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
 
                 
                 NewMiniPlayerSongInfo(
                     mediaMetadata = mediaMetadata,
+                    playbackState = domainPlaybackState,
                     onSurfaceColor = onSurfaceColor,
                     errorColor = errorColor,
                     modifier = Modifier.weight(1f)
@@ -489,7 +466,7 @@ private fun NewMiniPlayer(
 
                 MiniPlayerControls(
                     playerConnection = playerConnection,
-                    playbackState = playbackState,
+                    playbackState = playerConnection.player.playbackState,
                     isCasting = isCasting,
                     castHandler = castHandler,
                     listenTogetherManager = listenTogetherManager,
@@ -581,6 +558,7 @@ private fun NewMiniPlayerThumbnail(
 @Composable
 private fun NewMiniPlayerSongInfo(
     mediaMetadata: MediaMetadata?,
+    playbackState: echo.music.iad1tya.models.PlaybackState,
     onSurfaceColor: Color,
     errorColor: Color,
     modifier: Modifier = Modifier
@@ -611,11 +589,11 @@ private fun NewMiniPlayerSongInfo(
                 if (metadata.explicit) MIcon.Explicit()
                 if (metadata.artists.any { it.name.isNotBlank() }) {
                     Text(
-                        text = metadata.artists.joinToString { it.name }.uppercase(),
+                        text = (metadata.artists.joinToString { it.name } + (playbackState.telemetry.codec?.let { " • $it" } ?: "")).uppercase(),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontFamily = NothingFont,
                             letterSpacing = 0.5.sp,
-                            fontSize = 10.sp
+                            fontSize = 9.sp
                         ),
                         color = onSurfaceColor.copy(alpha = 0.6f),
                         maxLines = 1,
@@ -650,7 +628,6 @@ private fun LegacyMiniPlayer(
     val playerConnection = LocalPlayerConnection.current ?: return
     val pureBlack by rememberPreference(PureBlackMiniPlayerKey, defaultValue = false)
     
-    val playbackState by playerConnection.playbackState.collectAsState()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val canSkipNext by playerConnection.canSkipNext.collectAsState()
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsState()
@@ -794,7 +771,7 @@ private fun LegacyMiniPlayer(
             }
 
             LegacyPlayPauseButton(
-                playbackState = playbackState,
+                playbackState = playerConnection.player.playbackState,
                 isCasting = isCasting,
                 castHandler = castHandler,
                 playerConnection = playerConnection,
@@ -803,7 +780,7 @@ private fun LegacyMiniPlayer(
 
             IconButton(
                     enabled = canSkipNext && !isListenTogetherGuest,
-                    onClick = if (isListenTogetherGuest) ({}) else ({ playerConnection.seekToNext() }),
+                    onClick = if (isListenTogetherGuest) ({}) else ({ playerConnection.player.seekToNext() }),
             ) {
                 Icon(painter = painterResource(R.drawable.skip_next), contentDescription = null)
             }
@@ -886,6 +863,8 @@ private fun LegacyMiniMediaInfo(
 ) {
     val error by LocalPlayerConnection.current?.error?.collectAsState() ?: remember { mutableStateOf(null) }
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
+    val (playerStyle) = rememberEnumPreference(PlayerStyleKey, defaultValue = PlayerStyleVariant.LUX)
+    val thumbShape = if (playerStyle == PlayerStyleVariant.LUX) OrganicPebbleShape(1f) else RoundedCornerShape(ThumbnailCornerRadius)
     
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -895,7 +874,7 @@ private fun LegacyMiniMediaInfo(
             modifier = Modifier
                 .padding(6.dp)
                 .size(48.dp)
-                .clip(RoundedCornerShape(ThumbnailCornerRadius))
+                .clip(thumbShape)
         ) {
             Box(
                 modifier = Modifier
@@ -1313,3 +1292,6 @@ private fun MiniPlayerControls(
         }
     }
 }
+
+private fun isSpeaker(name: String?): Boolean = false
+private fun isBuds(name: String?): Boolean = false

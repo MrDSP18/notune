@@ -21,7 +21,8 @@ private const val PLAYLIST_NAME = "Recommended by AI"
 
 @Singleton
 class AiRecommendationHelper @Inject constructor(
-    private val aiEngine: AiEngine
+    private val aiEngine: AiEngine,
+    private val tasteProfileRepository: com.music.echo.notune.personalization.repository.TasteProfileRepository
 ) {
 
     suspend fun generateRecommendations(
@@ -32,13 +33,33 @@ class AiRecommendationHelper @Inject constructor(
         onLog?.invoke("NØTUNE Engine: Scanning musical DNA...")
 
         val topSongs: List<Song> = database.topSongs(20).firstOrNull() ?: emptyList()
-        val tasteList = if (topSongs.isNotEmpty()) {
-            topSongs.map { "${it.song.title} by ${it.artists.joinToString { a -> a.name }}" }
-        } else {
-            listOf("Blinding Lights by The Weeknd", "Starboy by The Weeknd", "Nightcall by Kavinsky", "Midnight City by M83")
+        val tasteProfile = tasteProfileRepository.getTasteProfileOnce()
+        
+        val tasteList = mutableListOf<String>()
+        if (topSongs.isNotEmpty()) {
+            tasteList.addAll(topSongs.map { "${it.song.title} by ${it.artists.joinToString { a -> a.name }}" })
         }
-
-        val prompt = "Based on my top songs:\n${tasteList.joinToString("\n")}\nRecommend 20 new songs. Respond ONLY as a JSON array: [{\"title\": \"Song\", \"artist\": \"Artist\"}]"
+        
+        // Add taste profile info if available
+        val profileArtists = tasteProfile.favoriteArtists.map { it.name }
+        val profileGenres = tasteProfile.favoriteGenres
+        val profileLangs = tasteProfile.musicLanguages
+        
+        val prompt = if (tasteList.isEmpty() && profileArtists.isEmpty()) {
+            "Recommend 20 popular futuristic songs. Respond ONLY as a JSON array: [{\"title\": \"Song\", \"artist\": \"Artist\"}]"
+        } else {
+            """
+                USER_MUSICAL_DNA:
+                - Recent Favorites: ${tasteList.take(10).joinToString(", ")}
+                - Favorite Artists: ${profileArtists.joinToString(", ")}
+                - Preferred Genres: ${profileGenres.joinToString(", ")}
+                - Languages: ${profileLangs.joinToString(", ")}
+                
+                Based on this DNA, recommend 20 proper songs. 
+                Focus on the selected artists and languages.
+                Respond ONLY as a JSON array: [{"title": "Song", "artist": "Artist"}]
+            """.trimIndent()
+        }
 
         onLog?.invoke("Resolving neural predictions...")
         val result = aiEngine.generateResponse(prompt)

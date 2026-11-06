@@ -56,15 +56,13 @@ class ListenTogetherManager @Inject constructor(
         private const val PLAYBACK_POSITION_TOLERANCE_MS = 3000L
     }
 
-    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val scopeJob = SupervisorJob()
+    private val scope = CoroutineScope(Dispatchers.Main + scopeJob)
 
-    init {
-        initialize()
-        observePreferences()
-    }
-    
     private var playerConnection: PlayerConnection? = null
     private var eventCollectorJob: Job? = null
+    private var roleObserverJob: Job? = null
+    private var roomStateObserverJob: Job? = null
     private var queueObserverJob: Job? = null
     private var volumeObserverJob: Job? = null
     private var playerListenerRegistered = false
@@ -105,17 +103,17 @@ class ListenTogetherManager @Inject constructor(
     private var bufferCompleteReceivedForTrack: String? = null
 
     
-    val connectionState = client.connectionState
-    val roomState = client.roomState
-    val role = client.role
-    val userId = client.userId
-    val pendingJoinRequests = client.pendingJoinRequests
-    val bufferingUsers = client.bufferingUsers
-    val logs = client.logs
-    val events = client.events
-    val blockedUsernames = client.blockedUsernames
-    val pendingSuggestions = client.pendingSuggestions
-    val rtt = client.rtt
+    val connectionState get() = client.connectionState
+    val roomState get() = client.roomState
+    val role get() = client.role
+    val userId get() = client.userId
+    val pendingJoinRequests get() = client.pendingJoinRequests
+    val bufferingUsers get() = client.bufferingUsers
+    val logs get() = client.logs
+    val events get() = client.events
+    val blockedUsernames get() = client.blockedUsernames
+    val pendingSuggestions get() = client.pendingSuggestions
+    val rtt get() = client.rtt
 
     val isInRoom: Boolean get() = client.isInRoom
     val isHost: Boolean get() = client.isHost
@@ -133,11 +131,15 @@ class ListenTogetherManager @Inject constructor(
     val guestPlaybackRestricted = combine(client.roomState, client.role) { state, role ->
         role == RoomRole.GUEST && state?.allowParticipantControl != true
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), false)
-    
-    
+
     private val _chatMessages = MutableStateFlow<List<ChatMessagePayload>>(emptyList())
     val chatMessages = _chatMessages
     
+    init {
+        initialize()
+        observePreferences()
+    }
+
     private val playerListener = object : Player.Listener {
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
             try {
@@ -411,8 +413,8 @@ class ListenTogetherManager @Inject constructor(
             }
         }
         
-        
-        scope.launch {
+        roleObserverJob?.cancel()
+        roleObserverJob = scope.launch {
             role.collect { newRole ->
                 try {
                     val previousRole = lastRole
@@ -424,7 +426,8 @@ class ListenTogetherManager @Inject constructor(
             }
         }
 
-        scope.launch {
+        roomStateObserverJob?.cancel()
+        roomStateObserverJob = scope.launch {
             roomState
                 .map { it?.allowParticipantControl ?: false }
                 .distinctUntilChanged()
@@ -707,6 +710,11 @@ class ListenTogetherManager @Inject constructor(
         }
     }
     
+    fun release() {
+        scopeJob.cancel()
+        cleanup()
+    }
+
     private fun cleanup() {
         if (lastRole == RoomRole.GUEST) {
             restoreGuestMuteState()

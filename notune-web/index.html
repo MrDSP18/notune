@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NØTUNE — Personal Music OS & Web Player</title>
+  <meta name="description" content="NØTUNE Personal Music OS — On-device AI, high-fidelity sound, real-time synchronized lyrics, live listening rooms, adaptive queue, and zero cloud LLM cost.">
+  
+  <!-- Open Graph / Social Sharing -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="NØTUNE — Your Music. Your Way.">
+  <meta property="og:description" content="Open, ad-free Personal Music OS powered by on-device NØ AI and real-time room synchronization.">
+  <meta property="og:image" content="https://raw.githubusercontent.com/MrDSP18/notune/main/fastlane/metadata/android/en-US/images/featureGraphic.png">
+  <meta property="og:url" content="https://notune.app">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#090A0F">
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-dark">
+  <div class="glow-bg"></div>
+
+  <!-- Main SPA Container -->
+  <div id="app-container" class="app-layout">
+    
+    <!-- DESKTOP / LAPTOP SIDEBAR NAVIGATION -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="/" class="brand-link" data-link>
+          <span class="logo-dot">●</span>
+          <span class="logo-text">NØTUNE</span>
+          <span class="badge">V3 OS</span>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <span class="section-title">MENU</span>
+          <a href="/player" class="nav-item active" data-link id="nav-player">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            <span>Web Player</span>
+          </a>
+          <a href="/search" class="nav-item" data-link id="nav-search">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <span>Search</span>
+          </a>
+          <a href="/library" class="nav-item" data-link id="nav-library">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
+            <span>Library</span>
+          </a>
+          <a href="/playlists" class="nav-item" data-link id="nav-playlists">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/></svg>
+            <span>Playlists</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="section-title">FEATURES</span>
+          <a href="/rooms" class="nav-item" data-link id="nav-rooms">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+            <span>Listen Rooms</span>
+            <span class="nav-badge live">LIVE</span>
+          </a>
+          <a href="/social" class="nav-item" data-link id="nav-social">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            <span>Social Feed</span>
+          </a>
+          <a href="/no-ai" class="nav-item" data-link id="nav-no-ai">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12z"/></svg>
+            <span>NØ AI Assistant</span>
+          </a>
+        </div>
+
+        <div class="nav-section footer-links">
+          <a href="/download" class="nav-item" data-link id="nav-download">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            <span>Download App</span>
+          </a>
+          <a href="/about" class="nav-item" data-link id="nav-about">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            <span>About & Docs</span>
+          </a>
+        </div>
+      </nav>
+      
+      <div class="sidebar-user-box" id="sidebar-user">
+        <div class="user-avatar" id="user-avatar">NØ</div>
+        <div class="user-info">
+          <span class="user-name" id="user-name">Guest Listener</span>
+          <span class="user-status" id="user-status">On-Device Session</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN VIEW AREA -->
+    <main class="main-content" id="main-content">
+      
+      <!-- TOP NAVIGATION BAR -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn mobile-menu-toggle" id="menu-toggle">☰</button>
+          <div class="nav-history-btns">
+            <button class="icon-btn" id="btn-history-back" title="Back">❮</button>
+            <button class="icon-btn" id="btn-history-forward" title="Forward">❯</button>
+          </div>
+          <div class="search-input-wrapper">
+            <input type="text" id="global-search-input" placeholder="Search songs, artists, playlists, rooms..." autocomplete="off">
+            <span class="search-icon">🔍</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <a href="/rooms" class="btn-topbar-action" data-link>
+            <span class="pulse-dot"></span> Join Live Room
+          </a>
+          <a href="/download" class="btn-primary-sm" data-link>Get Android App</a>
+        </div>
+      </header>
+
+      <!-- DYNAMIC ROUTE CONTAINER -->
+      <div class="view-viewport" id="view-container">
+        <!-- Views rendered dynamically via Router in app.js -->
+      </div>
+    </main>
+
+    <!-- RIGHT SLIDE-OUT OVERLAY PANELS (Lyrics / Queue / Room Info) -->
+    <aside class="right-panel hidden" id="right-panel">
+      <div class="panel-header">
+        <div class="panel-tabs">
+          <button class="panel-tab active" id="tab-queue">Queue</button>
+          <button class="panel-tab" id="tab-lyrics">Lyrics</button>
+          <button class="panel-tab" id="tab-room">Room</button>
+        </div>
+        <button class="icon-btn panel-close" id="btn-close-panel">✕</button>
+      </div>
+
+      <div class="panel-body">
+        <!-- Queue Tab View -->
+        <div class="panel-view active" id="view-queue">
+          <div class="queue-header">
+            <h4>Now Playing</h4>
+            <span class="queue-badge" id="queue-count">0 tracks</span>
+          </div>
+          <div class="queue-current-card" id="queue-now-playing">
+            <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=120&auto=format&fit=crop" alt="Artwork" id="qp-art" class="qp-art">
+            <div class="qp-details">
+              <span class="qp-title" id="qp-title">Hosanna</span>
+              <span class="qp-artist" id="qp-artist">A.R. Rahman • Wind</span>
+            </div>
+          </div>
+          
+          <div class="queue-section-title">
+            <span>Adaptive Next Up</span>
+            <button class="btn-text-sm" id="btn-clear-queue">Clear</button>
+          </div>
+          <div class="queue-list" id="queue-items-container">
+            <!-- Dynamic Queue Items -->
+          </div>
+        </div>
+
+        <!-- Lyrics Tab View -->
+        <div class="panel-view" id="view-lyrics">
+          <div class="lyrics-header">
+            <div class="lyrics-meta">
+              <h4 id="lyrics-song-title">Hosanna</h4>
+              <p id="lyrics-artist-name">A.R. Rahman</p>
+            </div>
+            <div class="lyrics-actions">
+              <button class="btn-chip" id="btn-translate-lyrics">Translate</button>
+              <button class="btn-chip" id="btn-fullscreen-lyrics">Fullscreen</button>
+            </div>
+          </div>
+          <div class="lyrics-scroll-area" id="lyrics-container">
+            <div class="lyrics-placeholder">
+              <span class="lyrics-icon">♪</span>
+              <p id="lyrics-status-msg">Click play to synchronize live lyrics...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Room Tab View -->
+        <div class="panel-view" id="view-room">
+          <div class="room-panel-card glass-panel">
+            <div class="room-status-row">
+              <span class="room-status-indicator" id="rp-status-dot">●</span>
+              <span class="room-status-text" id="rp-status-text">Disconnected</span>
+            </div>
+            <div class="room-info-group">
+              <label>Room Code:</label>
+              <div class="copy-code-box">
+                <code id="rp-room-code">NOTUNE1</code>
+                <button class="btn-copy" id="btn-copy-room">Copy Link</button>
+              </div>
+            </div>
+            <div class="room-listeners-box">
+              <h5>Active Listeners (<span id="rp-listener-count">0</span>)</h5>
+              <ul class="listener-list" id="rp-listeners-list">
+                <!-- Listeners dynamic list -->
+              </ul>
+            </div>
+            <div class="room-chat-box">
+              <h5>Room Chat</h5>
+              <div class="chat-messages" id="rp-chat-messages">
+                <div class="chat-msg system">Connected to NØTUNE Realtime Room engine.</div>
+              </div>
+              <div class="chat-input-row">
+                <input type="text" id="rp-chat-input" placeholder="Send a reaction or message...">
+                <button class="btn-primary-sm" id="rp-send-chat">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- PERSISTENT BOTTOM DESKTOP MUSIC PLAYER -->
+    <footer class="player-bar" id="player-bar">
+      
+      <!-- Track Artwork & Metadata -->
+      <div class="player-left-group">
+        <div class="now-playing-art-wrap">
+          <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=120&auto=format&fit=crop" alt="Track Artwork" id="player-artwork" class="player-art">
+          <div class="equalizer-mini" id="mini-equalizer">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+        <div class="now-playing-details">
+          <a href="#" class="now-playing-title" id="player-title">Hosanna</a>
+          <span class="now-playing-artist" id="player-artist">A.R. Rahman • Wind (Tamil)</span>
+        </div>
+        <button class="icon-btn-sm" id="btn-like-track" title="Like Track">❤️</button>
+        <button class="icon-btn-sm" id="btn-share-track" title="Share Track">🔗</button>
+      </div>
+
+      <!-- Center Player Controls & Progress -->
+      <div class="player-center-group">
+        <div class="player-controls">
+          <button class="ctrl-icon-btn" id="btn-shuffle" title="Shuffle">🔀</button>
+          <button class="ctrl-icon-btn" id="btn-prev" title="Previous Track">⏮</button>
+          <button class="ctrl-icon-btn main-play-btn" id="btn-play-pause" title="Play / Pause">▶</button>
+          <button class="ctrl-icon-btn" id="btn-next" title="Next Track">⏭</button>
+          <button class="ctrl-icon-btn" id="btn-repeat" title="Repeat">🔁</button>
+        </div>
+
+        <div class="player-progress-row">
+          <span class="time-stamp" id="time-current">0:00</span>
+          <div class="seek-bar-wrapper">
+            <input type="range" id="seek-slider" min="0" max="100" value="0" step="0.1">
+            <div class="seek-fill" id="seek-fill"></div>
+          </div>
+          <span class="time-stamp" id="time-duration">3:45</span>
+        </div>
+      </div>
+
+      <!-- Right Utility Controls (Volume, Queue, Lyrics, Fullscreen) -->
+      <div class="player-right-group">
+        <button class="utility-btn" id="btn-toggle-lyrics" title="Synchronized Lyrics">♪ Lyrics</button>
+        <button class="utility-btn" id="btn-toggle-queue" title="Adaptive Queue">☰ Queue</button>
+        
+        <div class="volume-control-wrap">
+          <button class="icon-btn-sm" id="btn-mute-volume">🔊</button>
+          <input type="range" id="volume-slider" min="0" max="1" value="0.8" step="0.01">
+        </div>
+
+        <button class="icon-btn-sm" id="btn-fullscreen-player" title="Fullscreen Player">⛶</button>
+      </div>
+
+      <!-- Hidden Web Audio Element -->
+      <audio id="audio-engine" crossorigin="anonymous" preload="metadata"></audio>
+    </footer>
+
+  </div>
+
+  <!-- FULLSCREEN LYRICS OVERLAY CONTAINER -->
+  <div class="fullscreen-overlay hidden" id="fullscreen-overlay">
+    <div class="overlay-header">
+      <div class="overlay-brand">NØTUNE LYRICS</div>
+      <button class="icon-btn close-overlay" id="btn-close-fullscreen">✕</button>
+    </div>
+    <div class="overlay-content">
+      <div class="overlay-track-card">
+        <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&auto=format&fit=crop" id="overlay-art" alt="Artwork">
+        <h2 id="overlay-title">Hosanna</h2>
+        <p id="overlay-artist">A.R. Rahman</p>
+      </div>
+      <div class="overlay-lyrics-stream" id="overlay-lyrics-stream">
+        <!-- Fullscreen synced lyrics lines -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Central JavaScript App Engine -->
+  <script src="app.js"></script>
+</body>
+</html>

@@ -361,7 +361,7 @@ fun OldPlayerMenu(
                                     )
                                 },
                                 onClick = {
-                                    playerConnection.player.shuffleModeEnabled = !shuffleModeEnabled
+                                    playerConnection.setShuffleModeEnabled(!shuffleModeEnabled)
                                     onDismiss()
                                 }
                             )
@@ -526,7 +526,12 @@ fun OldPlayerMenu(
                                     )
                                 },
                                 onClick = {
-                                    playerConnection.player.toggleRepeatMode()
+                                    val next = when (repeatMode) {
+                                        Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                                        Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                                        else -> Player.REPEAT_MODE_OFF
+                                    }
+                                    playerConnection.setRepeatMode(next)
                                 }
                             )
                         )

@@ -74,6 +74,9 @@ import echo.music.iad1tya.ui.screens.ambient.AmbientModeScreen
 import echo.music.iad1tya.ui.screens.couple.CoupleModeScreen
 import echo.music.iad1tya.notune.rooms.ui.PublicDiscoveryScreen
 import echo.music.iad1tya.notune.rooms.ui.CoupleHomeScreen
+import echo.music.iad1tya.notune.intelligence.ui.SongDetailsScreen
+import echo.music.iad1tya.notune.intelligence.ui.MovieDetailsScreen
+import echo.music.iad1tya.notune.intelligence.ui.PersonDetailsScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 fun NavGraphBuilder.navigationBuilder(
@@ -566,7 +569,49 @@ fun NavGraphBuilder.navigationBuilder(
         ReplayScreen(navController)
     }
 
+    composable("notune/achievements") {
+        com.music.echo.notune.gamification.MusicMilestoneManager(onBackClick = { navController.navigateUp() })
+    }
+
+    composable("notune/mood_journey") {
+        com.music.echo.notune.flow.MoodJourneyScreen(onBackClick = { navController.navigateUp() })
+    }
+
+    composable("notune/neural_search") {
+        com.music.echo.notune.search.GlobalNeuralSearchHub(onBackClick = { navController.navigateUp() })
+    }
+
     composable("notune/lab/playground") {
         AiPlaygroundScreen(navController)
+    }
+
+    composable(
+        route = "song_details/{songId}",
+        arguments = listOf(
+            navArgument("songId") { type = NavType.StringType }
+        )
+    ) { backStackEntry ->
+        val songId = backStackEntry.arguments?.getString("songId") ?: ""
+        SongDetailsScreen(songId = songId, navController = navController)
+    }
+
+    composable(
+        route = "movie/{movieId}",
+        arguments = listOf(
+            navArgument("movieId") { type = NavType.StringType }
+        )
+    ) { backStackEntry ->
+        val movieId = backStackEntry.arguments?.getString("movieId") ?: ""
+        MovieDetailsScreen(movieId = movieId, navController = navController)
+    }
+
+    composable(
+        route = "person/{personId}",
+        arguments = listOf(
+            navArgument("personId") { type = NavType.StringType }
+        )
+    ) { backStackEntry ->
+        val personId = backStackEntry.arguments?.getString("personId") ?: ""
+        PersonDetailsScreen(personId = personId, navController = navController)
     }
 }

@@ -313,19 +313,19 @@ class ListenTogetherClient @Inject constructor(
         try {
             scope.launch {
                 context.dataStore.edit { preferences ->
-                    if (sessionToken != null) {
-                        preferences[ListenTogetherSessionTokenKey] = sessionToken!!
-                        preferences[ListenTogetherRoomCodeKey] = storedRoomCode ?: ""
-                        preferences[ListenTogetherUserIdKey] = _userId.value ?: ""
-                        preferences[ListenTogetherIsHostKey] = wasHost
-                        preferences[ListenTogetherSessionTimestampKey] = System.currentTimeMillis()
-                    }
+                    val token = sessionToken ?: return@edit
+                    preferences[ListenTogetherSessionTokenKey] = token
+                    preferences[ListenTogetherRoomCodeKey] = storedRoomCode ?: ""
+                    preferences[ListenTogetherUserIdKey] = _userId.value ?: ""
+                    preferences[ListenTogetherIsHostKey] = wasHost
+                    preferences[ListenTogetherSessionTimestampKey] = System.currentTimeMillis()
                 }
             }
         } catch (e: Exception) {
             log(LogLevel.ERROR, "Failed to save persisted session", e.message)
         }
     }
+
     
     
     private fun clearPersistedSession() {
@@ -409,11 +409,11 @@ class ListenTogetherClient @Inject constructor(
 
     
     
-    private fun calculateBackoffDelay(attempt: Int): Long {
-        val exponentialDelay = INITIAL_RECONNECT_DELAY_MS * (2 shl (minOf(attempt - 1, 4)))
+    fun calculateBackoffDelay(attempt: Int, randomFactor: Double = Math.random()): Long {
+        val attemptClamped = maxOf(1, attempt)
+        val exponentialDelay = INITIAL_RECONNECT_DELAY_MS * (1 shl minOf(attemptClamped - 1, 5))
         val cappedDelay = minOf(exponentialDelay, MAX_RECONNECT_DELAY_MS)
-        
-        val jitter = (cappedDelay * 0.2 * Math.random()).toLong()
+        val jitter = (cappedDelay * 0.25 * randomFactor.coerceIn(0.0, 1.0)).toLong()
         return cappedDelay + jitter
     }
 
@@ -466,7 +466,7 @@ class ListenTogetherClient @Inject constructor(
                 
                 if (sessionToken != null && storedRoomCode != null) {
                     log(LogLevel.INFO, "Attempting to reconnect to previous session", "Room: $storedRoomCode")
-                    sendMessage(MessageTypes.RECONNECT, ReconnectPayload(sessionToken!!))
+                    sendMessage(MessageTypes.RECONNECT, ReconnectPayload(sessionToken ?: return@onOpen))
                 } else {
                     
                     executePendingAction()
@@ -861,9 +861,11 @@ class ListenTogetherClient @Inject constructor(
                 
                 MessageTypes.USER_JOINED -> {
                     val payload = codec.decodePayload(msgType, payloadBytes, detectedFormat) as? UserJoinedPayload ?: return
-                    _roomState.value = _roomState.value?.copy(
-                        users = _roomState.value!!.users + UserInfo(payload.userId, payload.username, false)
-                    )
+                    _roomState.value?.let { current ->
+                        _roomState.value = current.copy(
+                            users = current.users + UserInfo(payload.userId, payload.username, false)
+                        )
+                    }
                     _pendingJoinRequests.value = _pendingJoinRequests.value.filter { it.userId != payload.userId }
                     
                     
@@ -877,21 +879,25 @@ class ListenTogetherClient @Inject constructor(
                 
                 MessageTypes.USER_LEFT -> {
                     val payload = codec.decodePayload(msgType, payloadBytes, detectedFormat) as? UserLeftPayload ?: return
-                    _roomState.value = _roomState.value?.copy(
-                        users = _roomState.value!!.users.filter { it.userId != payload.userId }
-                    )
+                    _roomState.value?.let { current ->
+                        _roomState.value = current.copy(
+                            users = current.users.filter { it.userId != payload.userId }
+                        )
+                    }
                     log(LogLevel.INFO, "User left", payload.username)
                     scope.launch { _events.emit(ListenTogetherEvent.UserLeft(payload.userId, payload.username)) }
                 }
                 
                 MessageTypes.HOST_CHANGED -> {
                     val payload = codec.decodePayload(msgType, payloadBytes, detectedFormat) as? HostChangedPayload ?: return
-                    _roomState.value = _roomState.value?.copy(
-                        hostId = payload.newHostId,
-                        users = _roomState.value!!.users.map { 
-                            it.copy(isHost = it.userId == payload.newHostId)
-                        }
-                    )
+                    _roomState.value?.let { current ->
+                        _roomState.value = current.copy(
+                            hostId = payload.newHostId,
+                            users = current.users.map { 
+                                it.copy(isHost = it.userId == payload.newHostId)
+                            }
+                        )
+                    }
                     if (payload.newHostId == _userId.value) {
                         _role.value = RoomRole.HOST
                     } else if (_role.value == RoomRole.HOST) {
@@ -916,57 +922,57 @@ class ListenTogetherClient @Inject constructor(
                     val payload = codec.decodePayload(msgType, payloadBytes, detectedFormat) as? PlaybackActionPayload ?: return
                     log(LogLevel.DEBUG, "Playback sync", "Action: ${payload.action}")
                     
-                    
-                    when (payload.action) {
-                        PlaybackActions.PLAY -> {
-                            _roomState.value = _roomState.value?.copy(
-                                isPlaying = true,
-                                position = payload.position ?: _roomState.value!!.position
-                            )
-                        }
-                        PlaybackActions.PAUSE -> {
-                            _roomState.value = _roomState.value?.copy(
-                                isPlaying = false,
-                                position = payload.position ?: _roomState.value!!.position
-                            )
-                        }
-                        PlaybackActions.SEEK -> {
-                            _roomState.value = _roomState.value?.copy(
-                                position = payload.position ?: _roomState.value!!.position
-                            )
-                        }
-                        PlaybackActions.CHANGE_TRACK -> {
-                            _roomState.value = _roomState.value?.copy(
-                                currentTrack = payload.trackInfo,
-                                isPlaying = false,
-                                position = 0
-                            )
-                        }
-                        PlaybackActions.QUEUE_ADD -> {
-                            val ti = payload.trackInfo
-                            if (ti != null) {
-                                val currentQueue = _roomState.value?.queue ?: emptyList()
-                                _roomState.value = _roomState.value?.copy(
-                                    queue = if (payload.insertNext == true) listOf(ti) + currentQueue else currentQueue + ti
+                    _roomState.value?.let { current ->
+                        when (payload.action) {
+                            PlaybackActions.PLAY -> {
+                                _roomState.value = current.copy(
+                                    isPlaying = true,
+                                    position = payload.position ?: current.position
                                 )
                             }
-                        }
-                        PlaybackActions.QUEUE_REMOVE -> {
-                            val id = payload.trackId
-                            if (!id.isNullOrEmpty()) {
-                                val currentQueue = _roomState.value?.queue ?: emptyList()
-                                _roomState.value = _roomState.value?.copy(
-                                    queue = currentQueue.filter { it.id != id }
+                            PlaybackActions.PAUSE -> {
+                                _roomState.value = current.copy(
+                                    isPlaying = false,
+                                    position = payload.position ?: current.position
                                 )
                             }
-                        }
-                        PlaybackActions.QUEUE_CLEAR -> {
-                            _roomState.value = _roomState.value?.copy(queue = emptyList())
-                        }
-                        PlaybackActions.SET_VOLUME -> {
-                            val vol = payload.volume
-                            if (vol != null) {
-                                _roomState.value = _roomState.value?.copy(volume = vol.coerceIn(0f, 1f))
+                            PlaybackActions.SEEK -> {
+                                _roomState.value = current.copy(
+                                    position = payload.position ?: current.position
+                                )
+                            }
+                            PlaybackActions.CHANGE_TRACK -> {
+                                _roomState.value = current.copy(
+                                    currentTrack = payload.trackInfo,
+                                    isPlaying = false,
+                                    position = 0
+                                )
+                            }
+                            PlaybackActions.QUEUE_ADD -> {
+                                val ti = payload.trackInfo
+                                if (ti != null) {
+                                    val currentQueue = current.queue
+                                    _roomState.value = current.copy(
+                                        queue = if (payload.insertNext == true) listOf(ti) + currentQueue else currentQueue + ti
+                                    )
+                                }
+                            }
+                            PlaybackActions.QUEUE_REMOVE -> {
+                                val id = payload.trackId
+                                if (!id.isNullOrEmpty()) {
+                                    _roomState.value = current.copy(
+                                        queue = current.queue.filter { it.id != id }
+                                    )
+                                }
+                            }
+                            PlaybackActions.QUEUE_CLEAR -> {
+                                _roomState.value = current.copy(queue = emptyList())
+                            }
+                            PlaybackActions.SET_VOLUME -> {
+                                val vol = payload.volume
+                                if (vol != null) {
+                                    _roomState.value = current.copy(volume = vol.coerceIn(0f, 1f))
+                                }
                             }
                         }
                     }
@@ -1059,7 +1065,9 @@ class ListenTogetherClient @Inject constructor(
                                 
                                 scope.launch {
                                     delay(500) 
-                                    joinRoom(storedRoomCode!!, storedUsername!!)
+                                    val rc = storedRoomCode ?: return@launch
+                                    val un = storedUsername ?: return@launch
+                                    joinRoom(rc, un)
                                 }
                             } else if (storedRoomCode != null && storedUsername != null) {
                                 
@@ -1112,11 +1120,13 @@ class ListenTogetherClient @Inject constructor(
                 MessageTypes.USER_RECONNECTED -> {
                     val payload = codec.decodePayload(msgType, payloadBytes, detectedFormat) as? UserReconnectedPayload ?: return
                     
-                    _roomState.value = _roomState.value?.copy(
-                        users = _roomState.value!!.users.map { user ->
-                            if (user.userId == payload.userId) user.copy(isConnected = true) else user
-                        }
-                    )
+                    _roomState.value?.let { current ->
+                        _roomState.value = current.copy(
+                            users = current.users.map { user ->
+                                if (user.userId == payload.userId) user.copy(isConnected = true) else user
+                            }
+                        )
+                    }
                     log(LogLevel.INFO, "User reconnected", payload.username)
                     scope.launch { _events.emit(ListenTogetherEvent.UserReconnected(payload.userId, payload.username)) }
                 }
@@ -1124,11 +1134,13 @@ class ListenTogetherClient @Inject constructor(
                 MessageTypes.USER_DISCONNECTED -> {
                     val payload = codec.decodePayload(msgType, payloadBytes, detectedFormat) as? UserDisconnectedPayload ?: return
                     
-                    _roomState.value = _roomState.value?.copy(
-                        users = _roomState.value!!.users.map { user ->
-                            if (user.userId == payload.userId) user.copy(isConnected = false) else user
-                        }
-                    )
+                    _roomState.value?.let { current ->
+                        _roomState.value = current.copy(
+                            users = current.users.map { user ->
+                                if (user.userId == payload.userId) user.copy(isConnected = false) else user
+                            }
+                        )
+                    }
                     log(LogLevel.INFO, "User temporarily disconnected", payload.username)
                     scope.launch { _events.emit(ListenTogetherEvent.UserDisconnected(payload.userId, payload.username)) }
                 }

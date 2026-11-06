@@ -91,7 +91,7 @@ fun PersonalizationStudioScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Category Selector Chips
-            val categories = listOf("Themes", "Typography", "Logo & Brand", "Player Stage", "Card Style", "Context Mode")
+            val categories = listOf("OS Personality", "Themes", "Typography", "Logo & Brand", "Player Stage", "Card Style", "Context Mode")
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -116,6 +116,49 @@ fun PersonalizationStudioScreen(
                     .padding(horizontal = 16.dp)
             ) {
                 when (selectedCategory) {
+                    "OS Personality" -> {
+                        Text(
+                            "ANDROID OS ECOSYSTEM ADAPTATION",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        val (osPersonality, onOsPersonalityChange) = echo.music.iad1tya.utils.rememberEnumPreference(
+                            echo.music.iad1tya.constants.OsPersonalityKey,
+                            echo.music.iad1tya.constants.OsPersonality.AUTO
+                        )
+
+                        echo.music.iad1tya.constants.OsPersonality.entries.forEach { personality ->
+                            val isSelected = osPersonality == personality
+                            val osTokens = com.music.echo.notune.os.NotuneOsAdapter.getTokens(personality)
+                            NoTuneSurfaceCard(
+                                cardStyle = if (isSelected) CardStyleVariant.GLASS else CardStyleVariant.CLEAN,
+                                onClick = { onOsPersonalityChange(personality) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(osTokens.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                        Text(
+                                            "Adapts spacing, navigation, gestures & corners to match ${osTokens.name}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    if (isSelected) {
+                                        Text("✓ Active", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     "Themes" -> {
                         Text(
                             "APPEARANCE MODE",

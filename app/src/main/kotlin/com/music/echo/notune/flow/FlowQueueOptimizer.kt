@@ -32,14 +32,13 @@ class FlowQueueOptimizer @Inject constructor() {
         val manualOrLocked = existingItems.filter { it.source != ItemSource.FLOW || it.isLocked }
         result.addAll(manualOrLocked)
 
-        val existingIds = result.map { it.mediaMetadata.id }.toSet()
-        val slotsNeeded = (config.targetQueueSize - result.size).coerceAtLeast(0)
+        val existingIds = result.mapTo(mutableSetOf()) { it.mediaMetadata.id }
 
         // 2. Fill remaining slots with top ranked candidates
         for (score in rankedCandidates) {
             if (result.size >= config.targetQueueSize) break
             val candidateId = score.candidate.mediaMetadata.id
-            if (!existingIds.contains(candidateId)) {
+            if (existingIds.add(candidateId)) {
                 result.add(
                     FlowQueueItem(
                         mediaMetadata = score.candidate.mediaMetadata,
@@ -53,6 +52,11 @@ class FlowQueueOptimizer @Inject constructor() {
         }
 
         return result
+    }
+
+    fun appendableItems(existingMediaIds: Collection<String>, generated: List<FlowQueueItem>): List<FlowQueueItem> {
+        val seenIds = existingMediaIds.toMutableSet()
+        return generated.filter { seenIds.add(it.mediaMetadata.id) }
     }
 
     /**

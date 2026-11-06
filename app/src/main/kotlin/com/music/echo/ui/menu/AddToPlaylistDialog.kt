@@ -231,12 +231,12 @@ fun AddToPlaylistDialog(
                             if (songIds == null) {
                                 songIds = onGetSong(playlist)
                             }
-                            duplicates = database.playlistDuplicates(playlist.id, songIds!!)
+                            duplicates = database.playlistDuplicates(playlist.id, songIds ?: emptyList())
                             if (duplicates.isNotEmpty()) {
                                 showDuplicateDialog = true
                             } else {
                                 onDismiss()
-                                database.addSongToPlaylist(playlist, songIds!!)
+                                database.addSongToPlaylist(playlist, songIds ?: emptyList())
 
                                 playlist.playlist.browseId?.let { plist ->
                                     songIds?.forEach {
@@ -273,13 +273,13 @@ fun AddToPlaylistDialog(
                             onDismiss()
                             database.transaction {
                                 addSongToPlaylist(
-                                    selectedPlaylist!!,
-                                    songIds!!.filter {
+                                    selectedPlaylist ?: return@transaction,
+                                    (songIds ?: emptyList()).filter {
                                         !duplicates.contains(it)
                                     }
                                 )
                             }
-                            Toast.makeText(context, context.getString(R.string.added_to_playlist, selectedPlaylist!!.playlist.name), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.added_to_playlist, selectedPlaylist?.playlist?.name.orEmpty()), Toast.LENGTH_SHORT).show()
                         }
                     ) {
                         Text(stringResource(R.string.skip_duplicates))
@@ -290,9 +290,9 @@ fun AddToPlaylistDialog(
                             showDuplicateDialog = false
                             onDismiss()
                             database.transaction {
-                                addSongToPlaylist(selectedPlaylist!!, songIds!!)
+                                addSongToPlaylist(selectedPlaylist ?: return@transaction, songIds ?: emptyList())
                             }
-                            Toast.makeText(context, context.getString(R.string.added_to_playlist, selectedPlaylist!!.playlist.name), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.added_to_playlist, selectedPlaylist?.playlist?.name.orEmpty()), Toast.LENGTH_SHORT).show()
                         }
                     ) {
                         Text(stringResource(R.string.add_anyway))

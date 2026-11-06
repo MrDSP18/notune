@@ -37,6 +37,10 @@ import com.music.echo.notune.personalization.model.DiscoveryPreference
 import com.music.echo.notune.personalization.model.SelectedArtist
 import com.music.echo.notune.personalization.model.TasteProfile
 import com.music.echo.notune.personalization.repository.TasteProfileRepository
+import com.music.echo.notune.personalization.TasteSeedingEngine
+import com.music.echo.notune.theme.NoTuneLogo
+import com.music.echo.notune.theme.NoTuneTelemetryHeader
+import com.music.echo.notune.theme.NothingRed
 import echo.music.iad1tya.R
 import echo.music.iad1tya.ui.theme.NothingFont
 import kotlinx.coroutines.launch
@@ -48,8 +52,9 @@ fun OnboardingWizardScreen(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val seedingEngine = remember { TasteSeedingEngine() }
     var currentStep by remember { mutableIntStateOf(0) }
-    val totalSteps = 10
+    val totalSteps = 11
 
     var selectedMusicLanguages by remember { mutableStateOf(setOf("English", "Tamil")) }
     var selectedArtists by remember { mutableStateOf(listOf<SelectedArtist>()) }
@@ -58,7 +63,7 @@ fun OnboardingWizardScreen(
     var selectedMoods by remember { mutableStateOf(setOf("Chill", "Energetic")) }
     var discoveryPref by remember { mutableStateOf(DiscoveryPreference.BALANCED) }
     var appLanguage by remember { mutableStateOf("en") }
-    var visualStyle by remember { mutableStateOf("Minimal") }
+    var visualStyle by remember { mutableStateOf("Stitch") }
     var historyEnabled by remember { mutableStateOf(true) }
     var aiPersonalizationEnabled by remember { mutableStateOf(true) }
 
@@ -75,42 +80,44 @@ fun OnboardingWizardScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
+                .background(Color(0xFF131313))
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(24.dp)
             ) {
-                // Header Step Indicator
-                if (currentStep in 1 until totalSteps - 1) {
+                // Header Step Indicator with Telemetry
+                if (currentStep > 0 && currentStep < totalSteps - 1) {
+                    NoTuneTelemetryHeader(section = "INITIALIZATION", status = "STEP_$currentStep")
+                    
+                    Spacer(Modifier.height(8.dp))
+                    
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "STEP $currentStep / ${totalSteps - 2}",
-                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, color = Color(0xFFFF0031), letterSpacing = 1.5.sp)
+                        LinearProgressIndicator(
+                            progress = { currentStep.toFloat() / (totalSteps - 2) },
+                            modifier = Modifier.weight(1f).height(2.dp).clip(RoundedCornerShape(1.dp)),
+                            color = NothingRed,
+                            trackColor = Color.White.copy(alpha = 0.05f)
                         )
+                        Spacer(Modifier.width(16.dp))
                         TextButton(
                             onClick = {
                                 coroutineScope.launch {
                                     tasteProfileRepository.skipOnboarding()
                                     onComplete()
                                 }
-                            }
+                            },
+                            contentPadding = PaddingValues(0.dp)
                         ) {
-                            Text("SKIP", style = MaterialTheme.typography.labelMedium.copy(color = Color.White.copy(alpha = 0.6f)))
+                            Text("BYPASS", style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, color = Color.White.copy(alpha = 0.4f), letterSpacing = 1.sp))
                         }
                     }
-                    LinearProgressIndicator(
-                        progress = { currentStep.toFloat() / (totalSteps - 2) },
-                        modifier = Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)),
-                        color = Color(0xFFFF0031),
-                        trackColor = Color.White.copy(alpha = 0.1f)
-                    )
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(24.dp))
                 }
 
                 Box(
@@ -135,6 +142,7 @@ fun OnboardingWizardScreen(
                                     onComplete()
                                 }
                             })
+                            // ... (rest of the steps remain mostly same but I'll update styling)
                             1 -> PermissionsStep(onGrant = {
                                 val perms = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                     arrayOf(Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.POST_NOTIFICATIONS)
@@ -147,17 +155,28 @@ fun OnboardingWizardScreen(
                             3 -> VisualStyleStep(selectedStyle = visualStyle, onSelect = { visualStyle = it; currentStep++ })
                             4 -> MusicLanguagesStep(selectedLangs = selectedMusicLanguages, onToggle = { lang ->
                                 selectedMusicLanguages = if (lang in selectedMusicLanguages) selectedMusicLanguages - lang else selectedMusicLanguages + lang
+                                // Reset artists and genres to match new language selection
+                                selectedArtists = emptyList()
+                                selectedGenres = emptySet()
                             }, onNext = { currentStep++ })
-                            5 -> FavoriteArtistsStep(selected = selectedArtists, onToggle = { artist ->
-                                selectedArtists = if (selectedArtists.any { it.name == artist.name }) {
-                                    selectedArtists.filterNot { it.name == artist.name }
-                                } else {
-                                    selectedArtists + artist
-                                }
-                            }, onNext = { currentStep++ })
-                            6 -> FavoriteGenresStep(selected = selectedGenres, onToggle = { genre ->
-                                selectedGenres = if (genre in selectedGenres) selectedGenres - genre else selectedGenres + genre
-                            }, onNext = { currentStep++ })
+                            5 -> FavoriteArtistsStep(
+                                selected = selectedArtists,
+                                availableArtists = seedingEngine.getArtistsForLanguages(selectedMusicLanguages),
+                                onToggle = { artist ->
+                                    selectedArtists = if (selectedArtists.any { it.name == artist.name }) {
+                                        selectedArtists.filterNot { it.name == artist.name }
+                                    } else {
+                                        selectedArtists + artist
+                                    }
+                                }, onNext = { currentStep++ }
+                            )
+                            6 -> FavoriteGenresStep(
+                                selected = selectedGenres,
+                                availableGenres = seedingEngine.getGenresForLanguages(selectedMusicLanguages),
+                                onToggle = { genre ->
+                                    selectedGenres = if (genre in selectedGenres) selectedGenres - genre else selectedGenres + genre
+                                }, onNext = { currentStep++ }
+                            )
                             7 -> ErasAndMoodsStep(
                                 selectedEras = selectedEras,
                                 selectedMoods = selectedMoods,
@@ -166,7 +185,8 @@ fun OnboardingWizardScreen(
                                 onNext = { currentStep++ }
                             )
                             8 -> ListeningStyleStep(selected = discoveryPref, onSelect = { discoveryPref = it }, onNext = { currentStep++ })
-                            9 -> PrivacyAndFinishStep(
+                            9 -> TutorialStep(onNext = { currentStep++ })
+                            10 -> PrivacyAndFinishStep(
                                 historyEnabled = historyEnabled,
                                 aiEnabled = aiPersonalizationEnabled,
                                 onHistoryToggle = { historyEnabled = it },
@@ -199,54 +219,130 @@ fun OnboardingWizardScreen(
 }
 
 @Composable
+private fun TutorialStep(onNext: () -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+        Text("GESTURE & INTERFACE GUIDE", style = MaterialTheme.typography.titleLarge.copy(fontFamily = NothingFont, color = Color.White))
+        Spacer(Modifier.height(24.dp))
+        
+        TutorialItem(
+            icon = R.drawable.swipe,
+            title = "SWIPE TO NAVIGATE",
+            description = "Swipe left/right on the player to switch tracks. Swipe down to collapse."
+        )
+        
+        Spacer(Modifier.height(16.dp))
+        
+        TutorialItem(
+            icon = R.drawable.biotech,
+            title = "TECHNICAL TELEMETRY",
+            description = "Monitor real-time audio bitrates, system node status, and AI engine activity."
+        )
+        
+        Spacer(Modifier.height(16.dp))
+        
+        TutorialItem(
+            icon = R.drawable.tune,
+            title = "PRECISION FLOW",
+            description = "NØTUNE FLOW adapts to your skips and replays in real-time."
+        )
+
+        Spacer(Modifier.height(48.dp))
+        
+        Button(
+            onClick = onNext,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(2.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+        ) {
+            Text("UNDERSTOOD", style = MaterialTheme.typography.labelLarge.copy(fontFamily = NothingFont))
+        }
+    }
+}
+
+@Composable
+private fun TutorialItem(icon: Int, title: String, description: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, Color(0xFF27272A), RoundedCornerShape(2.dp))
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(painterResource(icon), contentDescription = null, tint = NothingRed, modifier = Modifier.size(32.dp))
+        Spacer(Modifier.width(16.dp))
+        Column {
+            Text(title, style = MaterialTheme.typography.labelMedium.copy(fontFamily = NothingFont, fontWeight = FontWeight.Bold, color = Color.White))
+            Text(description, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.6f))
+        }
+    }
+}
+
+@Composable
 private fun WelcomeStep(onGetStarted: () -> Unit, onSkip: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
     ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.size(80.dp).background(Color(0xFFFF0031), RoundedCornerShape(4.dp))
-        ) {
-            Text("NØ", style = MaterialTheme.typography.headlineLarge.copy(fontFamily = NothingFont, color = Color.White))
-        }
+        NoTuneLogo(size = 120.dp)
+
+        Spacer(Modifier.height(48.dp))
+
+        Text(
+            text = "NØTUNE // OS",
+            style = MaterialTheme.typography.displaySmall.copy(
+                fontFamily = NothingFont,
+                letterSpacing = 6.sp,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+        )
+        
+        Spacer(Modifier.height(8.dp))
+        
+        Text(
+            text = "FUTURISTIC AUDIO ECOSYSTEM",
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontFamily = NothingFont,
+                color = NothingRed,
+                letterSpacing = 3.sp,
+                fontWeight = FontWeight.Bold
+            )
+        )
 
         Spacer(Modifier.height(32.dp))
 
-        Text(
-            text = "NØTUNE",
-            style = MaterialTheme.typography.displaySmall.copy(fontFamily = NothingFont, letterSpacing = 4.sp, color = Color.White)
-        )
-        Text(
-            text = "MUSIC. INTELLIGENCE. YOUR WAY.",
-            style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, color = Color(0xFFFF0031), letterSpacing = 2.sp)
-        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.03f)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF27272A)),
+            shape = RoundedCornerShape(4.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    text = "Welcome to your intelligent, local-first music environment. NØTUNE is designed for precision listening and total privacy.",
+                    style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 22.sp),
+                    color = Color.White.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
 
-        Spacer(Modifier.height(24.dp))
-
-        Text(
-            text = "Welcome to your local-first, privacy-aware music ecosystem. Let's calibrate your Taste Profile.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.7f),
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(Modifier.height(48.dp))
+        Spacer(Modifier.height(64.dp))
 
         Button(
             onClick = onGetStarted,
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(2.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF0031), contentColor = Color.White)
+            colors = ButtonDefaults.buttonColors(containerColor = NothingRed, contentColor = Color.White)
         ) {
-            Text("INITIALIZE TASTE PROFILE", style = MaterialTheme.typography.labelLarge.copy(fontFamily = NothingFont))
+            Text("INITIALIZE CORE", style = MaterialTheme.typography.labelLarge.copy(fontFamily = NothingFont, letterSpacing = 2.sp))
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
 
         TextButton(onClick = onSkip) {
-            Text("CONTINUE WITH DEFAULT SETTINGS", style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(alpha = 0.5f)))
+            Text("BYPASS CONFIGURATION", style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, color = Color.White.copy(alpha = 0.3f), letterSpacing = 1.sp))
         }
     }
 }
@@ -351,162 +447,26 @@ private fun MusicLanguagesStep(selectedLangs: Set<String>, onToggle: (String) ->
     }
 }
 
-private data class SuggestedSong(val title: String, val artist: String, val album: String)
-
 @Composable
 private fun FavoriteArtistsStep(
     selected: List<SelectedArtist>,
+    availableArtists: List<SelectedArtist>,
     onToggle: (SelectedArtist) -> Unit,
     onNext: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
-    val popularArtists = remember {
-        listOf(
-            SelectedArtist("1", "A.R. Rahman"), SelectedArtist("2", "Anirudh Ravichander"),
-            SelectedArtist("3", "Taylor Swift"), SelectedArtist("4", "The Weeknd"),
-            SelectedArtist("5", "Arijit Singh"), SelectedArtist("6", "Sid Sriram"),
-            SelectedArtist("7", "BTS"), SelectedArtist("8", "Drake"),
-            SelectedArtist("9", "Kendrick Lamar"), SelectedArtist("10", "Yuvan Shankar Raja"),
-            SelectedArtist("11", "Harris Jayaraj"), SelectedArtist("12", "Santhosh Narayanan"),
-            SelectedArtist("13", "Billie Eilish"), SelectedArtist("14", "Eminem"),
-            SelectedArtist("15", "Ed Sheeran"), SelectedArtist("16", "Dua Lipa"),
-            SelectedArtist("17", "Bad Bunny"), SelectedArtist("18", "Post Malone"),
-            SelectedArtist("19", "Justin Bieber"), SelectedArtist("20", "Ariana Grande"),
-            SelectedArtist("21", "Bruno Mars"), SelectedArtist("22", "Coldplay"),
-            SelectedArtist("23", "Imagine Dragons"), SelectedArtist("24", "Shreya Ghoshal"),
-            SelectedArtist("25", "S.P. Balasubrahmanyam"), SelectedArtist("26", "Ilaiyaraaja"),
-            SelectedArtist("27", "Pradeep Kumar"), SelectedArtist("28", "Shankar-Ehsaan-Loy")
-        )
-    }
-
-    val filteredArtists = remember(searchQuery) {
+    val filteredArtists = remember(searchQuery, availableArtists) {
         if (searchQuery.isBlank()) {
-            popularArtists
+            availableArtists
         } else {
-            popularArtists.filter { it.name.contains(searchQuery, ignoreCase = true) }
-        }
-    }
-
-    val artistSongCatalog = remember {
-        mapOf(
-            "A.R. Rahman" to listOf(
-                SuggestedSong("Jai Ho", "A.R. Rahman", "Slumdog Millionaire"),
-                SuggestedSong("Urvashe Urvashe", "A.R. Rahman", "Kadhalan"),
-                SuggestedSong("Roja Janeman", "A.R. Rahman", "Roja"),
-                SuggestedSong("Tere Bina", "A.R. Rahman", "Guru")
-            ),
-            "Anirudh Ravichander" to listOf(
-                SuggestedSong("Naa Ready", "Anirudh Ravichander", "Leo"),
-                SuggestedSong("Hukum", "Anirudh Ravichander", "Jailer"),
-                SuggestedSong("Vathi Coming", "Anirudh Ravichander", "Master"),
-                SuggestedSong("Chaleya", "Anirudh Ravichander", "Jawan")
-            ),
-            "Taylor Swift" to listOf(
-                SuggestedSong("Cruel Summer", "Taylor Swift", "Lover"),
-                SuggestedSong("Anti-Hero", "Taylor Swift", "Midnights"),
-                SuggestedSong("Blank Space", "Taylor Swift", "1989"),
-                SuggestedSong("Cardigan", "Taylor Swift", "Folklore")
-            ),
-            "The Weeknd" to listOf(
-                SuggestedSong("Blinding Lights", "The Weeknd", "After Hours"),
-                SuggestedSong("Starboy", "The Weeknd", "Starboy"),
-                SuggestedSong("Save Your Tears", "The Weeknd", "After Hours"),
-                SuggestedSong("Die For You", "The Weeknd", "Starboy")
-            ),
-            "Arijit Singh" to listOf(
-                SuggestedSong("Kesariya", "Arijit Singh", "Brahmastra"),
-                SuggestedSong("Tum Hi Ho", "Arijit Singh", "Aashiqui 2"),
-                SuggestedSong("Channa Mereya", "Arijit Singh", "Ae Dil Hai Mushkil"),
-                SuggestedSong("Apna Bana Le", "Arijit Singh", "Bhediya")
-            ),
-            "Sid Sriram" to listOf(
-                SuggestedSong("Srivalli", "Sid Sriram", "Pushpa"),
-                SuggestedSong("Inkem Inkem", "Sid Sriram", "Geetha Govindam"),
-                SuggestedSong("Adiye", "Sid Sriram", "Kadal"),
-                SuggestedSong("Kadhaippoma", "Sid Sriram", "Oh My Kadavule")
-            ),
-            "BTS" to listOf(
-                SuggestedSong("Dynamite", "BTS", "BE"),
-                SuggestedSong("Butter", "BTS", "Butter"),
-                SuggestedSong("Boy With Luv", "BTS", "Map of the Soul: Persona"),
-                SuggestedSong("Spring Day", "BTS", "You Never Walk Alone")
-            ),
-            "Drake" to listOf(
-                SuggestedSong("God's Plan", "Drake", "Scorpion"),
-                SuggestedSong("Hotline Bling", "Drake", "Views"),
-                SuggestedSong("One Dance", "Drake", "Views"),
-                SuggestedSong("Passionfruit", "Drake", "More Life")
-            ),
-            "Kendrick Lamar" to listOf(
-                SuggestedSong("HUMBLE.", "Kendrick Lamar", "DAMN."),
-                SuggestedSong("Not Like Us", "Kendrick Lamar", "Single"),
-                SuggestedSong("DNA.", "Kendrick Lamar", "DAMN."),
-                SuggestedSong("All The Stars", "Kendrick Lamar", "Black Panther")
-            ),
-            "Yuvan Shankar Raja" to listOf(
-                SuggestedSong("Rowdy Baby", "Yuvan Shankar Raja", "Maari 2"),
-                SuggestedSong("High On Love", "Yuvan Shankar Raja", "Pyaar Prema Kadhal"),
-                SuggestedSong("Pogattuma", "Yuvan Shankar Raja", "Single"),
-                SuggestedSong("Evanda Enakku Custody", "Yuvan Shankar Raja", "Mankatha")
-            ),
-            "Harris Jayaraj" to listOf(
-                SuggestedSong("Vaseegara", "Harris Jayaraj", "Minnale"),
-                SuggestedSong("Annul Maale", "Harris Jayaraj", "Vaaranam Aayiram"),
-                SuggestedSong("Hasili Fisili", "Harris Jayaraj", "Aadhavan")
-            ),
-            "Santhosh Narayanan" to listOf(
-                SuggestedSong("Rakita Rakita", "Santhosh Narayanan", "Jagame Thandhiram"),
-                SuggestedSong("Neruppu Da", "Santhosh Narayanan", "Kabali"),
-                SuggestedSong("Enjoy Enjaami", "Santhosh Narayanan & Dhee", "Single")
-            ),
-            "Billie Eilish" to listOf(
-                SuggestedSong("bad guy", "Billie Eilish", "WHEN WE ALL FALL ASLEEP"),
-                SuggestedSong("BIRDS OF A FEATHER", "Billie Eilish", "HIT ME HARD AND SOFT"),
-                SuggestedSong("Ocean Eyes", "Billie Eilish", "Don't Smile at Me")
-            ),
-            "Eminem" to listOf(
-                SuggestedSong("Lose Yourself", "Eminem", "8 Mile"),
-                SuggestedSong("Without Me", "Eminem", "The Eminem Show"),
-                SuggestedSong("Houdini", "Eminem", "The Death of Slim Shady")
-            ),
-            "Ed Sheeran" to listOf(
-                SuggestedSong("Shape of You", "Ed Sheeran", "÷"),
-                SuggestedSong("Perfect", "Ed Sheeran", "÷"),
-                SuggestedSong("Bad Habits", "Ed Sheeran", "=")
-            ),
-            "Dua Lipa" to listOf(
-                SuggestedSong("Levitating", "Dua Lipa", "Future Nostalgia"),
-                SuggestedSong("Don't Start Now", "Dua Lipa", "Future Nostalgia"),
-                SuggestedSong("Houdini", "Dua Lipa", "Radical Optimism")
-            )
-        )
-    }
-
-    val defaultSuggestedSongs = remember {
-        listOf(
-            SuggestedSong("Jai Ho", "A.R. Rahman", "Slumdog Millionaire"),
-            SuggestedSong("Blinding Lights", "The Weeknd", "After Hours"),
-            SuggestedSong("Naa Ready", "Anirudh Ravichander", "Leo"),
-            SuggestedSong("Cruel Summer", "Taylor Swift", "Lover"),
-            SuggestedSong("Kesariya", "Arijit Singh", "Brahmastra"),
-            SuggestedSong("Dynamite", "BTS", "BE")
-        )
-    }
-
-    val suggestedSongs = remember(selected) {
-        if (selected.isEmpty()) {
-            defaultSuggestedSongs
-        } else {
-            selected.flatMap { artist ->
-                artistSongCatalog[artist.name] ?: listOf(SuggestedSong("Top Track", artist.name, "Popular Hits"))
-            }.distinctBy { it.title }.take(6)
+            availableArtists.filter { it.name.contains(searchQuery, ignoreCase = true) }
         }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Text("FAVORITE ARTISTS", style = MaterialTheme.typography.titleLarge.copy(fontFamily = NothingFont, color = Color.White))
-        Text("Select artists you love to calibrate your personalized recommendations", style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.6f)))
+        Text("Select artists you love to calibrate recommendations", style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.6f)))
         
         Spacer(Modifier.height(12.dp))
 
@@ -585,7 +545,7 @@ private fun FavoriteArtistsStep(
 
             Spacer(Modifier.height(20.dp))
 
-            // Dynamic Suggested Songs Loaded Based on Selection
+            // Dynamic Info Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -594,41 +554,18 @@ private fun FavoriteArtistsStep(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(painterResource(R.drawable.music_note), contentDescription = null, tint = Color(0xFFFF0031), modifier = Modifier.size(18.dp))
+                        Icon(painterResource(R.drawable.biotech), contentDescription = null, tint = Color(0xFFFF0031), modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = if (selected.isEmpty()) "DEFAULT SUGGESTED SONGS" else "LIVE SUGGESTED TRACKS (${selected.size} ARTISTS MATCHED)",
+                            text = "NEURAL SEEDING ACTIVE",
                             style = MaterialTheme.typography.labelSmall.copy(fontFamily = NothingFont, color = Color.White, letterSpacing = 1.sp)
                         )
                     }
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(8.dp))
                     Text(
-                        text = if (selected.isEmpty()) "Select your favorite artists above to load personalized songs!" else "Songs dynamically recommended for your selected artists:",
+                        text = "Your selections are used to calibrate the NØTUNE FLOW engine. We'll find tracks that match these artists' acoustic DNA across your selected languages.",
                         style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.6f))
                     )
-                    Spacer(Modifier.height(12.dp))
-
-                    suggestedSongs.forEach { song ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFFF0031).copy(alpha = 0.2f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(painterResource(R.drawable.play), contentDescription = null, tint = Color(0xFFFF0031), modifier = Modifier.size(16.dp))
-                            }
-                            Spacer(Modifier.width(10.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(song.title, style = MaterialTheme.typography.bodyMedium.copy(color = Color.White, fontWeight = FontWeight.Bold), maxLines = 1)
-                                Text("${song.artist} • ${song.album}", style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.5f)), maxLines = 1)
-                            }
-                            Surface(shape = RoundedCornerShape(4.dp), color = Color(0xFFFF0031).copy(alpha = 0.15f)) {
-                                Text("MATCHED", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFFFF0031), fontSize = 9.sp))
-                            }
-                        }
-                    }
                 }
             }
 
@@ -642,19 +579,23 @@ private fun FavoriteArtistsStep(
             shape = RoundedCornerShape(2.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
         ) {
-            Text("CONTINUE (${selected.size} ARTISTS SELECTED)", style = MaterialTheme.typography.labelLarge.copy(fontFamily = NothingFont))
+            Text("CONTINUE (${selected.size} SELECTED)", style = MaterialTheme.typography.labelLarge.copy(fontFamily = NothingFont))
         }
     }
 }
 
 @Composable
-private fun FavoriteGenresStep(selected: Set<String>, onToggle: (String) -> Unit, onNext: () -> Unit) {
-    val genres = listOf("Pop", "Rock", "Hip-Hop / Rap", "Tamil Pop", "Bollywood", "Electronic / EDM", "R&B / Soul", "K-Pop", "Indie / Alternative", "Ambient / Chill", "Classical", "Jazz", "Metal", "Folk")
+private fun FavoriteGenresStep(
+    selected: Set<String>, 
+    availableGenres: List<String>,
+    onToggle: (String) -> Unit, 
+    onNext: () -> Unit
+) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text("GENRE PREFERENCES", style = MaterialTheme.typography.titleLarge.copy(fontFamily = NothingFont, color = Color.White))
         Spacer(Modifier.height(16.dp))
         LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(genres) { genre ->
+            items(availableGenres) { genre ->
                 val isSelected = genre in selected
                 FilterChip(
                     selected = isSelected,
@@ -773,6 +714,16 @@ private fun PrivacyAndFinishStep(
                 }
             }
         }
+        
+        Spacer(Modifier.height(16.dp))
+        Text(
+            text = "By finishing, NØTUNE will immediately synthesize a personalized recommendation matrix based on your selections. No login required.",
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.White.copy(alpha = 0.5f),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+        )
+
         Spacer(Modifier.height(32.dp))
         Button(
             onClick = onFinish,

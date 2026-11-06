@@ -384,6 +384,7 @@ fun GridItem(
     fillMaxWidth = fillMaxWidth
 )
 
+
 @Composable
 fun SongListItem(
     song: Song,
@@ -982,6 +983,7 @@ fun MediaMetadataListItem(
     isSelected: Boolean = false,
     isActive: Boolean = false,
     isPlaying: Boolean = false,
+    showLikedIcon: Boolean = true,
     shape: Shape = RectangleShape,
     color: Color = MaterialTheme.colorScheme.surfaceContainer,
     trailingContent: @Composable RowScope.() -> Unit = {},
@@ -1008,6 +1010,7 @@ fun MediaMetadataListItem(
         },
         badges = {
             if (mediaMetadata.explicit) Icon.Explicit()
+            if (showLikedIcon && mediaMetadata.liked) Icon.Favorite()
         },
         thumbnailContent = {
             ItemThumbnail(

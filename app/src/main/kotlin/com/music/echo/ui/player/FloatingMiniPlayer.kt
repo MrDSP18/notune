@@ -58,6 +58,10 @@ import echo.music.iad1tya.constants.SwipeThumbnailKey
 import echo.music.iad1tya.extensions.togglePlayPause
 import echo.music.iad1tya.utils.rememberPreference
 import echo.music.iad1tya.ui.theme.NothingFont
+import echo.music.iad1tya.constants.PlayerStyleKey
+import echo.music.iad1tya.constants.PlayerStyleVariant
+import echo.music.iad1tya.utils.rememberEnumPreference
+import com.music.echo.ui.player.lux.OrganicPebbleShape
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
@@ -210,13 +214,15 @@ fun FloatingMiniPlayer(
                     vertical = if (isInline) 4.dp else 8.dp,
                 ),
         ) {
+            val (playerStyle) = rememberEnumPreference(PlayerStyleKey, defaultValue = PlayerStyleVariant.LUX)
+            val thumbShape = if (playerStyle == PlayerStyleVariant.LUX) OrganicPebbleShape(1f) else RoundedCornerShape(artCornerRadius)
             AsyncImage(
                 model = mediaMetadata?.thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(artSize)
-                    .clip(RoundedCornerShape(artCornerRadius)),
+                    .clip(thumbShape),
             )
 
             Spacer(Modifier.width(if (isInline) 8.dp else 12.dp))

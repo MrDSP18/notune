@@ -111,21 +111,13 @@ class MusicDnaAnalyzer @Inject constructor() {
     }
 
     fun calculateFriendCompatibility(friendUsername: String): FriendMusicCompatibility {
-        // Fallback for UI visualization when raw set objects are pending load
-        val sampleMyArtists = setOf("Stephen Sanchez", "The Weeknd", "Anirudh Ravichander", "Taylor Swift")
-        val sampleFriendArtists = setOf("Stephen Sanchez", "The Weeknd", "Dua Lipa", "Coldplay")
-        val sampleMyGenres = setOf("Pop", "Indie", "R&B", "Tamil")
-        val sampleFriendGenres = setOf("Pop", "R&B", "Synthwave", "EDM")
-        val sampleMySongs = setOf("Until I Found You", "Starboy", "Arabic Kuthu", "Blinding Lights")
-        val sampleFriendSongs = setOf("Until I Found You", "Starboy", "Levitating", "A Sky Full of Stars")
-
         return calculateDeterministicCompatibility(
-            myArtists = sampleMyArtists,
-            friendArtists = sampleFriendArtists,
-            myGenres = sampleMyGenres,
-            friendGenres = sampleFriendGenres,
-            mySongs = sampleMySongs,
-            friendSongs = sampleFriendSongs
+            myArtists = emptySet(),
+            friendArtists = emptySet(),
+            myGenres = emptySet(),
+            friendGenres = emptySet(),
+            mySongs = emptySet(),
+            friendSongs = emptySet()
         )
     }
 }

@@ -18,10 +18,17 @@ private val PREF_LYRICS_MODE = stringPreferencesKey("pref_lyrics_mode")
 class MultilingualLyricsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val singAlongEngine: SingAlongEngine,
-    private val translationEngine: LyricsTranslationEngine
+    private val translationEngine: LyricsTranslationEngine,
+    private val transliterator: LyricsTransliterator
 ) {
-    // In-memory cache for transformed lyric lines key: "songId_targetLanguage_mode"
-    private val transformationCache = ConcurrentHashMap<String, List<LyricLine>>()
+    private data class CacheKey(
+        val songId: String,
+        val targetLanguage: LyricsLanguage,
+        val mode: LyricsMode,
+        val lines: List<LyricLine>
+    )
+
+    private val transformationCache = ConcurrentHashMap<CacheKey, List<LyricLine>>()
 
     val lyricsLanguageFlow: Flow<LyricsLanguage> = context.dataStore.data.map { prefs ->
         val code = prefs[PREF_LYRICS_LANGUAGE] ?: LyricsLanguage.TAMIL.code
@@ -55,7 +62,7 @@ class MultilingualLyricsRepository @Inject constructor(
         targetLanguage: LyricsLanguage,
         mode: LyricsMode
     ): TransformLyricsResult {
-        if (mode == LyricsMode.ORIGINAL || targetLanguage == LyricsLanguage.ENGLISH) {
+        if (mode == LyricsMode.ORIGINAL) {
             return TransformLyricsResult(
                 songId = songId,
                 transformedLines = lines,
@@ -65,7 +72,7 @@ class MultilingualLyricsRepository @Inject constructor(
             )
         }
 
-        val cacheKey = "${songId}_${targetLanguage.code}_${mode.name}"
+        val cacheKey = CacheKey(songId, targetLanguage, mode, lines.toList())
         transformationCache[cacheKey]?.let { cachedLines ->
             return TransformLyricsResult(
                 songId = songId,
@@ -77,8 +84,13 @@ class MultilingualLyricsRepository @Inject constructor(
         }
 
         val transformed = when (mode) {
-            LyricsMode.SING_ALONG, LyricsMode.ROMANIZED -> {
+            LyricsMode.SING_ALONG -> {
                 singAlongEngine.generateSingAlong(lines, targetLanguage)
+            }
+            LyricsMode.ROMANIZED -> lines.map { line ->
+                line.copy(transliteratedText = transliterator.transliterateToPronunciation(
+                    line.originalText, LyricsLanguage.fromCode(line.language)
+                ))
             }
             LyricsMode.TRANSLATION -> {
                 translationEngine.generateTranslation(lines, targetLanguage)

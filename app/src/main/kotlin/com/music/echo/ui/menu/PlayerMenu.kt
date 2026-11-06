@@ -65,6 +65,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.exoplayer.offline.Download
@@ -135,9 +136,11 @@ fun PlayerMenu(
                 }
             }
         }
-        context.registerReceiver(
+        ContextCompat.registerReceiver(
+            context,
             volumeChangeReceiver,
-            android.content.IntentFilter("android.media.VOLUME_CHANGED_ACTION")
+            android.content.IntentFilter("android.media.VOLUME_CHANGED_ACTION"),
+            ContextCompat.RECEIVER_NOT_EXPORTED
         )
         onDispose {
             context.unregisterReceiver(volumeChangeReceiver)
@@ -393,13 +396,13 @@ fun PlayerMenu(
                             )
                         )
                     }
-                    if (mediaMetadata.album != null) {
+                    mediaMetadata.album?.let { album ->
                         add(
                             Material3MenuItemData(
                                 title = { Text(text = stringResource(R.string.view_album)) },
                                 description = {
                                     Text(
-                                        text = mediaMetadata.album!!.title,
+                                        text = album.title,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -412,7 +415,7 @@ fun PlayerMenu(
                                     )
                                 },
                                 onClick = {
-                                    navController.navigate("album/${mediaMetadata.album!!.id}")
+                                    navController.navigate("album/${album.id}")
                                     playerBottomSheetState.collapseSoft()
                                     onDismiss()
                                 }
@@ -743,8 +746,8 @@ fun PlayerMenu(
                         }
                     ),
                     Material3MenuItemData(
-                        title = { Text(text = stringResource(R.string.details)) },
-                        description = { Text(text = stringResource(R.string.details_desc)) },
+                        title = { Text(text = "Deep Song Intelligence") },
+                        description = { Text(text = "Song details, credits, movie cast & NØ AI context") },
                         icon = {
                             Icon(
                                 painter = painterResource(R.drawable.info),
@@ -1433,7 +1436,7 @@ fun ListenTogetherDialog(
                             if (isHost) {
                                 Spacer(modifier = Modifier.height(12.dp))
                                 val inviteLink = remember(room.roomCode) {
-                                    "https://notune-listen-together.onrender.com/listen?code=${room.roomCode}"
+                                    "https://github.com/MrDSP18/notune?code=${room.roomCode}"
                                 }
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,

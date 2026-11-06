@@ -31,7 +31,6 @@ fun LabSettingsScreen(
     val (experimentalAi, onExperimentalAiChange) = rememberPreference(ExperimentalAiFeaturesKey, false)
     val (experimentalVisualizers, onExperimentalVisualizersChange) = rememberPreference(ExperimentalVisualizersKey, false)
     val (experimentalAnimations, onExperimentalAnimationsChange) = rememberPreference(ExperimentalAnimationsKey, false)
-    val (geminiApiKey, onGeminiApiKeyChange) = rememberPreference(GeminiApiKey, "")
 
     Scaffold(
         topBar = {
@@ -71,13 +70,6 @@ fun LabSettingsScreen(
         ) {
             PreferenceGroupTitle(title = "AI Engine")
             
-            EditTextPreference(
-                title = { Text("Gemini API Key") },
-                icon = { Icon(painter = painterResource(R.drawable.sparks), contentDescription = null) },
-                value = geminiApiKey,
-                onValueChange = onGeminiApiKeyChange
-            )
-
             SwitchPreference(
                 title = { Text("Experimental AI Features") },
                 description = "Enable advanced natural language processing and AI DJ.",
@@ -101,12 +93,36 @@ fun LabSettingsScreen(
                 onCheckedChange = onExperimentalAnimationsChange
             )
             
-            PreferenceGroupTitle(title = "Coming Soon")
+            PreferenceGroupTitle(title = "Experimental Features")
             
             PreferenceEntry(
                 title = { Text("NØTUNE Neural Map") },
                 description = "Visualization of your personal music taste and history.",
                 onClick = { navController.navigate("notune/neural_map") }
+            )
+
+            PreferenceEntry(
+                title = { Text("NØTUNE Replay & Time Machine") },
+                description = "4-tab listening statistics, forgotten gems, and memories.",
+                onClick = { navController.navigate("notune/replay") }
+            )
+
+            PreferenceEntry(
+                title = { Text("Listening Achievements & Fandom Badges") },
+                description = "Track listening level, active streak, and unlocked badges.",
+                onClick = { navController.navigate("notune/achievements") }
+            )
+
+            PreferenceEntry(
+                title = { Text("Mood Journey Engine") },
+                description = "Dynamic emotional audio transition architecture.",
+                onClick = { navController.navigate("notune/mood_journey") }
+            )
+
+            PreferenceEntry(
+                title = { Text("Global Neural Search & Hum-To-Search") },
+                description = "AI voice, lyrics, and melody recognition search hub.",
+                onClick = { navController.navigate("notune/neural_search") }
             )
         }
     }

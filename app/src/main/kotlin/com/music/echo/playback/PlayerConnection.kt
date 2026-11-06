@@ -25,6 +25,7 @@ import echo.music.iad1tya.playback.MusicService.MusicBinder
 import echo.music.iad1tya.playback.queues.Queue
 import echo.music.iad1tya.utils.reportException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,6 +33,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import echo.music.iad1tya.constants.SponsorBlockEnabledKey
 import echo.music.iad1tya.utils.dataStore
@@ -156,12 +158,42 @@ class PlayerConnection(
     val error = MutableStateFlow<PlaybackException?>(null)
     val isMuted = service.isMuted
 
+    val position = kotlinx.coroutines.flow.flow {
+        while (true) {
+            if (isPlayerInitialized.value) {
+                val currentPos = withContext(Dispatchers.Main.immediate) { player.currentPosition }
+                emit(currentPos)
+            }
+            kotlinx.coroutines.delay(if (isPlaying.value) 1000L else 5000L)
+        }
+    }.stateIn(scope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), 0L)
+
+    val duration = kotlinx.coroutines.flow.flow {
+        while (true) {
+            if (isPlayerInitialized.value) {
+                val currentDur = withContext(Dispatchers.Main.immediate) { player.duration.coerceAtLeast(0L) }
+                emit(currentDur)
+            }
+            kotlinx.coroutines.delay(if (isPlaying.value) 2000L else 10000L)
+        }
+    }.stateIn(scope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), 0L)
+
     val waitingForNetworkConnection = service.waitingForNetworkConnection
     val isCrossfading: kotlinx.coroutines.flow.StateFlow<Boolean> = service.isCrossfading
     val isAutomixing: kotlinx.coroutines.flow.StateFlow<Boolean> = service.isAutomixing
     val automixDebugInfo: kotlinx.coroutines.flow.StateFlow<MusicService.AutomixDebugInfo?> = service.automixDebugInfo
+    val aiDjCommentary: kotlinx.coroutines.flow.StateFlow<String?> = service.aiDjCommentary
+    val technicalTelemetry: kotlinx.coroutines.flow.StateFlow<echo.music.iad1tya.models.TechnicalTelemetry> = service.technicalTelemetry
 
-    
+    val audioFormat = MutableStateFlow<androidx.media3.common.Format?>(null)
+
+    // Thread-safe snapshots updated via Player.Listener (always on the main thread).
+    // Consume these instead of accessing connection.player.* directly from background threads.
+    val audioSessionId = MutableStateFlow<Int?>(null)
+    val bufferedPosition = MutableStateFlow(0L)
+    val playerVolume = MutableStateFlow(1f)
+    val playerQueue = MutableStateFlow<List<echo.music.iad1tya.models.MediaMetadata>>(emptyList())
+
     var shouldBlockPlaybackChanges: (() -> Boolean)? = null
     
     
@@ -180,7 +212,7 @@ class PlayerConnection(
     init {
         try {
             
-            scope.launch {
+            scope.launch(Dispatchers.Main.immediate) {
                 service.playerFlow.collect { newPlayer ->
                     if (newPlayer != null && newPlayer != attachedPlayer) {
                         updateAttachedPlayer(newPlayer)
@@ -206,7 +238,6 @@ class PlayerConnection(
         attachedPlayer = newPlayer
         newPlayer.addListener(this)
         
-        
         playbackState.value = newPlayer.playbackState
         playWhenReady.value = newPlayer.playWhenReady
         mediaMetadata.value = newPlayer.currentMetadata
@@ -216,10 +247,42 @@ class PlayerConnection(
         currentMediaItemIndex.value = newPlayer.currentMediaItemIndex
         shuffleModeEnabled.value = newPlayer.shuffleModeEnabled
         repeatMode.value = newPlayer.repeatMode
-        
+
+        val audioTrack = newPlayer.currentTracks.groups.firstOrNull {
+            it.type == androidx.media3.common.C.TRACK_TYPE_AUDIO && it.isSelected
+        }
+        audioFormat.value = audioTrack?.getTrackFormat(0)
+
+        // Snapshot thread-safe properties (called on main thread from service playerFlow)
+        syncPlayerSnapshot(newPlayer)
+
         Timber.tag(TAG).d("Attached to new player instance: $newPlayer")
         
         startSponsorBlockPolling()
+    }
+
+    /**
+     * Refresh the thread-safe snapshot flows from the player.
+     * MUST be called only on the main thread (from Player.Listener callbacks or service init).
+     */
+    private fun syncPlayerSnapshot(p: Player) {
+        val sessionId = try {
+            (p as? ExoPlayer)?.audioSessionId
+                ?.takeIf { it != androidx.media3.common.C.AUDIO_SESSION_ID_UNSET }
+        } catch (_: Throwable) { null }
+        audioSessionId.value = sessionId
+
+        bufferedPosition.value = try { p.bufferedPosition } catch (_: Throwable) { 0L }
+        playerVolume.value = try { p.volume } catch (_: Throwable) { 1f }
+        playerQueue.value = try {
+            val list = mutableListOf<echo.music.iad1tya.models.MediaMetadata>()
+            val timeline = p.currentTimeline
+            for (i in 0 until timeline.windowCount) {
+                timeline.getWindow(i, androidx.media3.common.Timeline.Window())
+                    .mediaItem.metadata?.let { list.add(it) }
+            }
+            list
+        } catch (_: Throwable) { emptyList() }
     }
 
     fun playQueue(queue: Queue) {
@@ -307,125 +370,168 @@ class PlayerConnection(
         }
     }
 
-    
-    fun togglePlayPause() {
-        try {
-            val castHandler = service.castConnectionHandler
-            if (castHandler?.isCasting?.value == true) {
-                if (castHandler.castIsPlaying.value) {
-                    castHandler.pause()
-                } else {
-                    castHandler.play()
-                }
-            } else {
-                player.togglePlayPause()
+    fun setVolume(volume: Float) {
+        runOnMain {
+            try { player.volume = volume } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in setVolume")
             }
-        } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Error in togglePlayPause")
         }
     }
-    
-    
-    fun play() {
-        try {
-            val castHandler = service.castConnectionHandler
-            if (castHandler?.isCasting?.value == true) {
-                castHandler.play()
-            } else {
-                if (player.playbackState == Player.STATE_IDLE) {
-                    player.prepare()
-                }
-                player.playWhenReady = true
+
+    fun setShuffleModeEnabled(enabled: Boolean) {
+        runOnMain {
+            try { player.shuffleModeEnabled = enabled } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in setShuffleModeEnabled")
             }
-        } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Error in play")
         }
     }
-    
-    
-    fun pause() {
-        try {
-            val castHandler = service.castConnectionHandler
-            if (castHandler?.isCasting?.value == true) {
-                castHandler.pause()
-            } else {
-                player.playWhenReady = false
+
+    fun setRepeatMode(mode: Int) {
+        runOnMain {
+            try { player.repeatMode = mode } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in setRepeatMode")
             }
-        } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Error in pause")
         }
     }
 
     
-    fun seekTo(position: Long) {
-        try {
-            val castHandler = service.castConnectionHandler
-            if (castHandler?.isCasting?.value == true) {
-                castHandler.seekTo(position)
-            } else {
-                player.seekTo(position)
+    private inline fun <T> runOnMain(crossinline block: () -> T): T {
+        return if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper() || android.os.Looper.getMainLooper() == null) {
+            block()
+        } else {
+            try {
+                kotlinx.coroutines.runBlocking(Dispatchers.Main.immediate) {
+                    block()
+                }
+            } catch (e: Throwable) {
+                block()
             }
-        } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Error in seekTo")
+        }
+    }
+
+    fun togglePlayPause() {
+        runOnMain {
+            try {
+                val castHandler = service.castConnectionHandler
+                if (castHandler?.isCasting?.value == true) {
+                    if (castHandler.castIsPlaying.value) {
+                        castHandler.pause()
+                    } else {
+                        castHandler.play()
+                    }
+                } else {
+                    player.togglePlayPause()
+                }
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in togglePlayPause")
+            }
+        }
+    }
+    
+    fun play() {
+        runOnMain {
+            try {
+                val castHandler = service.castConnectionHandler
+                if (castHandler?.isCasting?.value == true) {
+                    castHandler.play()
+                } else {
+                    if (player.playbackState == Player.STATE_IDLE) {
+                        player.prepare()
+                    }
+                    player.playWhenReady = true
+                }
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in play")
+            }
+        }
+    }
+    
+    fun pause() {
+        runOnMain {
+            try {
+                val castHandler = service.castConnectionHandler
+                if (castHandler?.isCasting?.value == true) {
+                    castHandler.pause()
+                } else {
+                    player.playWhenReady = false
+                }
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in pause")
+            }
+        }
+    }
+
+    fun seekTo(position: Long) {
+        runOnMain {
+            try {
+                val castHandler = service.castConnectionHandler
+                if (castHandler?.isCasting?.value == true) {
+                    castHandler.seekTo(position)
+                } else {
+                    player.seekTo(position)
+                }
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in seekTo")
+            }
         }
     }
 
     fun seekToNext() {
-        try {
-            
-            val castHandler = service.castConnectionHandler
-            if (castHandler?.isCasting?.value == true) {
-                castHandler.skipToNext()
-                return
+        runOnMain {
+            try {
+                val castHandler = service.castConnectionHandler
+                if (castHandler?.isCasting?.value == true) {
+                    castHandler.skipToNext()
+                    return@runOnMain
+                }
+                player.seekToNext()
+                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+                    player.prepare()
+                }
+                player.playWhenReady = true
+                onSkipNext?.invoke()
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in seekToNext")
             }
-            player.seekToNext()
-            if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
-                player.prepare()
-            }
-            player.playWhenReady = true
-            onSkipNext?.invoke()
-        } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Error in seekToNext")
         }
     }
 
     var onRestartSong: (() -> Unit)? = null
 
     fun seekToPrevious() {
-        try {
-            
-            val castHandler = service.castConnectionHandler
-            if (castHandler?.isCasting?.value == true) {
-                castHandler.skipToPrevious()
-                return
-            }
+        runOnMain {
+            try {
+                val castHandler = service.castConnectionHandler
+                if (castHandler?.isCasting?.value == true) {
+                    castHandler.skipToPrevious()
+                    return@runOnMain
+                }
 
-            
-            
-            if (player.currentPosition > 3000 || !player.hasPreviousMediaItem()) {
-                player.seekTo(0)
-                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
-                    player.prepare()
+                if (player.currentPosition > 3000 || !player.hasPreviousMediaItem()) {
+                    player.seekTo(0)
+                    if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+                        player.prepare()
+                    }
+                    player.playWhenReady = true
+                    onRestartSong?.invoke()
+                } else {
+                    player.seekToPreviousMediaItem()
+                    if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+                        player.prepare()
+                    }
+                    player.playWhenReady = true
+                    onSkipPrevious?.invoke()
                 }
-                player.playWhenReady = true
-                onRestartSong?.invoke()
-            } else {
-                
-                player.seekToPreviousMediaItem()
-                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
-                    player.prepare()
-                }
-                player.playWhenReady = true
-                onSkipPrevious?.invoke()
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error in seekToPrevious")
             }
-        } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Error in seekToPrevious")
         }
     }
 
     override fun onPlaybackStateChanged(state: Int) {
         playbackState.value = state
         error.value = player.playerError
+        syncPlayerSnapshot(player)
     }
 
     override fun onPlayWhenReadyChanged(
@@ -433,6 +539,7 @@ class PlayerConnection(
         reason: Int,
     ) {
         playWhenReady.value = newPlayWhenReady
+        syncPlayerSnapshot(player)
     }
 
     override fun onMediaItemTransition(
@@ -443,6 +550,7 @@ class PlayerConnection(
         currentMediaItemIndex.value = player.currentMediaItemIndex
         currentWindowIndex.value = player.getCurrentQueueIndex()
         updateCanSkipPreviousAndNext()
+        syncPlayerSnapshot(player)
     }
 
     override fun onTimelineChanged(
@@ -455,6 +563,7 @@ class PlayerConnection(
         currentMediaItemIndex.value = player.currentMediaItemIndex
         currentWindowIndex.value = player.getCurrentQueueIndex()
         updateCanSkipPreviousAndNext()
+        syncPlayerSnapshot(player)
     }
 
     override fun onShuffleModeEnabledChanged(enabled: Boolean) {
@@ -462,11 +571,17 @@ class PlayerConnection(
         queueWindows.value = player.getQueueWindows()
         currentWindowIndex.value = player.getCurrentQueueIndex()
         updateCanSkipPreviousAndNext()
+        syncPlayerSnapshot(player)
     }
 
     override fun onRepeatModeChanged(mode: Int) {
         repeatMode.value = mode
         updateCanSkipPreviousAndNext()
+    }
+
+    override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
+        val audioTrack = tracks.groups.firstOrNull { it.type == androidx.media3.common.C.TRACK_TYPE_AUDIO && it.isSelected }
+        audioFormat.value = audioTrack?.getTrackFormat(0)
     }
 
     override fun onPlayerErrorChanged(playbackError: PlaybackException?) {
@@ -495,10 +610,10 @@ class PlayerConnection(
 
     private fun startSponsorBlockPolling() {
         sponsorBlockJob?.cancel()
-        sponsorBlockJob = scope.launch {
+        sponsorBlockJob = scope.launch(Dispatchers.Main.immediate) {
             val sponsorBlockEnabledFlow = context.dataStore.data.map { (try { it[SponsorBlockEnabledKey] } catch(e: Exception) { null }) ?: false }
 
-            launch {
+            launch(Dispatchers.IO) {
                 combine(mediaMetadata, sponsorBlockEnabledFlow) { metadata, enabled ->
                     Pair(metadata, enabled)
                 }.collect { (metadata, enabled) ->
@@ -511,7 +626,7 @@ class PlayerConnection(
                 }
             }
 
-            launch {
+            launch(Dispatchers.Main.immediate) {
                 while (true) {
                     if (player.isPlaying) {
                         val currentSegments = sponsorBlockSegments.value

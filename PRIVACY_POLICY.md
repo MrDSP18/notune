@@ -1,35 +1,31 @@
+# NØTUNE Privacy Policy
 
-# Privacy Policy for NØTUNE
+**Last updated: September 19, 2026**
 
-**Last Updated: February 2026**
+NØTUNE is a local-first Android music player. The app does not sell personal data or use advertising trackers. This document describes the optional network features accurately; distribution-specific legal review is still recommended before launch.
 
-NØTUNE ("we," "our," or "us") is committed to protecting your privacy. This policy explains how we handle your data.
+## On-device data
 
-## 1. Information We Collect
+Your local music library, playback queue, favorites, listening history, downloads, customization, and Music DNA are stored on your device. They are not uploaded by the local player. Android permissions are requested only when a selected feature needs them.
 
-### 1.1 Local Music Data
-NØTUNE scans your device for local audio files to create your library. This data remains on your device and is never uploaded to our servers.
+## Optional network requests
 
-### 1.2 Listening History
-Your listening history, favorites, and statistics are stored locally in a private database. This data is used to generate your "Music DNA" and provide personalized recommendations.
+Search, streaming, artwork, lyrics, recognition, and optional AI features send the minimum request needed to the provider selected by you. Provider policies apply to those requests. If you configure an AI provider, prompts and any content included in them go directly to that provider; NØTUNE does not claim ownership of or retain those prompts on its own servers.
 
-### 1.3 AI Interactions
-If you configure an AI provider (e.g., Google Gemini, Groq), your prompts are sent directly to that provider to generate responses. We do not intercept or store these interactions on our own servers. Please refer to your chosen provider's privacy policy for their data handling practices.
+The optional NØTUNE cloud/social backend can process an account identifier, display name, avatar, social posts, messages, friendship data, presence, and synchronization data that you choose to submit. Cloud features are not required for local playback. Presence and social sharing can be disabled in the app.
 
-## 2. API Keys & Credentials
-Any API keys or login credentials you provide are stored securely on your device using Android DataStore/EncryptedSharedPreferences. They are never transmitted to us or any third party except for the intended AI provider.
+## Credentials
 
-## 3. Third-Party Services
-NØTUNE uses the following third-party APIs to provide music content and metadata:
-- **YouTube Music**: To stream music and fetch metadata.
-- **AI Providers**: As configured by the user (Google, Groq, etc.).
-- **Coil**: To fetch and cache album artwork.
+API keys are intended to remain in the app's protected local storage and are sent only to the provider they belong to. Never paste secrets into issues, builds, or public configuration. Cloud credentials are server-side secrets and are not included in the Android app.
 
-## 4. No Data Harvesting
-We do not use trackers, analytics, or data-collection scripts. NØTUNE is a "local-first" application designed for personal use and privacy.
+## Retention and deletion
 
-## 5. Open Source
-As an open-source project, our code is public and auditable. You can verify our data handling practices at any time by reviewing the source code on GitHub.
+Local data can be removed by clearing the app data or using the app's data controls. For cloud/social data, use the account deletion and content deletion controls when available, or contact the project through a private GitHub security/support channel. Backups and provider retention are governed by the applicable provider policy.
 
-## 6. Contact
-If you have questions about your privacy while using NØTUNE, please open an issue on our GitHub repository.
+## Third parties
+
+Depending on enabled features, requests may involve YouTube/InnerTube-compatible services, lyric providers, artwork CDNs, optional AI providers, Last.fm, Shazam, Discord, Google Drive, or Cloudflare/Render infrastructure. The FOSS build excludes Google Play Services features.
+
+## Contact
+
+For privacy questions, open a repository discussion or contact the maintainer. For vulnerabilities, follow [SECURITY.md](SECURITY.md) and do not publish secrets in a public issue.

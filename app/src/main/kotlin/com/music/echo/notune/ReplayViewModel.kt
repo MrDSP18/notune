@@ -3,6 +3,12 @@ package echo.music.iad1tya.notune
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.music.echo.notune.memory.ForgottenSongCandidate
+import com.music.echo.notune.memory.ForgottenSongsEngine
+import com.music.echo.notune.memory.MemoryInsight
+import com.music.echo.notune.memory.NotuneMemoryManager
+import com.music.echo.notune.memory.TimeMachineEra
+import com.music.echo.notune.memory.TimeMachineEngine
 import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.db.entities.Song
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import javax.inject.Inject
@@ -26,7 +33,10 @@ enum class ReplayPeriod(val label: String) {
 
 @HiltViewModel
 class ReplayViewModel @Inject constructor(
-    private val database: MusicDatabase
+    private val database: MusicDatabase,
+    private val forgottenSongsEngine: ForgottenSongsEngine,
+    private val timeMachineEngine: TimeMachineEngine,
+    private val memoryManager: NotuneMemoryManager,
 ) : ViewModel() {
 
     private val _period = MutableStateFlow(ReplayPeriod.THIS_MONTH)
@@ -41,12 +51,30 @@ class ReplayViewModel @Inject constructor(
     private val _uniqueTrackCount = MutableStateFlow(0)
     val uniqueTrackCount: StateFlow<Int> = _uniqueTrackCount
 
+    private val _forgottenSongs = MutableStateFlow<List<ForgottenSongCandidate>>(emptyList())
+    val forgottenSongs: StateFlow<List<ForgottenSongCandidate>> = _forgottenSongs
+
+    private val _musicEras = MutableStateFlow<List<TimeMachineEra>>(emptyList())
+    val musicEras: StateFlow<List<TimeMachineEra>> = _musicEras
+
+    private val _memoryInsights = MutableStateFlow<List<MemoryInsight>>(emptyList())
+    val memoryInsights: StateFlow<List<MemoryInsight>> = _memoryInsights
+
     init {
         _period.onEach { loadReplay(it) }.launchIn(viewModelScope)
+        loadMemoryData()
     }
 
     fun setPeriod(newPeriod: ReplayPeriod) {
         _period.value = newPeriod
+    }
+
+    private fun loadMemoryData() {
+        viewModelScope.launch {
+            _forgottenSongs.value = forgottenSongsEngine.getForgottenSongs()
+            _musicEras.value = timeMachineEngine.getEras()
+            _memoryInsights.value = memoryManager.generateContextualMemories()
+        }
     }
 
     private fun loadReplay(period: ReplayPeriod) {
@@ -65,7 +93,6 @@ class ReplayViewModel @Inject constructor(
             else -> now
         }
 
-        // Real time-filtered top songs using the event table
         combine(
             database.mostPlayedSongs(fromMs, 20, 0, toMs),
             database.getTotalPlayTimeInRange(fromMs, toMs),

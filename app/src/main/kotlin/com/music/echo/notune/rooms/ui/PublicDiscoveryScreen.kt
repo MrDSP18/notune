@@ -19,15 +19,15 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import echo.music.iad1tya.notune.rooms.RoomsViewModel
-import echo.music.iad1tya.notune.rooms.models.RoomModel
-import echo.music.iad1tya.notune.rooms.models.RoomType
+import echo.music.iad1tya.models.Room
+import echo.music.iad1tya.models.RoomType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PublicDiscoveryScreen(
     navController: NavController,
     viewModel: RoomsViewModel = hiltViewModel(),
-    onRoomSelected: (RoomModel) -> Unit
+    onRoomSelected: (Room) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -38,9 +38,8 @@ fun PublicDiscoveryScreen(
 
     val filteredRooms = remember(uiState.publicRooms, searchQuery, selectedCategory) {
         uiState.publicRooms.filter { room ->
-            val matchesQuery = searchQuery.isBlank() || room.name.contains(searchQuery, ignoreCase = true) || (room.genreTag?.contains(searchQuery, ignoreCase = true) == true)
-            val matchesCategory = selectedCategory == "All" || room.genreTag.equals(selectedCategory, ignoreCase = true)
-            matchesQuery && matchesCategory
+            val matchesQuery = searchQuery.isBlank() || room.name.contains(searchQuery, ignoreCase = true)
+            matchesQuery
         }
     }
 
@@ -57,7 +56,7 @@ fun PublicDiscoveryScreen(
                             Text(
                                 "PUBLIC ROOMS & SESSIONS",
                                 style = MaterialTheme.typography.titleMedium.copy(
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                    fontFamily = echo.music.iad1tya.ui.theme.NothingFont,
                                     fontWeight = FontWeight.Black,
                                     letterSpacing = 1.5.sp,
                                     color = Color.White
@@ -89,10 +88,10 @@ fun PublicDiscoveryScreen(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { viewModel.setSearchQuery(it) },
-                placeholder = { Text("Search public rooms by name or genre...") },
+                placeholder = { Text("Search public rooms by name...") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(2.dp)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -152,8 +151,8 @@ fun PublicDiscoveryScreen(
     if (showCreateModal) {
         CreateRoomDialog(
             onDismiss = { showCreateModal = false },
-            onCreate = { name, desc, type, genre ->
-                viewModel.createRoom(name, desc, type, genre)
+            onCreate = { name, type ->
+                viewModel.createRoom(name, type)
                 showCreateModal = false
             }
         )
@@ -162,77 +161,46 @@ fun PublicDiscoveryScreen(
 
 @Composable
 private fun PublicRoomCard(
-    room: RoomModel,
+    room: Room,
     onJoin: () -> Unit
 ) {
-    val cardGradient = Brush.horizontalGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.surfaceVariant,
-            MaterialTheme.colorScheme.surface
-        )
-    )
-
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp)
+        shape = RoundedCornerShape(2.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(cardGradient)
+                .background(Color.White.copy(alpha = 0.05f))
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = room.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    if (room.isEncrypted) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("🔐", fontSize = 12.sp)
-                    }
-                }
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = room.description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = room.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Surface(
                         color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(2.dp)
                     ) {
                         Text(
-                            text = "👥 ${room.currentMemberCount}/${room.memberLimit}",
+                            text = "👥 ${room.members.size}",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                         )
-                    }
-                    if (room.genreTag != null) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                text = "🏷️ ${room.genreTag}",
-                                fontSize = 11.sp,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
-                        }
                     }
                 }
             }
 
             Button(
                 onClick = onJoin,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(2.dp)
             ) {
                 Text("Join")
             }
@@ -243,12 +211,10 @@ private fun PublicRoomCard(
 @Composable
 private fun CreateRoomDialog(
     onDismiss: () -> Unit,
-    onCreate: (String, String, RoomType, String?) -> Unit
+    onCreate: (String, RoomType) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf(RoomType.PUBLIC) }
-    var genreTag by remember { mutableStateOf("Tamil Hits") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -262,12 +228,6 @@ private fun CreateRoomDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description / Topic") },
-                    modifier = Modifier.fillMaxWidth()
-                )
                 Text("Room Type", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     RoomType.values().forEach { type ->
@@ -278,20 +238,13 @@ private fun CreateRoomDialog(
                         )
                     }
                 }
-                OutlinedTextField(
-                    value = genreTag,
-                    onValueChange = { genreTag = it },
-                    label = { Text("Genre / Theme Tag") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
         },
         confirmButton = {
             Button(
                 onClick = {
                     if (name.isNotBlank()) {
-                        onCreate(name, description, selectedType, genreTag.ifBlank { null })
+                        onCreate(name, selectedType)
                     }
                 }
             ) {

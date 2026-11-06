@@ -24,14 +24,14 @@
 - **Neural Map**: Visualize your "Musical DNA" through an interactive geometric graph.
 - **Multi-Provider Support**: Connect Google Gemini, Groq, or use Local AI (Ollama).
 
-### 🎨 Technical Design (Nothing OS Style)
+### 🎨 Technical Design (NØTUNE Industrial Style)
 - **Extreme Customization**: A global Theme Builder for accent colors, typography, blur, and glass intensity.
 - **Glassmorphism 2.0**: Ultra-thin translucent surfaces with technical 1dp outlines.
 - **Industrial Geometry**: Switch between sharp 2dp corners and unique wavy shapes.
 - **OLED Optimization**: Pure black backgrounds with stark high-contrast accents.
 
 ### 🎵 Pro Playback
-- **Ad-Free Streaming**: Listen to any song from YouTube Music without interruptions.
+- **Unified Music Streaming**: Stream and discover tracks across your local library and authorized online catalog providers.
 - **High-Fidelity Audio**: Native support for Opus and high-bitrate streams.
 - **Gapless & Crossfade**: Seamless transitions between your tracks.
 - **Offline Mode**: Download and play music directly from your device.
@@ -74,7 +74,7 @@ cd notune
 
 - Licensed under **GPL-3.0**.
 - Special thanks to the InnerTube and NewPipe teams for their incredible research.
-- Inspired by the minimalist design philosophy of Nothing OS.
+- Designed with a minimalist, technical dot-matrix industrial aesthetic.
 
 ---
 **NØTUNE — Music Understood.**

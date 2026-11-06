@@ -1,6 +1,6 @@
 package echo.music.iad1tya.notune
 
-import echo.music.iad1tya.notune.rooms.models.RoomType
+import echo.music.iad1tya.models.RoomType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

@@ -34,7 +34,8 @@ import java.util.UUID
 @Composable
 fun GoogleLoginPopupDialog(
     authManager: GoogleAuthManager,
-    onLoginSuccess: (GoogleUserAccount) -> Unit
+    onLoginSuccess: (GoogleUserAccount) -> Unit,
+    onDismiss: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     var isSignUpTab by remember { mutableStateOf(false) }
@@ -76,10 +77,10 @@ fun GoogleLoginPopupDialog(
     )
 
     Dialog(
-        onDismissRequest = { /* Mandatory login modal */ },
+        onDismissRequest = onDismiss,
         properties = DialogProperties(
-            dismissOnBackPress = false,
-            dismissOnClickOutside = false,
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
             usePlatformDefaultWidth = false
         )
     ) {
@@ -132,27 +133,46 @@ fun GoogleLoginPopupDialog(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Header Badge
+                // Header Badge with Dismiss Option
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFFF0031))
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "NØTUNE ACCOUNT GATEWAY",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontFamily = NothingFont,
+                                color = Color(0xFFFF0031),
+                                letterSpacing = 2.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
+
                     Box(
                         modifier = Modifier
-                            .size(10.dp)
+                            .size(30.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFFF0031))
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "NØTUNE ACCOUNT GATEWAY",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontFamily = NothingFont,
-                            color = Color(0xFFFF0031),
-                            letterSpacing = 2.sp,
+                            .background(Color.White.copy(alpha = 0.12f))
+                            .clickable { onDismiss() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "✕",
+                            color = Color.White,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Bold
                         )
-                    )
+                    }
                 }
 
                 Spacer(Modifier.height(14.dp))
