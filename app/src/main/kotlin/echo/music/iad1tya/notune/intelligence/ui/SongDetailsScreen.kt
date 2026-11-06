@@ -456,7 +456,7 @@ fun SongMetadataCard(song: SongDetails) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            Divider()
+            HorizontalDivider()
 
             MetadataRow("Language", song.language ?: "Information unavailable")
             MetadataRow("Genre", song.genre ?: "Information unavailable")
