@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -73,11 +73,9 @@ jobs:
           echo "APK_SHA256=$SHA256" >> $GITHUB_ENV
           echo "Release APK SHA-256: $SHA256"
 
-          # Verify APK signature using apksigner
           BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | tail -n 1)
           $BUILD_TOOLS_DIR/apksigner verify --verbose "$APK_PATH"
 
-          # Extract public certificate fingerprint if keystore exists
           if [ -f keystore.jks ]; then
             ALIAS="${A1:-$A2}"
             PASS="${P1:-$P2}"
