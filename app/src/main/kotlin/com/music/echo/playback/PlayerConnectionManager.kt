@@ -48,11 +48,14 @@ class PlayerConnectionManager @Inject constructor(
     }
 
     fun unbind() {
-        if (isBound) {
-            context.unbindService(serviceConnection)
+        try {
+            if (isBound) {
+                context.unbindService(serviceConnection)
+            }
+        } finally {
             isBound = false
+            _playerConnection.value?.dispose()
+            _playerConnection.value = null
         }
-        _playerConnection.value?.dispose()
-        _playerConnection.value = null
     }
 }
