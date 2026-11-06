@@ -313,7 +313,7 @@ fun BottomSheetPlayer(
         defaultValue = PlayerStyleVariant.LUX
     )
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
-    val isLocalMedia = mediaMetadata?.id?.isLocalMediaId() == true
+    val isLocalMedia = mediaMetadata.id?.isLocalMediaId() == true
 
     val playerBackgroundPref by rememberEnumPreference(
         key = PlayerBackgroundStyleKey,
@@ -356,12 +356,12 @@ fun BottomSheetPlayer(
     val isKeepScreenOn by rememberPreference(KeepScreenOn, false)
     val keepScreenOn = isPlaying && isKeepScreenOn
 
-    DisposableEffect(playerBackground, state.isExpanded, useDarkTheme, keepScreenOn, mediaMetadata?.id) {
+    DisposableEffect(playerBackground, state.isExpanded, useDarkTheme, keepScreenOn, mediaMetadata.id) {
         val window = (context as? android.app.Activity)?.window
         if (window != null && state.isExpanded) {
             val insetsController = WindowCompat.getInsetsController(window, window.decorView)
 
-            val isLocal = mediaMetadata?.id?.isLocalMediaId() == true
+            val isLocal = mediaMetadata.id?.isLocalMediaId() == true
             if (playerStyle == PlayerStyleVariant.LUX) {
                 insetsController.isAppearanceLightStatusBars = true
             } else if (isLocal || playerBackground in listOf(PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT, PlayerBackgroundStyle.GLOW_ANIMATED, PlayerBackgroundStyle.APPLE_MUSIC, PlayerBackgroundStyle.LIVE_MESH)) {
@@ -396,7 +396,7 @@ fun BottomSheetPlayer(
         }
 
     val playbackState by playerConnection.playbackState.collectAsState()
-    val currentFormatEntity by database.format(mediaMetadata?.id).collectAsState(initial = null)
+    val currentFormatEntity by database.format(mediaMetadata.id).collectAsState(initial = null)
     val currentSong by playerConnection.currentSong.collectAsState(initial = null)
     val automix by playerConnection.service.automixItems.collectAsState()
     val repeatMode by playerConnection.repeatMode.collectAsState()
@@ -414,7 +414,7 @@ fun BottomSheetPlayer(
 
 
     val listenTogetherManager = LocalListenTogetherManager.current
-    val isListenTogetherGuest by listenTogetherManager?.guestPlaybackRestricted?.collectAsState(initial = false) ?: remember { mutableStateOf(false) }
+    val isListenTogetherGuest by listenTogetherManager.guestPlaybackRestricted?.collectAsState(initial = false) ?: remember { mutableStateOf(false) }
 
 
     val castHandler = remember(playerConnection) {
@@ -424,12 +424,12 @@ fun BottomSheetPlayer(
             null
         }
     }
-    val isCasting by castHandler?.isCasting?.collectAsState() ?: remember { mutableStateOf(false) }
-    val castDeviceName by castHandler?.castDeviceName?.collectAsState() ?: remember { mutableStateOf(null) }
-    val castPosition by castHandler?.castPosition?.collectAsState() ?: remember { mutableLongStateOf(0L) }
-    val castDuration by castHandler?.castDuration?.collectAsState() ?: remember { mutableLongStateOf(0L) }
-    val castIsPlaying by castHandler?.castIsPlaying?.collectAsState() ?: remember { mutableStateOf(false) }
-    val castVolume by castHandler?.castVolume?.collectAsState() ?: remember { mutableFloatStateOf(1f) }
+    val isCasting by castHandler.isCasting?.collectAsState() ?: remember { mutableStateOf(false) }
+    val castDeviceName by castHandler.castDeviceName?.collectAsState() ?: remember { mutableStateOf(null) }
+    val castPosition by castHandler.castPosition?.collectAsState() ?: remember { mutableLongStateOf(0L) }
+    val castDuration by castHandler.castDuration?.collectAsState() ?: remember { mutableLongStateOf(0L) }
+    val castIsPlaying by castHandler.castIsPlaying?.collectAsState() ?: remember { mutableStateOf(false) }
+    val castVolume by castHandler.castVolume?.collectAsState() ?: remember { mutableFloatStateOf(1f) }
 
 
     val effectiveIsPlaying = if (isCasting) castIsPlaying else isPlaying
@@ -461,7 +461,7 @@ fun BottomSheetPlayer(
 
     val automixDebugOverlay: @Composable () -> Unit = {
         if (automixDebugOverlayEnabled) {
-            automixDebug?.let { dbg ->
+            automixDebug.let { dbg ->
                 val mono = MaterialTheme.typography.labelSmall.copy(
                     fontSize = 9.sp,
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
@@ -505,23 +505,23 @@ fun BottomSheetPlayer(
                     if (isAutomixDebugExpanded) {
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            "out: ${dbg.outBpm?.let { "%.1f bpm".format(it) } ?: "—"}" +
-                                    (dbg.outConfidence?.let { "  conf %.2f".format(it) } ?: "") +
-                                    (dbg.outMixOutMs?.takeIf { it > 0 }?.let { "  mixOut ${makeTimeString(it)}" } ?: ""),
+                            "out: ${dbg.outBpm.let { "%.1f bpm".format(it) } ?: "—"}" +
+                                    (dbg.outConfidence.let { "  conf %.2f".format(it) } ?: "") +
+                                    (dbg.outMixOutMs.takeIf { it > 0 }?.let { "  mixOut ${makeTimeString(it)}" } ?: ""),
                             style = mono, color = Color.White.copy(alpha = 0.85f)
                         )
                         Text(
-                            "in:  ${dbg.inBpm?.let { "%.1f bpm".format(it) } ?: "—"}" +
-                                    (dbg.inConfidence?.let { "  conf %.2f".format(it) } ?: "") +
-                                    (dbg.inMixInMs?.takeIf { it > 0 }?.let { "  mixIn ${makeTimeString(it)}" } ?: ""),
+                            "in:  ${dbg.inBpm.let { "%.1f bpm".format(it) } ?: "—"}" +
+                                    (dbg.inConfidence.let { "  conf %.2f".format(it) } ?: "") +
+                                    (dbg.inMixInMs.takeIf { it > 0 }?.let { "  mixIn ${makeTimeString(it)}" } ?: ""),
                             style = mono, color = Color.White.copy(alpha = 0.85f)
                         )
                         if (dbg.triggerTimeMs != null) {
                             val remainingS = ((dbg.triggerTimeMs - (sliderPosition ?: effectivePosition)) / 1000).coerceAtLeast(0)
                             Text(
                                 "mix @ ${makeTimeString(dbg.triggerTimeMs)} (in ${remainingS}s)" +
-                                        (dbg.incomingStartMs?.let { "  from ${makeTimeString(it)}" } ?: "") +
-                                        (dbg.tempoRatio?.let { "  ×%.3f".format(it) } ?: ""),
+                                        (dbg.incomingStartMs.let { "  from ${makeTimeString(it)}" } ?: "") +
+                                        (dbg.tempoRatio.let { "  ×%.3f".format(it) } ?: ""),
                                 style = mono, color = Color.White.copy(alpha = 0.85f)
                             )
                         }
@@ -603,7 +603,7 @@ fun BottomSheetPlayer(
     val defaultGradientColors = listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant)
     val fallbackColor = MaterialTheme.colorScheme.surface.toArgb()
 
-    LaunchedEffect(mediaMetadata?.id, playerBackground) {
+    LaunchedEffect(mediaMetadata.id, playerBackground) {
         if (playerBackground == PlayerBackgroundStyle.GRADIENT || playerBackground == PlayerBackgroundStyle.GLOW_ANIMATED) {
             val currentMetadata = mediaMetadata
             if (currentMetadata != null && currentMetadata.thumbnailUrl != null) {
@@ -622,7 +622,7 @@ fun BottomSheetPlayer(
 
                     val result = runCatching { context.imageLoader.execute(request) }.getOrNull()
                     if (result != null) {
-                        val bitmap = result.image?.toBitmap()
+                        val bitmap = result.image.toBitmap()
                         if (bitmap != null) {
                             val palette = withContext(Dispatchers.Default) {
                                 Palette.from(bitmap)
@@ -674,10 +674,10 @@ fun BottomSheetPlayer(
         label = "icBackgroundColor"
     )
 
-    var canvasArtwork by remember(mediaMetadata?.id) { mutableStateOf<CanvasArtwork?>(null) }
-    var canvasFetchInFlight by remember(mediaMetadata?.id) { mutableStateOf(false) }
+    var canvasArtwork by remember(mediaMetadata.id) { mutableStateOf<CanvasArtwork?>(null) }
+    var canvasFetchInFlight by remember(mediaMetadata.id) { mutableStateOf(false) }
 
-    LaunchedEffect(mediaMetadata?.id, playerBackground) {
+    LaunchedEffect(mediaMetadata.id, playerBackground) {
         if (playerBackground != PlayerBackgroundStyle.APPLE_MUSIC || !enableCanvas) {
             canvasArtwork = null
             return@LaunchedEffect
@@ -697,7 +697,7 @@ fun BottomSheetPlayer(
             val storefront = Locale.getDefault().country.lowercase(Locale.ROOT).takeIf { it.length == 2 } ?: "us"
             val requestedTitle = item.title
             val requestedArtist = item.artists.joinToString { it.name }
-            val requestedAlbum = item.album?.title ?: ""
+            val requestedAlbum = item.album.title ?: ""
 
             val s = normalizeCanvasSongTitle(requestedTitle)
             val a = normalizeCanvasArtistName(requestedArtist)
@@ -709,7 +709,7 @@ fun BottomSheetPlayer(
                 ?: AppleMusicCanvasProvider.getBySongArtist(s, a, requestedAlbum, storefront)
                     ?.takeIf { !it.preferredAnimationUrl.isNullOrBlank() }
 
-            val validated = fetched?.let { artwork ->
+            val validated = fetched.let { artwork ->
                 val localArtists = splitAndNormalizeArtists(requestedArtist)
                 val returnedArtists = splitAndNormalizeArtists(artwork.artist ?: "")
                 val artistMatches = localArtists.isNotEmpty() && returnedArtists.isNotEmpty() &&
@@ -780,7 +780,7 @@ fun BottomSheetPlayer(
         )
     }
 
-    val download by LocalDownloadUtil.current.getDownload(mediaMetadata?.id ?: "")
+    val download by LocalDownloadUtil.current.getDownload(mediaMetadata.id ?: "")
         .collectAsState(initial = null)
 
     val sleepTimerEnabled =
@@ -922,7 +922,7 @@ fun BottomSheetPlayer(
     }
 
 
-    LaunchedEffect(playbackState, mediaMetadata?.id) {
+    LaunchedEffect(playbackState, mediaMetadata.id) {
         if (!isCasting) {
             position = playerConnection.player.currentPosition
             duration = playerConnection.player.duration
@@ -982,7 +982,7 @@ fun BottomSheetPlayer(
                         .background(Color(0xFF131313))
                 )
             } else {
-                val backgroundThumbnailUrl = mediaMetadata?.thumbnailUrl ?: playerConnection.player.currentMediaItem?.mediaMetadata?.artworkUri?.toString()
+                val backgroundThumbnailUrl = mediaMetadata.thumbnailUrl ?: playerConnection.player.currentMediaItem.mediaMetadata?.artworkUri.toString()
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -1278,7 +1278,7 @@ fun BottomSheetPlayer(
 
                                             if (enableCanvas && canvasArtwork != null && showCanvas) {
                                                 BackgroundVideoView(
-                                                    videoUrl = canvasArtwork?.animated ?: canvasArtwork?.videoUrl ?: "",
+                                                    videoUrl = canvasArtwork.animated ?: canvasArtwork.videoUrl ?: "",
                                                     isPlaying = isPlaying,
                                                     modifier = Modifier.fillMaxSize()
                                                 )
@@ -1468,7 +1468,7 @@ fun BottomSheetPlayer(
         if (playerStyle == PlayerStyleVariant.LUX && mediaMetadata != null) {
             val lyrics by playerConnection.currentLyrics.collectAsState(initial = null)
             val lyricsLines = remember(lyrics) {
-                lyrics?.lyrics?.lines()?.filter { it.isNotBlank() } ?: emptyList()
+                lyrics.lyrics?.lines()?.filter { it.isNotBlank() } ?: emptyList()
             }
             val shuffleModeEnabled by playerConnection.shuffleModeEnabled.collectAsState()
 
@@ -1477,7 +1477,7 @@ fun BottomSheetPlayer(
                 position = effectivePosition,
                 duration = duration,
                 isPlaying = effectiveIsPlaying,
-                isLiked = currentSong?.song?.liked == true,
+                isLiked = currentSong.song?.liked == true,
                 shuffleModeEnabled = shuffleModeEnabled,
                 repeatMode = repeatMode,
                 bluetoothDeviceName = bluetoothDeviceName,
@@ -1515,7 +1515,7 @@ fun BottomSheetPlayer(
                             navController = navController,
                             playerBottomSheetState = state,
                             onShowDetailsDialog = {
-                                mediaMetadata?.id?.let {
+                                mediaMetadata.id?.let {
                                     bottomSheetPageState.show {
                                         ShowMediaInfo(it)
                                     }
@@ -1546,7 +1546,7 @@ fun BottomSheetPlayer(
                 onShareClick = {
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, "https://music.youtube.com/watch?v=${mediaMetadata?.id}")
+                        putExtra(Intent.EXTRA_TEXT, "https://music.youtube.com/watch?v=${mediaMetadata.id}")
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
                     context.startActivity(Intent.createChooser(shareIntent, null).apply {
@@ -1579,7 +1579,7 @@ fun BottomSheetPlayer(
                     
                     AnimatedVisibility(visible = !aiDjCommentary.isNullOrBlank()) {
                         Text(
-                            text = aiDjCommentary?.uppercase() ?: "",
+                            text = aiDjCommentary.uppercase() ?: "",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontFamily = NothingFont,
                                 color = NothingRed,
@@ -1616,7 +1616,7 @@ fun BottomSheetPlayer(
                                         indication = null,
                                         interactionSource = remember { MutableInteractionSource() },
                                         onClick = {
-                                            mediaMetadata.album?.let { album ->
+                                            mediaMetadata.album.let { album ->
                                                 navController.navigate("album/${album.id}")
                                                 state.collapseSoft()
                                             }
@@ -1773,7 +1773,7 @@ fun BottomSheetPlayer(
                                 FilledIconButton(
                                     onClick = {
                                         mediaMetadata.let { meta ->
-                                            when (download?.state) {
+                                            when (download.state) {
                                                 Download.STATE_COMPLETED, Download.STATE_QUEUED, Download.STATE_DOWNLOADING -> {
                                                     DownloadService.sendRemoveDownload(
                                                         context,
@@ -1809,7 +1809,7 @@ fun BottomSheetPlayer(
                                     ),
                                     modifier = Modifier.size(42.dp),
                                 ) {
-                                    when (download?.state) {
+                                    when (download.state) {
                                         Download.STATE_COMPLETED -> {
                                             Icon(
                                                 painter = painterResource(R.drawable.offline),
@@ -1842,13 +1842,13 @@ fun BottomSheetPlayer(
                                         menuState.show {
                                             echo.music.iad1tya.ui.menu.LyricsMenu(
                                                 lyricsProvider = { currentLyrics },
-                                                songProvider = { currentSong?.song },
+                                                songProvider = { currentSong.song },
                                                 mediaMetadataProvider = { mediaMetadata },
                                                 onDismiss = menuState::dismiss,
                                                 onShowOffsetDialog = {
                                                     bottomSheetPageState.show {
                                                         ShowOffsetDialog(
-                                                            songProvider = { currentSong?.song }
+                                                            songProvider = { currentSong.song }
                                                         )
                                                     }
                                                 }
@@ -1879,7 +1879,7 @@ fun BottomSheetPlayer(
                                     modifier = Modifier.size(42.dp),
                                 ) {
                                     HeartBurstIcon(
-                                        isLiked = currentSong?.song?.liked == true,
+                                        isLiked = currentSong.song?.liked == true,
                                         iconSize = 24.dp,
                                         unlikedColor = iconButtonColor
                                     )
@@ -1919,7 +1919,7 @@ fun BottomSheetPlayer(
                                                 navController = navController,
                                                 playerBottomSheetState = state,
                                                 onShowDetailsDialog = {
-                                                    mediaMetadata?.id?.let {
+                                                    mediaMetadata.id?.let {
                                                         bottomSheetPageState.show {
                                                             ShowMediaInfo(it)
                                                         }
@@ -1956,13 +1956,13 @@ fun BottomSheetPlayer(
                                         menuState.show {
                                             echo.music.iad1tya.ui.menu.LyricsMenu(
                                                 lyricsProvider = { currentLyrics },
-                                                songProvider = { currentSong?.song },
+                                                songProvider = { currentSong.song },
                                                 mediaMetadataProvider = { mediaMetadata },
                                                 onDismiss = menuState::dismiss,
                                                 onShowOffsetDialog = {
                                                     bottomSheetPageState.show {
                                                         ShowOffsetDialog(
-                                                            songProvider = { currentSong?.song }
+                                                            songProvider = { currentSong.song }
                                                         )
                                                     }
                                                 }
@@ -1989,7 +1989,7 @@ fun BottomSheetPlayer(
                             ) {
                                 Icon(
                                     painter = painterResource(
-                                        if (currentSong?.song?.liked == true)
+                                        if (currentSong.song?.liked == true)
                                             R.drawable.favorite
                                         else R.drawable.favorite_border
                                     ),
@@ -2019,9 +2019,9 @@ fun BottomSheetPlayer(
                         },
                         onValueChangeFinished = {
                             if (!isListenTogetherGuest) {
-                                sliderPosition?.let {
+                                sliderPosition.let {
                                     if (isCasting) {
-                                        castHandler?.seekTo(it)
+                                        castHandler.seekTo(it)
                                         lastManualSeekTime = System.currentTimeMillis()
                                     } else {
                                         playerConnection.player.seekTo(it)
@@ -2050,9 +2050,9 @@ fun BottomSheetPlayer(
                                 sliderPosition = it.toLong()
                             },
                             onValueChangeFinished = {
-                                sliderPosition?.let {
+                                sliderPosition.let {
                                     if (isCasting) {
-                                        castHandler?.seekTo(it)
+                                        castHandler.seekTo(it)
                                         lastManualSeekTime = System.currentTimeMillis()
                                     } else {
                                         playerConnection.player.seekTo(it)
@@ -2077,9 +2077,9 @@ fun BottomSheetPlayer(
                                 sliderPosition = it.toLong()
                             },
                             onValueChangeFinished = {
-                                sliderPosition?.let {
+                                sliderPosition.let {
                                     if (isCasting) {
-                                        castHandler?.seekTo(it)
+                                        castHandler.seekTo(it)
                                         lastManualSeekTime = System.currentTimeMillis()
                                     } else {
                                         playerConnection.player.seekTo(it)
@@ -2124,9 +2124,9 @@ fun BottomSheetPlayer(
                         },
                         onValueChangeFinished = {
                             if (!isListenTogetherGuest) {
-                                sliderPosition?.let {
+                                sliderPosition.let {
                                     if (isCasting) {
-                                        castHandler?.seekTo(it)
+                                        castHandler.seekTo(it)
                                         lastManualSeekTime = System.currentTimeMillis()
                                     } else {
                                         playerConnection.player.seekTo(it)
@@ -2178,7 +2178,7 @@ fun BottomSheetPlayer(
                 ) {
                     val formatText = remember(technicalTelemetry) {
                         val codecStr = technicalTelemetry.codec ?: ""
-                        val bitrateStr = technicalTelemetry.bitrate?.let { "${it / 1000} kbps" } ?: ""
+                        val bitrateStr = technicalTelemetry.bitrate.let { "${it / 1000} kbps" } ?: ""
                         listOf(codecStr, bitrateStr).filter { it.isNotEmpty() }.joinToString(" • ")
                     }
 
@@ -2186,8 +2186,8 @@ fun BottomSheetPlayer(
 
                     // Beat-synced automix countdown: beats left until the planned mix point,
                     // ticking with playback position and pulsing at the track's tempo.
-                    val mixBeatMs = automixDebug?.outBpm?.takeIf { it > 0f }?.let { 60_000f / it } ?: 500f
-                    val mixBeatsLeft = automixDebug?.triggerTimeMs?.let {
+                    val mixBeatMs = automixDebug.outBpm?.takeIf { it > 0f }?.let { 60_000f / it } ?: 500f
+                    val mixBeatsLeft = automixDebug.triggerTimeMs?.let {
                         kotlin.math.ceil((it - (sliderPosition ?: effectivePosition)) / mixBeatMs).toInt()
                     }
                     val mixCountdownActive = !isCrossfading && mixBeatsLeft != null && mixBeatsLeft in 1..16
@@ -2463,9 +2463,9 @@ fun BottomSheetPlayer(
                                     }
                                     if (isCasting) {
                                         if (castIsPlaying) {
-                                            castHandler?.pause()
+                                            castHandler.pause()
                                         } else {
-                                            castHandler?.play()
+                                            castHandler.play()
                                         }
                                     } else if (playbackState == STATE_ENDED) {
                                         playerConnection.player.seekTo(0, 0)
@@ -2635,7 +2635,7 @@ fun BottomSheetPlayer(
                                             navController = navController,
                                             playerBottomSheetState = state,
                                             onShowDetailsDialog = {
-                                                mediaMetadata?.id?.let {
+                                                mediaMetadata.id?.let {
                                                     bottomSheetPageState.show {
                                                         ShowMediaInfo(it)
                                                     }
@@ -2714,9 +2714,9 @@ fun BottomSheetPlayer(
                                             }
                                             if (isCasting) {
                                                 if (castIsPlaying) {
-                                                    castHandler?.pause()
+                                                    castHandler.pause()
                                                 } else {
-                                                    castHandler?.play()
+                                                    castHandler.play()
                                                 }
                                             } else if (playbackState == STATE_ENDED) {
                                                 playerConnection.player.seekTo(0, 0)
@@ -2849,7 +2849,7 @@ fun BottomSheetPlayer(
                                     onValueChange = { newVolume ->
                                         dragVolume = newVolume
                                         if (isCasting) {
-                                            castHandler?.setVolume(newVolume)
+                                            castHandler.setVolume(newVolume)
                                         } else {
                                             scope.launch(Dispatchers.Default) {
                                                 val newStep = (newVolume * maxSystemVolume).roundToInt()
@@ -3137,12 +3137,12 @@ fun InlineLyricsView(
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
     val currentLyrics by playerConnection.currentLyrics.collectAsState(initial = null)
-    val lyrics = remember(currentLyrics) { currentLyrics?.lyrics?.trim() }
+    val lyrics = remember(currentLyrics) { currentLyrics.lyrics?.trim() }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val database = LocalDatabase.current
 
-    LaunchedEffect(mediaMetadata?.id, currentLyrics) {
+    LaunchedEffect(mediaMetadata.id, currentLyrics) {
         if (mediaMetadata != null && currentLyrics == null) {
             delay(500)
             coroutineScope.launch(Dispatchers.IO) {
