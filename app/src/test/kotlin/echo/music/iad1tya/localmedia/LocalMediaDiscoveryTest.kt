@@ -32,6 +32,20 @@ class LocalMediaDiscoveryTest {
     }
 
     @Test
+    fun `failed scan preserves existing local library`() = runTest {
+        every { scanner.queryTracks(any()) } throws IllegalStateException("MediaStore query failed")
+
+        try {
+            scanner.scanDevice()
+            fail("Expected scan failure")
+        } catch (e: IllegalStateException) {
+            assertEquals("MediaStore query failed", e.message)
+        }
+
+        coVerify(exactly = 0) { database.withTransaction(any()) }
+    }
+
+    @Test
     fun `test mapping from LocalTrackRecord to entities`() = runTest {
         val track = LocalSongScanner.LocalTrackRecord(
             id = "content://media/1",
