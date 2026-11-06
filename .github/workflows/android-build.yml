@@ -2,9 +2,9 @@ name: Android CI
 
 on:
   push:
-    branches: [ "main", "feature/notune-platform-rebuild", "feature/notune-ui-reconstruction", "feature/notune-experience-engine", "release/notune-final", "release/final", "feature/notune-final", "develop/notune-v3.2" ]
+    branches: [ "**" ]
   pull_request:
-    branches: [ "main", "feature/notune-platform-rebuild", "feature/notune-ui-reconstruction", "feature/notune-experience-engine", "release/notune-final", "release/final", "feature/notune-final", "develop/notune-v3.2" ]
+    branches: [ "**" ]
   workflow_dispatch:
 
 env:
@@ -12,7 +12,7 @@ env:
   GRADLE_OPTS: "-Djava.awt.headless=true -Dorg.gradle.daemon=false"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
@@ -128,7 +128,7 @@ jobs:
 
     - name: Publish Public Direct APK Release (No Sign-in Required)
       uses: softprops/action-gh-release@v2
-      if: success() && github.event_name != 'pull_request'
+      if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
       with:
         tag_name: "latest"
         name: "NØTUNE Universal Direct Release"
