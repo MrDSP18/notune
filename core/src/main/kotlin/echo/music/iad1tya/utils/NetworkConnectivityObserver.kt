@@ -20,11 +20,13 @@ class NetworkConnectivityObserver(context: Context) {
 
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
-            _networkStatus.trySend(true)
+            _networkStatus.trySend(isCurrentlyConnected())
         }
 
         override fun onLost(network: Network) {
-            _networkStatus.trySend(false)
+            // Another validated network may still be active (for example Wi-Fi
+            // after mobile data disconnects), so recompute instead of forcing offline.
+            _networkStatus.trySend(isCurrentlyConnected())
         }
     }
 
@@ -37,8 +39,7 @@ class NetworkConnectivityObserver(context: Context) {
         try {
             connectivityManager.registerNetworkCallback(request, networkCallback)
         } catch (e: Exception) {
-            
-            _networkStatus.trySend(true)
+            _networkStatus.trySend(isCurrentlyConnected())
         }
         
         
