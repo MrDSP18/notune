@@ -29,7 +29,8 @@ class PoTokenGenerator {
     @OptIn(DelicateCoroutinesApi::class)
     fun initialize() {
         if (!webViewSupported || webViewBadImpl) return
-        kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {
+        // Intentionally unscoped: pre-warms the PoToken WebView for the app's lifetime, independent of any single caller's scope.
+        GlobalScope.launch(Dispatchers.Main) {
             try {
                 webPoTokenGenLock.withLock {
                     if (webPoTokenGenerator == null) {

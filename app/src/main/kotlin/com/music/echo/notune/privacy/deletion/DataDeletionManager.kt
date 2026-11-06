@@ -59,6 +59,9 @@ class DataDeletionManager @Inject constructor(
             clearAiData()
             database.clearAllData()
             context.dataStore.edit { it.clear() }
+            clearDirectoryChildren(context.cacheDir)
+            clearDirectoryChildren(context.filesDir)
+            clearDirectoryChildren(context.noBackupFilesDir)
 
             // Delete exported files
             val exportDir = File(context.cacheDir, "exports")
@@ -69,6 +72,14 @@ class DataDeletionManager @Inject constructor(
             Timber.d("DATA_DELETION: Full account and data reset executed successfully.")
         } catch (e: Exception) {
             Timber.e(e, "DATA_DELETION: Error during full data reset.")
+        }
+    }
+
+    private fun clearDirectoryChildren(directory: File) {
+        directory.listFiles()?.forEach { child ->
+            if (!child.deleteRecursively() && child.exists()) {
+                throw IllegalStateException("Failed to delete local data: ${child.name}")
+            }
         }
     }
 }

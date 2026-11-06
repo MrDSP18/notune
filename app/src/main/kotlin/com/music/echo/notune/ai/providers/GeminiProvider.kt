@@ -4,8 +4,7 @@ package echo.music.iad1tya.notune.ai.providers
 import android.content.Context
 import echo.music.iad1tya.constants.GeminiApiKey
 import echo.music.iad1tya.notune.ai.*
-import echo.music.iad1tya.utils.dataStore
-import echo.music.iad1tya.utils.get
+import com.music.echo.notune.privacy.security.SecureCredentialStore
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -18,11 +17,12 @@ import javax.inject.Inject
 
 class GeminiProvider @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val client: HttpClient
+    private val client: HttpClient,
+    private val credentials: SecureCredentialStore,
 ) : AiProvider {
     override val type: AiProviderType = AiProviderType.GEMINI
 
-    override suspend fun isConfigured(): Boolean = context.dataStore.get(GeminiApiKey, "").isNotBlank()
+    override suspend fun isConfigured(): Boolean = credentials.get(GeminiApiKey.name).isNotBlank()
 
     override suspend fun getModels(): List<AiModel> = listOf(
         AiModel("gemini-1.5-flash", "Gemini 1.5 Flash (Fast & Free Tier)", listOf(ModelCapability.TEXT_GENERATION, ModelCapability.TOOL_USE)),
@@ -35,7 +35,7 @@ class GeminiProvider @Inject constructor(
         tools: List<AiTool>?,
         systemInstruction: String?
     ): Result<AiResponse> = runCatching {
-        val apiKey = context.dataStore.get(GeminiApiKey, "")
+        val apiKey = credentials.get(GeminiApiKey.name)
         val targetModel = modelId ?: "gemini-1.5-flash"
         val url = "https://generativelanguage.googleapis.com/v1beta/models/$targetModel:generateContent?key=$apiKey"
 
