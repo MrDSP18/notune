@@ -104,7 +104,7 @@ fun PersonDetailsScreen(
                                     verticalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
                                     Text("Known Works & Credits", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                    Divider()
+                                    HorizontalDivider()
                                     if (person.knownWorks.isNotEmpty()) {
                                         person.knownWorks.forEach { work ->
                                             Row(
