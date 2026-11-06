@@ -1,3 +1,4 @@
+
 package echo.music.iad1tya.utils
 
 import android.content.Context
@@ -18,6 +19,7 @@ enum class NetworkQuality {
 }
 
 class NetworkConnectivityObserver(context: Context) {
+
     private val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
@@ -28,19 +30,20 @@ class NetworkConnectivityObserver(context: Context) {
     val networkQuality: Flow<NetworkQuality> = _networkQuality.receiveAsFlow()
 
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+
         override fun onAvailable(network: Network) {
-            _networkStatus.trySend(true)
-            _networkQuality.trySend(getNetworkQuality())
+            updateNetworkState()
         }
 
         override fun onLost(network: Network) {
-            _networkStatus.trySend(false)
-            _networkQuality.trySend(NetworkQuality.OFFLINE)
+            updateNetworkState()
         }
 
-        override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
-            _networkStatus.trySend(isCurrentlyConnected())
-            _networkQuality.trySend(getNetworkQuality())
+        override fun onCapabilitiesChanged(
+            network: Network,
+            networkCapabilities: NetworkCapabilities
+        ) {
+            updateNetworkState()
         }
     }
 
@@ -49,33 +52,54 @@ class NetworkConnectivityObserver(context: Context) {
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
             .build()
-        
+
         try {
             connectivityManager.registerNetworkCallback(request, networkCallback)
         } catch (e: Exception) {
-            _networkStatus.trySend(true)
-            _networkQuality.trySend(NetworkQuality.STABLE_4G)
+            updateNetworkState()
         }
-        
-        val isInitiallyConnected = isCurrentlyConnected()
-        _networkStatus.trySend(isInitiallyConnected)
-        _networkQuality.trySend(getNetworkQuality())
+
+        updateNetworkState()
+    }
+
+    private fun updateNetworkState() {
+        val connected = isCurrentlyConnected()
+
+        _networkStatus.trySend(connected)
+
+        _networkQuality.trySend(
+            if (connected) {
+                getNetworkQuality()
+            } else {
+                NetworkQuality.OFFLINE
+            }
+        )
     }
 
     fun unregister() {
         try {
             connectivityManager.unregisterNetworkCallback(networkCallback)
         } catch (e: Exception) {
-            // Ignored
+            // Callback may already be unregistered.
         }
     }
-    
+
     fun isCurrentlyConnected(): Boolean {
         return try {
             val activeNetwork = connectivityManager.activeNetwork
-            val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
-            val hasInternet = networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-            val isValidated = networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
+            val networkCapabilities =
+                connectivityManager.getNetworkCapabilities(activeNetwork)
+
+            val hasInternet =
+                networkCapabilities?.hasCapability(
+                    NetworkCapabilities.NET_CAPABILITY_INTERNET
+                ) == true
+
+            val isValidated =
+                networkCapabilities?.hasCapability(
+                    NetworkCapabilities.NET_CAPABILITY_VALIDATED
+                ) == true
+
             hasInternet && isValidated
         } catch (e: Exception) {
             false
@@ -85,33 +109,62 @@ class NetworkConnectivityObserver(context: Context) {
     fun isMetered(): Boolean {
         return try {
             val activeNetwork = connectivityManager.activeNetwork
-            val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
-            networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) == false
+            val networkCapabilities =
+                connectivityManager.getNetworkCapabilities(activeNetwork)
+
+            networkCapabilities?.hasCapability(
+                NetworkCapabilities.NET_CAPABILITY_NOT_METERED
+            ) == false
         } catch (e: Exception) {
             false
         }
     }
 
     fun getNetworkQuality(): NetworkQuality {
-        if (!isCurrentlyConnected()) return NetworkQuality.OFFLINE
+        if (!isCurrentlyConnected()) {
+            return NetworkQuality.OFFLINE
+        }
 
         return try {
-            val activeNetwork = connectivityManager.activeNetwork ?: return NetworkQuality.OFFLINE
-            val caps = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return NetworkQuality.OFFLINE
+            val activeNetwork =
+                connectivityManager.activeNetwork
+                    ?: return NetworkQuality.OFFLINE
+
+            val caps =
+                connectivityManager.getNetworkCapabilities(activeNetwork)
+                    ?: return NetworkQuality.OFFLINE
 
             when {
-                caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                    caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
+
                     val linkKbps = caps.linkDownstreamBandwidthKbps
-                    if (linkKbps in 1..2000) NetworkQuality.SLOW_2G_3G else NetworkQuality.EXCELLENT_WIFI
-                }
-                caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
-                    val linkKbps = caps.linkDownstreamBandwidthKbps
-                    when {
-                        linkKbps in 1..1500 -> NetworkQuality.SLOW_2G_3G
-                        !caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) -> NetworkQuality.METERED
-                        else -> NetworkQuality.STABLE_4G
+
+                    if (linkKbps in 1..2000) {
+                        NetworkQuality.SLOW_2G_3G
+                    } else {
+                        NetworkQuality.EXCELLENT_WIFI
                     }
                 }
+
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
+
+                    val linkKbps = caps.linkDownstreamBandwidthKbps
+
+                    when {
+                        linkKbps in 1..1500 ->
+                            NetworkQuality.SLOW_2G_3G
+
+                        !caps.hasCapability(
+                            NetworkCapabilities.NET_CAPABILITY_NOT_METERED
+                        ) ->
+                            NetworkQuality.METERED
+
+                        else ->
+                            NetworkQuality.STABLE_4G
+                    }
+                }
+
                 else -> NetworkQuality.STABLE_4G
             }
         } catch (e: Exception) {

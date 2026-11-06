@@ -275,13 +275,14 @@ constructor(
         val unknownArtist = context.getString(R.string.unknown_artist)
         val unknownTitle = context.getString(R.string.unknown)
         val tracks = mutableListOf<LocalTrackRecord>()
-        context.contentResolver.query(
+        val cursor = context.contentResolver.query(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
             projection,
             selection,
             null,
             "${MediaStore.Audio.Media.TITLE} COLLATE NOCASE ASC, ${MediaStore.Audio.Media._ID} ASC",
-        )?.use { cursor ->
+        ) ?: throw IllegalStateException("MediaStore audio query returned null; preserving the existing local library")
+        cursor.use { cursor ->
             val idIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
             val titleIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
             val displayNameIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)

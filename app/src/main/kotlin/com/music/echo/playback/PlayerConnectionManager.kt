@@ -24,28 +24,54 @@ class PlayerConnectionManager @Inject constructor(
     private val _playerConnection = MutableStateFlow<PlayerConnection?>(null)
     val playerConnection = _playerConnection.asStateFlow()
 
+    private var isBound = false
+
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             if (service is MusicBinder) {
+                _playerConnection.value?.dispose()
                 val connection = PlayerConnection(context, service, database, scope)
                 _playerConnection.value = connection
             }
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
-            _playerConnection.value?.dispose()
-            _playerConnection.value = null
+            clearPlayerConnection()
+        }
+
+        override fun onBindingDied(name: ComponentName?) {
+            try {
+                if (isBound) context.unbindService(this)
+            } finally {
+                isBound = false
+                clearPlayerConnection()
+            }
+        }
+
+        override fun onNullBinding(name: ComponentName?) {
+            onBindingDied(name)
         }
     }
 
+    private fun clearPlayerConnection() {
+        _playerConnection.value?.dispose()
+        _playerConnection.value = null
+    }
+
     fun bind() {
+        if (isBound) return
         val intent = Intent(context, MusicService::class.java)
-        context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        isBound = context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
     }
 
     fun unbind() {
-        context.unbindService(serviceConnection)
-        _playerConnection.value?.dispose()
-        _playerConnection.value = null
+        try {
+            if (isBound) {
+                context.unbindService(serviceConnection)
+            }
+        } finally {
+            isBound = false
+            clearPlayerConnection()
+        }
     }
 }
