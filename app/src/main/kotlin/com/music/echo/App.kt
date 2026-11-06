@@ -32,6 +32,7 @@ import echo.music.iad1tya.utils.CrashHandler
 import echo.music.iad1tya.utils.AppContextHolder
 import echo.music.iad1tya.utils.dataStore
 import echo.music.iad1tya.utils.reportException
+import com.music.echo.notune.privacy.security.SecureCredentialStore
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -126,6 +127,21 @@ class App : Application(), SingletonImageLoader.Factory, Configuration.Provider 
         CrashHandler.install(this)
 
         AppContextHolder.initialize(this)
+        runBlocking(Dispatchers.IO) {
+            SecureCredentialStore(this@App).migrateLegacyCredentials(
+                setOf(
+                    SpotifySpDcKey.name,
+                    SpotifySpKeyKey.name,
+                    SpotifyAccessTokenKey.name,
+                    ProxyPasswordKey.name,
+                    InnerTubeCookieKey.name,
+                    DataSyncIdKey.name,
+                    GeminiApiKey.name,
+                    GroqApiKey.name,
+                    OpenRouterApiKeyExtra.name,
+                ),
+            )
+        }
         echo.music.iad1tya.utils.cipher.CipherDeobfuscator.initialize(this)
         echo.music.iad1tya.utils.YTPlayerUtils.initialize()
 

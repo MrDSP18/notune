@@ -1,5 +1,6 @@
 package echo.music.iad1tya.models
 
+import echo.music.iad1tya.db.entities.Song
 import java.time.LocalDateTime
 
 data class LocalSong(
@@ -29,3 +30,23 @@ data class LocalArtist(
     val songCount: Int,
     val thumbnailUrl: String?
 )
+
+data class LocalFolderNode(
+    val path: String,
+    val name: String,
+    val songCount: Int,
+    val directSongs: List<Song> = emptyList()
+)
+
+data class LocalDuplicateGroup(
+    val titleKey: String,
+    val primaryArtist: String,
+    val duplicates: List<Song>
+)
+
+enum class LocalSmartPlaylistType {
+    RECENTLY_ADDED,
+    MOST_PLAYED,
+    FAVORITES,
+    NEVER_PLAYED
+}

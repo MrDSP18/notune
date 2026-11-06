@@ -360,8 +360,33 @@ val AudioQualityKey = stringPreferencesKey("audioQuality")
 val IpVersionKey = stringPreferencesKey("ipVersion")
 
 enum class AudioQuality {
-    OPUS,
+    AUTO,
+    DATA_SAVER,
+    BALANCED,
+    HIGH_QUALITY,
+    ORIGINAL,
+    OPUS;
+
+    val targetBitrateKbps: Int
+        get() = when (this) {
+            DATA_SAVER -> 64
+            BALANCED -> 128
+            HIGH_QUALITY -> 320
+            ORIGINAL -> 1411
+            AUTO, OPUS -> 160
+        }
 }
+
+val DataSaverModeKey = booleanPreferencesKey("dataSaverMode")
+val AdaptiveStreamingKey = booleanPreferencesKey("adaptiveStreaming")
+val SmartBufferingKey = booleanPreferencesKey("smartBuffering")
+val BassBoostGainKey = floatPreferencesKey("bassBoostGain")
+val TrebleGainKey = floatPreferencesKey("trebleGain")
+val EqualizerPresetKey = stringPreferencesKey("equalizerPreset")
+val LoudnessNormalizationEnabledKey = booleanPreferencesKey("loudnessNormalizationEnabled")
+val LoudnessTargetLufsKey = floatPreferencesKey("loudnessTargetLufs")
+val SafFolderUrisKey = stringSetPreferencesKey("saf_folder_uris")
+val LocalSmartPlaylistsEnabledKey = booleanPreferencesKey("localSmartPlaylistsEnabled")
 
 val DownloadQualityKey = stringPreferencesKey("downloadQuality")
 

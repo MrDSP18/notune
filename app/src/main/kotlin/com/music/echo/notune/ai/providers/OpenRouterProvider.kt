@@ -4,8 +4,7 @@ package echo.music.iad1tya.notune.ai.providers
 import android.content.Context
 import echo.music.iad1tya.constants.OpenRouterApiKeyExtra
 import echo.music.iad1tya.notune.ai.*
-import echo.music.iad1tya.utils.dataStore
-import echo.music.iad1tya.utils.get
+import com.music.echo.notune.privacy.security.SecureCredentialStore
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -17,11 +16,12 @@ import javax.inject.Inject
 
 class OpenRouterProvider @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val client: HttpClient
+    private val client: HttpClient,
+    private val credentials: SecureCredentialStore,
 ) : AiProvider {
     override val type: AiProviderType = AiProviderType.OPENROUTER
 
-    override suspend fun isConfigured(): Boolean = context.dataStore.get(OpenRouterApiKeyExtra, "").isNotBlank()
+    override suspend fun isConfigured(): Boolean = credentials.get(OpenRouterApiKeyExtra.name).isNotBlank()
 
     override suspend fun getModels(): List<AiModel> = listOf(
         AiModel("google/gemini-2.0-flash-exp:free", "Gemini 2.0 Flash (Free)", listOf(ModelCapability.TEXT_GENERATION), isFree = true),
@@ -36,7 +36,7 @@ class OpenRouterProvider @Inject constructor(
         systemInstruction: String?,
         history: List<AiChatMessage>?
     ): Result<AiResponse> = runCatching {
-        val apiKey = context.dataStore.get(OpenRouterApiKeyExtra, "")
+        val apiKey = credentials.get(OpenRouterApiKeyExtra.name)
         val targetModel = modelId ?: "google/gemini-2.0-flash-exp:free"
         val url = "https://openrouter.ai/api/v1/chat/completions"
 

@@ -86,37 +86,86 @@ class EQProfileRepository @Inject constructor(
     private fun getDefaultNotuneProfiles(): List<SavedEQProfile> {
         return listOf(
             SavedEQProfile(
-                id = "preset_bass_punch_pro",
-                name = "NØTUNE Bass Punch Pro",
-                deviceModel = "All Headphones / Speakers",
-                preamp = -2.0,
+                id = "preset_flat",
+                name = "Flat (Default)",
+                deviceModel = "Flat Response",
+                preamp = 0.0,
                 isCustom = false,
                 isActive = true,
                 bands = listOf(
-                    ParametricEQBand(frequency = 50.0, gain = 6.5, q = 1.0, filterType = FilterType.LSC),
-                    ParametricEQBand(frequency = 105.0, gain = 4.0, q = 1.41, filterType = FilterType.PK),
-                    ParametricEQBand(frequency = 250.0, gain = -1.5, q = 1.2, filterType = FilterType.PK),
-                    ParametricEQBand(frequency = 3500.0, gain = 2.0, q = 1.41, filterType = FilterType.PK),
-                    ParametricEQBand(frequency = 8000.0, gain = 3.5, q = 1.0, filterType = FilterType.HSC)
+                    ParametricEQBand(frequency = 31.0, gain = 0.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 62.0, gain = 0.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 125.0, gain = 0.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 250.0, gain = 0.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 500.0, gain = 0.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 1000.0, gain = 0.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 2000.0, gain = 0.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 4000.0, gain = 0.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 8000.0, gain = 0.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 16000.0, gain = 0.0, q = 1.41, filterType = FilterType.PK)
                 )
             ),
             SavedEQProfile(
-                id = "preset_club_edm_bass",
-                name = "NØTUNE Club & EDM Bass",
-                deviceModel = "Subwoofer / Bass Boost",
-                preamp = -2.5,
+                id = "preset_bass_boost",
+                name = "Bass Boost Pro",
+                deviceModel = "All Headphones / Speakers",
+                preamp = -2.0,
                 isCustom = false,
                 isActive = false,
                 bands = listOf(
-                    ParametricEQBand(frequency = 40.0, gain = 8.0, q = 0.9, filterType = FilterType.LSC),
-                    ParametricEQBand(frequency = 90.0, gain = 5.5, q = 1.5, filterType = FilterType.PK),
-                    ParametricEQBand(frequency = 12000.0, gain = 4.0, q = 1.0, filterType = FilterType.HSC)
+                    ParametricEQBand(frequency = 31.0, gain = 7.0, q = 1.0, filterType = FilterType.LSC),
+                    ParametricEQBand(frequency = 62.0, gain = 5.5, q = 1.2, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 125.0, gain = 3.5, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 250.0, gain = 1.0, q = 1.41, filterType = FilterType.PK)
+                )
+            ),
+            SavedEQProfile(
+                id = "preset_rock",
+                name = "Rock",
+                deviceModel = "All Headphones",
+                preamp = -1.5,
+                isCustom = false,
+                isActive = false,
+                bands = listOf(
+                    ParametricEQBand(frequency = 62.0, gain = 4.5, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 125.0, gain = 3.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 250.0, gain = -1.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 2000.0, gain = 2.5, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 8000.0, gain = 4.0, q = 1.41, filterType = FilterType.PK)
+                )
+            ),
+            SavedEQProfile(
+                id = "preset_pop",
+                name = "Pop",
+                deviceModel = "All Headphones",
+                preamp = -1.0,
+                isCustom = false,
+                isActive = false,
+                bands = listOf(
+                    ParametricEQBand(frequency = 62.0, gain = 2.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 250.0, gain = 3.5, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 1000.0, gain = 2.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 4000.0, gain = 3.0, q = 1.41, filterType = FilterType.PK)
+                )
+            ),
+            SavedEQProfile(
+                id = "preset_classical",
+                name = "Classical",
+                deviceModel = "Studio Monitors",
+                preamp = 0.0,
+                isCustom = false,
+                isActive = false,
+                bands = listOf(
+                    ParametricEQBand(frequency = 62.0, gain = 4.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 250.0, gain = 2.5, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 4000.0, gain = 2.0, q = 1.41, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 8000.0, gain = 3.5, q = 1.41, filterType = FilterType.PK)
                 )
             ),
             SavedEQProfile(
                 id = "preset_vocal_acoustic",
-                name = "NØTUNE Vocal & Acoustic Pure",
-                deviceModel = "Studio Monitors / Earbuds",
+                name = "Vocal & Acoustic",
+                deviceModel = "Earbuds / Studio Monitors",
                 preamp = -1.0,
                 isCustom = false,
                 isActive = false,
@@ -124,6 +173,19 @@ class EQProfileRepository @Inject constructor(
                     ParametricEQBand(frequency = 80.0, gain = 2.0, q = 1.2, filterType = FilterType.LSC),
                     ParametricEQBand(frequency = 1000.0, gain = 3.0, q = 1.41, filterType = FilterType.PK),
                     ParametricEQBand(frequency = 4000.0, gain = 2.5, q = 1.41, filterType = FilterType.PK)
+                )
+            ),
+            SavedEQProfile(
+                id = "preset_electronic",
+                name = "Electronic & EDM",
+                deviceModel = "Subwoofer / Bass Boost",
+                preamp = -2.0,
+                isCustom = false,
+                isActive = false,
+                bands = listOf(
+                    ParametricEQBand(frequency = 40.0, gain = 6.0, q = 0.9, filterType = FilterType.LSC),
+                    ParametricEQBand(frequency = 125.0, gain = 4.0, q = 1.5, filterType = FilterType.PK),
+                    ParametricEQBand(frequency = 8000.0, gain = 3.5, q = 1.0, filterType = FilterType.HSC)
                 )
             )
         )

@@ -18,11 +18,12 @@ class LocalMediaRepositoryTest {
 
     private val database = mockk<MusicDatabase>()
     private val scanner = mockk<LocalSongScanner>()
+    private val safScanner = mockk<com.music.echo.localmedia.SafFolderScanner>()
     private lateinit var repository: LocalMediaRepository
 
     @Before
     fun setUp() {
-        repository = LocalMediaRepositoryImpl(database, scanner)
+        repository = LocalMediaRepositoryImpl(database, scanner, safScanner)
     }
 
     @Test

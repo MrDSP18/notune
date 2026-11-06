@@ -21,10 +21,7 @@ class GroqProvider @Inject constructor(
 ) : AiProvider {
     override val type: AiProviderType = AiProviderType.GROQ
 
-    override suspend fun isConfigured(): Boolean {
-        val userKey = context.dataStore.get(GroqApiKey, "")
-        return userKey.isNotBlank() || echo.music.iad1tya.BuildConfig.GROQ_API_KEY.isNotBlank()
-    }
+    override suspend fun isConfigured(): Boolean = context.dataStore.get(GroqApiKey, "").isNotBlank()
 
     override suspend fun getModels(): List<AiModel> = listOf(
         AiModel("llama-3.3-70b-versatile", "Llama 3.3 70B (Powerful)", listOf(ModelCapability.TEXT_GENERATION, ModelCapability.TOOL_USE)),
@@ -39,10 +36,7 @@ class GroqProvider @Inject constructor(
         systemInstruction: String?,
         history: List<AiChatMessage>?
     ): Result<AiResponse> = runCatching {
-        val userKey = context.dataStore.get(GroqApiKey, "")
-        val apiKey = userKey.ifBlank { echo.music.iad1tya.BuildConfig.GROQ_API_KEY }
-        if (apiKey.isBlank()) throw Exception("Groq API Key not configured")
-
+        val apiKey = context.dataStore.get(GroqApiKey, "")
         val targetModel = modelId ?: "llama-3.3-70b-versatile"
         val url = "https://api.groq.com/openai/v1/chat/completions"
 
@@ -53,15 +47,6 @@ class GroqProvider @Inject constructor(
                 put("content", systemInstruction)
             })
         }
-        
-        // Add history
-        history?.forEach { msg ->
-            messages.add(buildJsonObject {
-                put("role", if (msg.role == "assistant") "assistant" else "user")
-                put("content", msg.content)
-            })
-        }
-
         messages.add(buildJsonObject {
             put("role", "user")
             put("content", buildJsonArray { add(buildJsonObject { put("type", "text"); put("text", prompt) }) })

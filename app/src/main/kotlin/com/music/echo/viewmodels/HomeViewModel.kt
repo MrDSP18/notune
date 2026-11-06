@@ -73,6 +73,7 @@ data class CommunityPlaylistItem(
     val songs: List<SongItem>
 )
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     @ApplicationContext val context: Context,
