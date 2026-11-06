@@ -28,7 +28,7 @@ import echo.music.iad1tya.notune.intelligence.knowledge.PersonDetails
 fun PersonDetailsScreen(
     personId: String,
     navController: NavController,
-    viewModel: KnowledgeViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    viewModel: KnowledgeViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel()
 ) {
     val uiState by viewModel.personState.collectAsState()
 
