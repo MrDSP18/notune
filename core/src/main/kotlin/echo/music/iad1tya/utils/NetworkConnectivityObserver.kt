@@ -28,6 +28,10 @@ class NetworkConnectivityObserver(context: Context) {
             // after mobile data disconnects), so recompute instead of forcing offline.
             _networkStatus.trySend(isCurrentlyConnected())
         }
+
+        override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
+            _networkStatus.trySend(isCurrentlyConnected())
+        }
     }
 
     init {
