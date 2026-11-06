@@ -24,6 +24,8 @@ class PlayerConnectionManager @Inject constructor(
     private val _playerConnection = MutableStateFlow<PlayerConnection?>(null)
     val playerConnection = _playerConnection.asStateFlow()
 
+    private var isBound = false
+
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             if (service is MusicBinder) {
@@ -39,12 +41,16 @@ class PlayerConnectionManager @Inject constructor(
     }
 
     fun bind() {
+        if (isBound) return
         val intent = Intent(context, MusicService::class.java)
-        context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        isBound = context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
     }
 
     fun unbind() {
-        context.unbindService(serviceConnection)
+        if (isBound) {
+            context.unbindService(serviceConnection)
+            isBound = false
+        }
         _playerConnection.value?.dispose()
         _playerConnection.value = null
     }
