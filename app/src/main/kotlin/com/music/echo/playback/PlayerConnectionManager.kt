@@ -36,9 +36,26 @@ class PlayerConnectionManager @Inject constructor(
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
-            _playerConnection.value?.dispose()
-            _playerConnection.value = null
+            clearPlayerConnection()
         }
+
+        override fun onBindingDied(name: ComponentName?) {
+            try {
+                if (isBound) context.unbindService(this)
+            } finally {
+                isBound = false
+                clearPlayerConnection()
+            }
+        }
+
+        override fun onNullBinding(name: ComponentName?) {
+            onBindingDied(name)
+        }
+    }
+
+    private fun clearPlayerConnection() {
+        _playerConnection.value?.dispose()
+        _playerConnection.value = null
     }
 
     fun bind() {
@@ -54,8 +71,7 @@ class PlayerConnectionManager @Inject constructor(
             }
         } finally {
             isBound = false
-            _playerConnection.value?.dispose()
-            _playerConnection.value = null
+            clearPlayerConnection()
         }
     }
 }
