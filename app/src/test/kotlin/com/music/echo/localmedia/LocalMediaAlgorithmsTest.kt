@@ -8,7 +8,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LocalMediaAlgorithmsTest {
-
     @Test
     fun duplicateNormalizationPreservesTamilLetters() {
         assertEquals("வணக்கம்", DuplicateSongDetector.normalize("வணக்கம்"))
@@ -28,15 +27,22 @@ class LocalMediaAlgorithmsTest {
     }
 
     @Test
+    fun recommendationsHandleZeroPlayHistoryWithoutNaN() {
+        val ranked = LocalRecommendationEngine.rankSongs(
+            listOf(track("1", "One", "Artist A", 0L), track("2", "Two", "Artist B", 0L)),
+            2
+        )
+        assertEquals(2, ranked.size)
+    }
+
+    @Test
     fun recommendationsDiversifyArtistsAfterStrongPersonalMatch() {
         val songs = listOf(
             track("1", "Favorite", "Artist A", 120L, liked = true, album = "Album A"),
             track("2", "Another A", "Artist A", 90L, album = "Album A"),
             track("3", "Artist B", "Artist B", 60L, album = "Album B")
         )
-
         val ranked = LocalRecommendationEngine.rankSongs(songs, 3)
-
         assertEquals(3, ranked.size)
         assertEquals("1", ranked.first().song.id)
         assertEquals("Artist B", ranked[1].artists.first().name)
@@ -48,7 +54,7 @@ class LocalMediaAlgorithmsTest {
         artist: String,
         playTime: Long,
         liked: Boolean = false,
-        album: String
+        album: String = "Unknown"
     ) = Song(
         song = SongEntity(
             id = id,
