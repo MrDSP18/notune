@@ -16,6 +16,9 @@ class BiquadFilter(
     private val filterType: FilterType = FilterType.PK
 ) {
     
+    private val safeGain = if (gain.isFinite()) gain.coerceIn(-18.0, 18.0) else 0.0
+    private val safeQ = if (q.isFinite()) q.coerceIn(0.1, 18.0) else 1.41
+
     private var a0 = 0.0
     private var a1 = 0.0
     private var a2 = 0.0
@@ -45,20 +48,36 @@ class BiquadFilter(
     }
 
     private fun normalizeCoefficients(rawB0: Double, rawB1: Double, rawB2: Double, rawA0: Double, rawA1: Double, rawA2: Double) {
-        if (rawA0 == 0.0 || rawA0.isNaN() || rawA0.isInfinite()) {
+        val raw = doubleArrayOf(rawB0, rawB1, rawB2, rawA0, rawA1, rawA2)
+        if (!raw.all { it.isFinite() } || kotlin.math.abs(rawA0) < 1.0e-12) {
             setPassthrough()
             return
         }
-        b0 = rawB0 / rawA0
-        b1 = rawB1 / rawA0
-        b2 = rawB2 / rawA0
-        a1 = rawA1 / rawA0
-        a2 = rawA2 / rawA0
+
+        val normalized = doubleArrayOf(
+            rawB0 / rawA0,
+            rawB1 / rawA0,
+            rawB2 / rawA0,
+            rawA1 / rawA0,
+            rawA2 / rawA0
+        )
+        if (!normalized.all { it.isFinite() }) {
+            setPassthrough()
+            return
+        }
+
+        b0 = normalized[0]
+        b1 = normalized[1]
+        b2 = normalized[2]
+        a1 = normalized[3]
+        a2 = normalized[4]
         a0 = 1.0
     }
 
     private fun calculateCoefficients() {
-        if (sampleRate <= 0 || frequency <= 0.0 || frequency >= sampleRate / 2.0 || q <= 0.0) {
+        if (sampleRate <= 0 || !frequency.isFinite() || frequency <= 0.0 ||
+            frequency >= sampleRate / 2.0 || !gain.isFinite() || !q.isFinite() || q <= 0.0
+        ) {
             setPassthrough()
             return
         }
@@ -72,11 +91,11 @@ class BiquadFilter(
 
     
     private fun calculatePeakingCoefficients() {
-        val A = 10.0.pow(gain / 40.0) 
+        val A = 10.0.pow(safeGain / 40.0) 
         val omega = 2.0 * PI * frequency / sampleRate
         val sinOmega = sin(omega)
         val cosOmega = cos(omega)
-        val alpha = sinOmega / (2.0 * q)
+        val alpha = sinOmega / (2.0 * safeQ)
 
         
         b0 = 1.0 + alpha * A
@@ -92,7 +111,7 @@ class BiquadFilter(
 
     
     private fun calculateLowShelfCoefficients() {
-        val A = sqrt(10.0.pow(gain / 20.0)) 
+        val A = sqrt(10.0.pow(safeGain / 20.0)) 
         val omega = 2.0 * PI * frequency / sampleRate
         val sinOmega = sin(omega)
         val cosOmega = cos(omega)
@@ -118,7 +137,7 @@ class BiquadFilter(
 
     
     private fun calculateHighShelfCoefficients() {
-        val A = sqrt(10.0.pow(gain / 20.0)) 
+        val A = sqrt(10.0.pow(safeGain / 20.0)) 
         val omega = 2.0 * PI * frequency / sampleRate
         val sinOmega = sin(omega)
         val cosOmega = cos(omega)
@@ -144,34 +163,44 @@ class BiquadFilter(
 
     
     fun processSample(input: Double): Double {
-        val output = b0 * input + b1 * x1L + b2 * x2L - a1 * y1L - a2 * y2L
+        if (!input.isFinite()) {
+            reset()
+            return 0.0
+        }
 
-        
+        val output = b0 * input + b1 * x1L + b2 * x2L - a1 * y1L - a2 * y2L
+        if (!output.isFinite()) {
+            reset()
+            return 0.0
+        }
+
         x2L = x1L
         x1L = input
         y2L = y1L
         y1L = output
-
         return output
     }
 
     
     fun processStereo(inputLeft: Double, inputRight: Double): Pair<Double, Double> {
-        
-        val outputLeft = b0 * inputLeft + b1 * x1L + b2 * x2L - a1 * y1L - a2 * y2L
+        val left = inputLeft.takeIf { it.isFinite() } ?: 0.0
+        val right = inputRight.takeIf { it.isFinite() } ?: 0.0
+        val outputLeft = b0 * left + b1 * x1L + b2 * x2L - a1 * y1L - a2 * y2L
+        val outputRight = b0 * right + b1 * x1R + b2 * x2R - a1 * y1R - a2 * y2R
+        if (!outputLeft.isFinite() || !outputRight.isFinite()) {
+            reset()
+            return 0.0 to 0.0
+        }
+
         x2L = x1L
-        x1L = inputLeft
+        x1L = left
         y2L = y1L
         y1L = outputLeft
-
-        
-        val outputRight = b0 * inputRight + b1 * x1R + b2 * x2R - a1 * y1R - a2 * y2R
         x2R = x1R
-        x1R = inputRight
+        x1R = right
         y2R = y1R
         y1R = outputRight
-
-        return Pair(outputLeft, outputRight)
+        return outputLeft to outputRight
     }
 
     

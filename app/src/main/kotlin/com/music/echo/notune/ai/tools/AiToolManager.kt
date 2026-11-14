@@ -89,7 +89,7 @@ class AiToolManager @Inject constructor(
                 
                 if (resolvedSongs.isNotEmpty()) {
                     player.playQueue(ListQueue(name, resolvedSongs.map { it.toMediaItem() }, 0))
-                    "I've created and started the playlist '$name' with ${resolvedSongs.size} songs."
+                    "Started a playback queue named '$name' with ${resolvedSongs.size} resolved tracks. This action does not save a permanent playlist."
                 } else {
                     "I suggested some songs but couldn't find them to play."
                 }
@@ -122,7 +122,7 @@ class AiToolManager @Inject constructor(
             }
             "explain_song" -> {
                 val query = toolCall.arguments["query"] ?: return "Error: Missing query"
-                "NØTUNE Engine: Fetching lyrical insights for $query..."
+                "Song explanation is not connected to a verified lyrics or metadata source yet. I won't invent details for $query."
             }
             "change_theme" -> {
                 val themeId = toolCall.arguments["theme_id"] ?: "notune_pure"
@@ -146,14 +146,14 @@ class AiToolManager @Inject constructor(
             }
             "set_sleep_timer" -> {
                 val minutes = toolCall.arguments["minutes"]?.toIntOrNull() ?: 30
-                "Sleep timer set for $minutes minutes."
+                "Sleep timer action is not connected to the playback timer service yet. No timer was started."
             }
             "get_vibe_check" -> {
                 aiSuiteManager.getVibeCheck()
             }
             "get_song_trivia" -> {
                 val query = toolCall.arguments["query"] ?: "current track"
-                "NØTUNE Neural Matrix Trivia: $query is recognized for its unique acoustic signature and cultural resonance in the futuristic synth-pop era."
+                "Verified trivia is not available for $query yet. I won't return generated facts as if they were verified."
             }
             "get_artist_journey" -> {
                 val artist = toolCall.arguments["artist"] ?: "The Weeknd"
@@ -273,7 +273,7 @@ class AiToolManager @Inject constructor(
                 context.dataStore.edit { it[echo.music.iad1tya.constants.AppearanceModeKey] = mode.uppercase() }
                 "Appearance mode set to '$mode'."
             }
-            else -> "NØTUNE AI Tool '${toolCall.functionName}' executed successfully."
+            else -> "This NØTUNE action is not implemented: ${toolCall.functionName}. No action was performed."
         }
     }
 }

@@ -62,6 +62,46 @@ class BiquadFilterTest {
     }
 
     @Test
+    fun testNonFiniteGainFallsBackToStablePassthrough() {
+        val filter = BiquadFilter(
+            sampleRate = 48000,
+            frequency = 1000.0,
+            gain = Double.NaN,
+            q = 1.0,
+            filterType = FilterType.PK
+        )
+        assertEquals(0.4, filter.processSample(0.4), 0.0001)
+    }
+
+    @Test
+    fun testExtremeGainAndQRemainFinite() {
+        val filter = BiquadFilter(
+            sampleRate = 48000,
+            frequency = 1000.0,
+            gain = 10000.0,
+            q = 0.000001,
+            filterType = FilterType.PK
+        )
+        repeat(1000) {
+            val output = filter.processSample(if (it == 0) 1.0 else 0.0)
+            assertTrue("Filter output must remain finite", output.isFinite())
+        }
+    }
+
+    @Test
+    fun testNonFiniteInputDoesNotPoisonFilterState() {
+        val filter = BiquadFilter(
+            sampleRate = 44100,
+            frequency = 1000.0,
+            gain = 3.0,
+            q = 1.0,
+            filterType = FilterType.PK
+        )
+        assertEquals(0.0, filter.processSample(Double.NaN), 0.000001)
+        assertTrue(filter.processSample(0.25).isFinite())
+    }
+
+    @Test
     fun testStereoProcessingAndReset() {
         val filter = BiquadFilter(
             sampleRate = 48000,

@@ -126,11 +126,11 @@ class AiEngine @Inject constructor(
         prompt: String,
         systemInstruction: String? = null,
         history: List<AiChatMessage>? = null,
-        maxSteps: Int = 4
+        maxSteps: Int = 4,
+        toolExecutor: (suspend (ToolCall) -> String)? = null
     ): Result<AiResponse> {
         val fullSystemInstruction = systemInstruction ?: "NØTUNE Neural Matrix Core"
         val tools = getMusicTools()
-
         val conversation = (history?.toMutableList() ?: mutableListOf()).apply {
             add(AiChatMessage("user", prompt))
         }
@@ -154,19 +154,40 @@ class AiEngine @Inject constructor(
                 return Result.success(response)
             }
 
-            // Real execution of AI tool calls
-            val toolManager = aiToolManagerProvider.get()
+            val executeSingleTool: suspend (ToolCall) -> String = { call ->
+                if (toolExecutor != null) {
+                    toolExecutor(call)
+                } else {
+                    aiToolManagerProvider.get().executeTool(call)
+                }
+            }
+
             val toolResults = mutableListOf<String>()
 
             for (toolCall in toolCalls) {
                 Timber.d("AI_ENGINE: Executing tool %s with arguments: %s", toolCall.functionName, toolCall.arguments)
                 val executionOutput = try {
-                    toolManager.executeTool(toolCall)
+                    executeSingleTool(toolCall)
                 } catch (e: Exception) {
                     Timber.e(e, "AI_ENGINE: Failed to execute tool %s", toolCall.functionName)
                     "Tool execution error: ${e.message}"
                 }
                 toolResults.add("TOOL_RESULT [${toolCall.functionName}]: $executionOutput")
+
+                // If user said "play X" and tool searched for songs, automatically play the first resolved song ID
+                val isPlayRequest = prompt.trimStart().lowercase().let {
+                    it.startsWith("play ") || it.startsWith("listen to ") || it.startsWith("put on ")
+                }
+                if (isPlayRequest && toolCall.functionName == "search_songs") {
+                    val songId = Regex("\\(ID:\\s*([^)]+)\\)", RegexOption.IGNORE_CASE)
+                        .find(executionOutput)?.groupValues?.getOrNull(1)?.trim()
+                    if (!songId.isNullOrBlank()) {
+                        val playResult = runCatching {
+                            executeSingleTool(ToolCall(functionName = "play_song", arguments = mapOf("song_id" to songId)))
+                        }.getOrElse { error -> "Playback failed: ${error.message ?: "Unknown error"}" }
+                        toolResults.add("TOOL_RESULT [play_song]: $playResult")
+                    }
+                }
             }
 
             // Append assistant tool request and user feedback results to conversation history
