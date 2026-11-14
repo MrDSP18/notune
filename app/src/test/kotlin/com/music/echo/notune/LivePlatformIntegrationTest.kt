@@ -36,6 +36,12 @@ class LivePlatformIntegrationTest {
         assertEquals("https://notune-api.dharansundarapandiyan24.workers.dev/api/v1/metrics", PlatformConfig.metricsEndpoint())
         assertEquals("https://notune-api.dharansundarapandiyan24.workers.dev/api/v1/version", PlatformConfig.versionEndpoint())
         assertEquals("https://notune-api.dharansundarapandiyan24.workers.dev/api/v1/releases/latest?platform=android&channel=stable", PlatformConfig.latestReleaseEndpoint())
+        assertEquals("https://notune-api.dharansundarapandiyan24.workers.dev/api/v1/sync", PlatformConfig.syncEndpoint())
+        assertEquals("https://notune-api.dharansundarapandiyan24.workers.dev/api/v1/auth/register", PlatformConfig.authRegisterEndpoint())
+        assertEquals("https://notune-api.dharansundarapandiyan24.workers.dev/api/v1/auth/login", PlatformConfig.authLoginEndpoint())
+        assertEquals("https://notune-api.dharansundarapandiyan24.workers.dev/api/v1/auth/refresh", PlatformConfig.authRefreshEndpoint())
+        assertEquals("https://notune-api.dharansundarapandiyan24.workers.dev/api/v1/auth/logout", PlatformConfig.authLogoutEndpoint())
+        assertEquals("https://notune-api.dharansundarapandiyan24.workers.dev/api/v1/auth/me", PlatformConfig.authMeEndpoint())
         assertEquals("wss://notune-api.dharansundarapandiyan24.workers.dev/api/v1/rooms/ROOM123/ws", PlatformConfig.roomWebSocketEndpoint("ROOM123"))
     }
 

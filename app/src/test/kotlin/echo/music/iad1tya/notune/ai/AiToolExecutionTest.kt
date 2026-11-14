@@ -79,4 +79,32 @@ class AiToolExecutionTest {
         
         assertTrue("Error: Player not connected" in result)
     }
+
+    @Test
+    fun `test set_sleep_timer tool execution`() = runTest {
+        val service = mockk<echo.music.iad1tya.playback.MusicService>(relaxed = true)
+        every { playerConnection.service } returns service
+
+        val call = ToolCall(functionName = "set_sleep_timer", arguments = mapOf("minutes" to "45"))
+        val result = toolManager.executeTool(call)
+
+        assertTrue(result.contains("Sleep timer set for 45 minutes"))
+    }
+
+    @Test
+    fun `test explain_song tool execution`() = runTest {
+        val meta = echo.music.iad1tya.models.MediaMetadata(
+            id = "s1",
+            title = "Blinding Lights",
+            artists = listOf(echo.music.iad1tya.models.MediaMetadata.Artist("a1", "The Weeknd")),
+            duration = 200
+        )
+        every { playerConnection.mediaMetadata } returns kotlinx.coroutines.flow.MutableStateFlow(meta)
+
+        val call = ToolCall(functionName = "explain_song", arguments = emptyMap())
+        val result = toolManager.executeTool(call)
+
+        assertTrue(result.contains("Blinding Lights"))
+        assertTrue(result.contains("The Weeknd"))
+    }
 }

@@ -40,6 +40,16 @@ object PlatformConfig {
     }
 
     fun sharesEndpoint(): String = "${getBaseUrl()}/api/v1/shares"
+    fun syncEndpoint(): String = "${getBaseUrl()}/api/v1/sync"
+    fun roomsEndpoint(): String = "${getBaseUrl()}/api/v1/rooms"
+    fun roomMessagesEndpoint(roomCode: String): String = "${getBaseUrl()}/api/v1/rooms/${roomCode.trim().uppercase()}/messages"
+    fun storageEndpoint(key: String): String = "${getBaseUrl()}/api/v1/storage/${key.trim()}"
+
+    fun authRegisterEndpoint(): String = "${getBaseUrl()}/api/v1/auth/register"
+    fun authLoginEndpoint(): String = "${getBaseUrl()}/api/v1/auth/login"
+    fun authRefreshEndpoint(): String = "${getBaseUrl()}/api/v1/auth/refresh"
+    fun authLogoutEndpoint(): String = "${getBaseUrl()}/api/v1/auth/logout"
+    fun authMeEndpoint(): String = "${getBaseUrl()}/api/v1/auth/me"
 
     fun roomWebSocketEndpoint(roomId: String): String {
         val cleanedRoomId = roomId.trim().replace("^#".toRegex(), "")

@@ -26,7 +26,12 @@ enum class LyricsLanguage(
     ASSAMESE("as", "Assamese", "অসমীয়া", "Bengali"),
     URDU("ur", "Urdu", "اردو", "Perso-Arabic"),
     KONKANI("kok", "Konkani", "कोंकणी", "Devanagari"),
-    SANSKRIT("sa", "Sanskrit", "संस्कृतम्", "Devanagari");
+    SANSKRIT("sa", "Sanskrit", "संस्कृतम्", "Devanagari"),
+    SPANISH("es", "Spanish", "Español", "Latin"),
+    FRENCH("fr", "French", "Français", "Latin"),
+    GERMAN("de", "German", "Deutsch", "Latin"),
+    JAPANESE("ja", "Japanese", "日本語", "Japanese"),
+    KOREAN("ko", "Korean", "한국어", "Hangul");
 
     companion object {
         fun fromCode(code: String): LyricsLanguage =

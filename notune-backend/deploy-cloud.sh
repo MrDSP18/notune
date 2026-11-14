@@ -33,9 +33,9 @@ echo "✅ Wrangler authenticated."
 
 # 2. D1 Database Check & Remote Setup
 echo "🗄️ 2. Executing Cloudflare D1 Database Migration..."
-echo "Running schema.sql against remote D1 database 'notune-db'..."
+echo "Applying migrations from d1-migrations against remote D1 database 'notune-db'..."
 
-npx wrangler d1 execute notune-db --remote --file=schema.sql || {
+npx wrangler d1 migrations apply notune-db --remote || {
     echo "⚠️ Remote D1 database execute failed or notune-db does not exist yet."
     echo "To create the D1 database for your account, run:"
     echo "   npx wrangler d1 create notune-db"

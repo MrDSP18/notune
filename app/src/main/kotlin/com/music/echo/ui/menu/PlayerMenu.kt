@@ -179,7 +179,7 @@ fun PlayerMenu(
     val (exportDirectoryUri) = rememberPreference(key = ExportDirectoryUriKey, defaultValue = "")
     val (exportingSongIds) = rememberPreference(key = ExportingSongIdsKey, defaultValue = "")
     val (exportedSongIds) = rememberPreference(key = ExportedSongIdsKey, defaultValue = "")
-    val (showLyricsOnPlayer, onShowLyricsOnPlayerChange) = rememberPreference(key = ShowLyricsOnPlayerKey, defaultValue = false)
+    val (showLyricsOnPlayer, onShowLyricsOnPlayerChange) = rememberPreference(key = ShowLyricsOnPlayerKey, defaultValue = true)
     
     val (exportProgressString) = rememberPreference(key = echo.music.iad1tya.constants.ExportProgressKey, defaultValue = "")
     val exportProgress = remember(exportProgressString, mediaMetadata.id) {
@@ -781,6 +781,21 @@ fun PlayerMenu(
                             },
                             onClick = {
                                 navController.navigate("equalizer")
+                                onDismiss()
+                            }
+                        ),
+                        Material3MenuItemData(
+                            title = { Text(text = "Audio Lab 2.0") },
+                            description = { Text(text = "DSP Pipeline, ReplayGain & Bass Boost") },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.graphic_eq),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            onClick = {
+                                navController.navigate("settings/equalizer")
                                 onDismiss()
                             }
                         ),

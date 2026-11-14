@@ -1,5 +1,13 @@
 package echo.music.iad1tya.notune
 
+import android.app.Activity
+import android.content.Intent
+import android.speech.RecognizerIntent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -53,6 +61,18 @@ fun AskNoTuneScreen(
     var textFieldValue by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     val playerConnection = LocalPlayerConnection.current
+    val context = LocalContext.current
+
+    val speechRecognizerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+            if (!spokenText.isNullOrBlank()) {
+                viewModel.sendMessage(spokenText)
+            }
+        }
+    }
 
     val promptSuggestions = remember {
         listOf(
@@ -223,6 +243,26 @@ fun AskNoTuneScreen(
 
                     IconButton(
                         onClick = {
+                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to NØTUNE AI DJ...")
+                            }
+                            try {
+                                speechRecognizerLauncher.launch(intent)
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Voice recognition not available on device", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Mic,
+                            contentDescription = "Voice Input",
+                            tint = Color(0xFFFF0031)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = {
                             if (textFieldValue.isNotBlank()) {
                                 viewModel.sendMessage(textFieldValue)
                                 textFieldValue = ""
@@ -290,11 +330,59 @@ fun ChatBubble(message: ChatMessage) {
                 )
                 .padding(14.dp)
         ) {
-            Text(
-                text = message.content,
-                color = if (isUser) Color.White else MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Column {
+                Text(
+                    text = message.content,
+                    color = if (isUser) Color.White else MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                if (!isUser) {
+                    val lower = message.content.lowercase()
+                    when {
+                        lower.contains("sleep timer") || lower.contains("timer") -> {
+                            Spacer(Modifier.height(8.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFFFF0031).copy(alpha = 0.15f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "⏱ SLEEP TIMER ENGAGED",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontFamily = NothingFont,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 10.sp,
+                                        color = Color(0xFFFF0031)
+                                    )
+                                )
+                            }
+                        }
+                        lower.contains("lyrics") || lower.contains("translated") -> {
+                            Spacer(Modifier.height(8.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFF00E5FF).copy(alpha = 0.15f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "✦ NEURAL SYNCED LYRICS LIVE",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontFamily = NothingFont,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 10.sp,
+                                        color = Color(0xFF00E5FF)
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

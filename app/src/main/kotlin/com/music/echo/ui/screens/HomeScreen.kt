@@ -1060,7 +1060,7 @@ fun HomeScreen(
                                 label = "ACOUSTIC_EQ",
                                 subLabel = "Equalizer",
                                 icon = R.drawable.tune,
-                                onClick = { navController.navigate("settings") },
+                                onClick = { navController.navigate("settings/equalizer") },
                                 modifier = Modifier.weight(1f)
                             )
                         }
