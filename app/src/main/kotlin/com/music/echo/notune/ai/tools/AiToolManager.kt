@@ -49,7 +49,7 @@ class AiToolManager @Inject constructor(
         }
 
     suspend fun executeTool(toolCall: ToolCall): String {
-        Timber.d("AI_TOOL: Executing ${toolCall.functionName} with ${toolCall.arguments}")
+        Timber.d("AI_TOOL: Executing %s", toolCall.functionName)
         return when (toolCall.functionName) {
             "search_songs" -> {
                 val query = toolCall.arguments["query"] ?: return "Error: Missing query"
@@ -144,10 +144,7 @@ class AiToolManager @Inject constructor(
                 context.dataStore.edit { it[echo.music.iad1tya.constants.PrivateSessionEnabledKey] = enable }
                 "Private incognito session ${if (enable) "activated" else "deactivated"}."
             }
-            "set_sleep_timer" -> {
-                val minutes = toolCall.arguments["minutes"]?.toIntOrNull() ?: 30
-                "Sleep timer action is not connected to the playback timer service yet. No timer was started."
-            }
+            "set_sleep_timer" -> "Sleep timer action is not connected to the playback timer service yet. No timer was started."
             "get_vibe_check" -> {
                 aiSuiteManager.getVibeCheck()
             }
@@ -159,35 +156,14 @@ class AiToolManager @Inject constructor(
                 val artist = toolCall.arguments["artist"] ?: "The Weeknd"
                 aiSuiteManager.getArtistJourney(artist)
             }
-            "blend_genres" -> {
-                val g1 = toolCall.arguments["genre1"] ?: "Synthwave"
-                val g2 = toolCall.arguments["genre2"] ?: "Jazz"
-                "NØTUNE Hybrid Queue created blending $g1 x $g2."
-            }
-            "decade_time_machine" -> {
-                val decade = toolCall.arguments["decade"] ?: "80s"
-                "Queue transposed to $decade acoustic aesthetic."
-            }
-            "ai_doctor_playlist" -> {
-                "NØTUNE Playlist Doctor: 92/100 Health Score. No duplicates found. Excellent tempo flow."
-            }
-            "set_equalizer_preset" -> {
-                val preset = toolCall.arguments["preset"] ?: "SYNTHWAVE"
-                "Equalizer preset updated to '$preset'."
-            }
-            "translate_lyrics" -> {
-                val lang = toolCall.arguments["language"] ?: "English"
-                "Translated sync lyrics into $lang."
-            }
-            "generate_singalong_guide" -> {
-                "Phonetic guide & syllable timing generated for active lyrics."
-            }
-            "get_similarity_score" -> {
-                "Acoustic vector similarity score: 94.2% match."
-            }
-            "get_couple_compatibility" -> {
-                "Couple Mode Compatibility: 88% Music DNA overlap."
-            }
+            "blend_genres" -> "Genre blending is not implemented yet. No queue was created."
+            "decade_time_machine" -> "Decade Time Machine is not implemented yet. The queue was not changed."
+            "ai_doctor_playlist" -> "Playlist Doctor is not implemented yet. No score or analysis was generated."
+            "set_equalizer_preset" -> "Equalizer preset changes are not connected yet. No preset was changed."
+            "translate_lyrics" -> "Lyrics translation is not connected to this tool yet. No translation was performed."
+            "generate_singalong_guide" -> "Sing-along guide generation is not implemented yet. No guide was generated."
+            "get_similarity_score" -> "Audio similarity scoring is not implemented yet. No score was calculated."
+            "get_couple_compatibility" -> "Couple compatibility scoring is not implemented yet. No score was calculated."
             "get_friends" -> {
                 val friends = socialRepository.getFriends().first()
                 if (friends.isEmpty()) "You don't have any friends added yet."
