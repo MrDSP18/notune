@@ -48,6 +48,20 @@ class LocalMediaAlgorithmsTest {
         assertEquals("Artist B", ranked[1].artists.first().name)
     }
 
+    @Test
+    fun smartPlaylistsRespectRequestedLimit() {
+        val songs = listOf(
+            track("1", "One", "Artist A", 10L, liked = true),
+            track("2", "Two", "Artist B", 20L, liked = true),
+            track("3", "Three", "Artist C", 30L, liked = true)
+        )
+        assertEquals(
+            2,
+            SmartPlaylistEngine.selectSongs(songs, SmartPlaylistType.FAVORITES, 2).size
+        )
+        assertTrue(SmartPlaylistEngine.selectSongs(songs, SmartPlaylistType.NEVER_PLAYED, 0).isEmpty())
+    }
+
     private fun track(
         id: String,
         title: String,
