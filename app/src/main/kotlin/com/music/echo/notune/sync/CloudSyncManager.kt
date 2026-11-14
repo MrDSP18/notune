@@ -130,9 +130,8 @@ class CloudSyncManager @Inject constructor(
         }
     }
 
-    private fun saveOutboxToDisk(): Boolean {
-        val snapshot = synchronized(pendingSyncQueue) { pendingSyncQueue.toList() }
-        return persistOutbox(snapshot)
+    private fun saveOutboxToDisk(): Boolean = synchronized(pendingSyncQueue) {
+        persistOutbox(pendingSyncQueue.toList())
     }
 
     private fun observeAppEvents() {
