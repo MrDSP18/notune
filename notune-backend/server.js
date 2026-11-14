@@ -10,15 +10,21 @@ const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const cors = require('cors');
-const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const crypto = require('crypto');
 require('dotenv').config();
 
-const PORT = process.env.PORT || 10000;
 const { getJwtSecret } = require('./authConfig');
+const {
+  isValidUuid,
+  signJwt,
+  verifyJwt,
+  createAuthMiddleware
+} = require('./auth');
+
+const PORT = process.env.PORT || 10000;
 const JWT_SECRET = getJwtSecret();
 const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/notune_db';
 
@@ -52,26 +58,16 @@ pool.on('error', (err) => {
   console.error('Unexpected PostgreSQL Pool Error:', err.message);
 });
 
-// Middleware: Authentication Token Extraction
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (!token) {
-    req.user = { id: '00000000-0000-0000-0000-000000000000', username: 'guest_user' };
-    return next();
-  }
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: 'Invalid or expired session token' });
-    req.user = user;
-    next();
-  });
-}
+// --------------------------------------------------------------------
+// Authentication Middleware (Hardened)
+// --------------------------------------------------------------------
+const { requireAuth, optionalAuth } = createAuthMiddleware(() => JWT_SECRET);
+const authenticateToken = requireAuth; // Backwards-compatible fail-closed alias
 
 // --------------------------------------------------------------------
-// Health & Readiness Probes
+// Health & Readiness Probes (Public)
 // --------------------------------------------------------------------
 
-// Liveness Probe: Fast 200 OK without DB overhead
 app.get('/health', (req, res) => {
   res.json({
     status: 'UP',
@@ -85,7 +81,6 @@ app.get('/api/v1/health', (req, res) => {
   res.json({ status: 'UP', service: 'NØTUNE Cloud Server', timestamp: new Date().toISOString() });
 });
 
-// Readiness Probe: Verifies database connectivity
 app.get('/ready', async (req, res) => {
   try {
     const dbRes = await pool.query('SELECT 1 as ready');
@@ -98,8 +93,20 @@ app.get('/ready', async (req, res) => {
   }
 });
 
+app.get('/api/v1/ready', async (req, res) => {
+  try {
+    const dbRes = await pool.query('SELECT 1 as ready');
+    if (dbRes.rows[0].ready === 1) {
+      return res.json({ status: 'READY', db: 'CONNECTED', timestamp: new Date().toISOString() });
+    }
+    res.status(503).json({ status: 'UNREADY', db: 'UNAVAILABLE' });
+  } catch (err) {
+    res.status(503).json({ status: 'UNREADY', error: err.message });
+  }
+});
+
 // --------------------------------------------------------------------
-// REST API Endpoints (Metadata, Auth, Social - Zero Audio Bytes)
+// REST API Endpoints: Public Music Metadata
 // --------------------------------------------------------------------
 
 app.get('/api/v1/metadata/song/search', async (req, res) => {
@@ -244,10 +251,15 @@ function detectLanguage(title, artist) {
   return 'en';
 }
 
+// --------------------------------------------------------------------
+// Authentication Endpoints
+// --------------------------------------------------------------------
 
 app.post('/api/v1/auth/register', async (req, res) => {
   const { email, displayName, avatarUrl } = req.body;
-  if (!displayName) return res.status(400).json({ error: 'displayName is required' });
+  if (!displayName || typeof displayName !== 'string' || displayName.trim().length === 0) {
+    return res.status(400).json({ error: 'displayName is required' });
+  }
 
   try {
     const query = `
@@ -255,16 +267,65 @@ app.post('/api/v1/auth/register', async (req, res) => {
       VALUES ($1, $2, $3)
       RETURNING id, display_name, avatar_url, created_at;
     `;
-    const result = await pool.query(query, [email || null, displayName, avatarUrl || null]);
+    const result = await pool.query(query, [email || null, displayName.trim(), avatarUrl || null]);
     const user = result.rows[0];
-    const token = jwt.sign({ id: user.id, username: user.display_name }, JWT_SECRET, { expiresIn: '30d' });
+    const token = signJwt(
+      { id: user.id, username: user.display_name },
+      JWT_SECRET,
+      { expiresInSeconds: 30 * 24 * 3600 }
+    );
     res.json({ token, user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.get('/api/v1/friends', authenticateToken, async (req, res) => {
+app.post('/api/v1/auth/login', async (req, res) => {
+  const { email, userId } = req.body;
+  if (!email && !userId) {
+    return res.status(400).json({ error: 'email or userId is required' });
+  }
+
+  try {
+    const query = email
+      ? 'SELECT id, display_name, email, avatar_url, created_at FROM users WHERE email = $1 LIMIT 1'
+      : 'SELECT id, display_name, email, avatar_url, created_at FROM users WHERE id = $1 LIMIT 1';
+    const result = await pool.query(query, [email || userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const user = result.rows[0];
+    const token = signJwt(
+      { id: user.id, username: user.display_name },
+      JWT_SECRET,
+      { expiresInSeconds: 30 * 24 * 3600 }
+    );
+    res.json({ token, user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/v1/auth/me', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, display_name, email, avatar_url, created_at FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'USER_NOT_FOUND', message: 'User record not found' });
+    }
+    res.json({ user: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --------------------------------------------------------------------
+// Protected Social & Community Routes
+// --------------------------------------------------------------------
+
+app.get('/api/v1/friends', requireAuth, async (req, res) => {
   try {
     const query = `
       SELECT f.id as friendship_id, u.id, u.display_name, u.avatar_url, p.status as presence_status, p.current_track_title, p.current_artist_name
@@ -280,7 +341,7 @@ app.get('/api/v1/friends', authenticateToken, async (req, res) => {
   }
 });
 
-app.get('/api/v1/feed', authenticateToken, async (req, res) => {
+app.get('/api/v1/feed', optionalAuth, async (req, res) => {
   try {
     const query = `
       SELECT p.*, u.display_name as author_name, u.avatar_url as author_avatar_url
@@ -297,7 +358,7 @@ app.get('/api/v1/feed', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/v1/posts', authenticateToken, async (req, res) => {
+app.post('/api/v1/posts', requireAuth, async (req, res) => {
   const { postType, songId, songTitle, artistName, caption, momentTimestamp, moodEmoji } = req.body;
   try {
     const query = `
@@ -322,7 +383,7 @@ app.post('/api/v1/posts', authenticateToken, async (req, res) => {
 });
 
 // --------------------------------------------------------------------
-// Real-Time Room & Presence Synchronization (WebSocket)
+// Real-Time Room & Presence Synchronization (WebSocket with JWT Auth)
 // --------------------------------------------------------------------
 
 const server = http.createServer(app);
@@ -335,7 +396,8 @@ const ephemeralPresence = new Map(); // userId -> { status, trackData, lastActiv
 
 wss.on('connection', (ws, req) => {
   let userId = null;
-  let username = 'Anonymous';
+  let username = null;
+  let isAuthenticated = false;
 
   ws.on('message', async (messageBuffer) => {
     try {
@@ -344,29 +406,59 @@ wss.on('connection', (ws, req) => {
 
       switch (type) {
         case 'AUTHENTICATE': {
-          userId = data.userId || crypto.randomUUID();
-          username = data.username || 'Listener';
-          connectedClients.set(userId, { ws, username, currentRoomId: null });
-          ephemeralPresence.set(userId, { status: 'ONLINE', trackData: null, lastActiveTimestamp: Date.now() });
-          ws.send(JSON.stringify({ type: 'AUTHENTICATED', userId, status: 'SUCCESS' }));
-          break;
-        }
+          const authToken = data.token || data.payload?.token;
+          if (!authToken) {
+            ws.send(JSON.stringify({ type: 'ERROR', code: 'UNAUTHORIZED', message: 'Authentication required: missing token' }));
+            ws.close(4001, 'Authentication token required');
+            break;
+          }
 
-        case 'HEARTBEAT_PRESENCE': {
-          if (userId) {
-            ephemeralPresence.set(userId, {
-              status: data.status || 'ONLINE',
-              trackData: data.currentTrack || null,
-              lastActiveTimestamp: Date.now()
-            });
-            ws.send(JSON.stringify({ type: 'PONG', serverTime: Date.now() }));
+          try {
+            const decoded = verifyJwt(authToken, JWT_SECRET);
+            userId = decoded.id;
+            username = decoded.username || decoded.display_name || 'Listener';
+            isAuthenticated = true;
+
+            connectedClients.set(userId, { ws, username, currentRoomId: null });
+            ephemeralPresence.set(userId, { status: 'ONLINE', trackData: null, lastActiveTimestamp: Date.now() });
+            ws.send(JSON.stringify({ type: 'AUTHENTICATED', userId, status: 'SUCCESS' }));
+          } catch (err) {
+            const isExpired = err.message === 'TOKEN_EXPIRED';
+            ws.send(JSON.stringify({
+              type: 'ERROR',
+              code: isExpired ? 'TOKEN_EXPIRED' : 'INVALID_TOKEN',
+              message: isExpired ? 'Session token has expired' : 'Invalid session token signature'
+            }));
+            ws.close(4003, 'Invalid or expired session token');
           }
           break;
         }
 
+        case 'HEARTBEAT_PRESENCE': {
+          if (!isAuthenticated || !userId) {
+            ws.send(JSON.stringify({ type: 'ERROR', code: 'UNAUTHENTICATED', message: 'Authentication required' }));
+            break;
+          }
+          ephemeralPresence.set(userId, {
+            status: data.status || 'ONLINE',
+            trackData: data.currentTrack || null,
+            lastActiveTimestamp: Date.now()
+          });
+          ws.send(JSON.stringify({ type: 'PONG', serverTime: Date.now() }));
+          break;
+        }
+
         case 'JOIN_ROOM': {
-          if (!userId) break;
+          if (!isAuthenticated || !userId) {
+            ws.send(JSON.stringify({ type: 'ERROR', code: 'UNAUTHENTICATED', message: 'Authentication required' }));
+            break;
+          }
           const targetRoomId = roomId || data.roomCode;
+          if (!targetRoomId) {
+            ws.send(JSON.stringify({ type: 'ERROR', code: 'BAD_REQUEST', message: 'Missing room identifier' }));
+            break;
+          }
+
           let room = roomsState.get(targetRoomId);
 
           if (!room) {
@@ -399,10 +491,13 @@ wss.on('connection', (ws, req) => {
 
         case 'ROOM_SYNC_EVENT':
         case 'PLAYBACK_ACTION': {
-          if (!userId || !roomId) break;
+          if (!isAuthenticated || !userId || !roomId) {
+            ws.send(JSON.stringify({ type: 'ERROR', code: 'UNAUTHENTICATED', message: 'Authentication required or missing roomId' }));
+            break;
+          }
           const room = roomsState.get(roomId);
           if (!room || !room.members.has(userId)) {
-            ws.send(JSON.stringify({ type: 'ERROR', message: 'Unauthorized room action' }));
+            ws.send(JSON.stringify({ type: 'ERROR', code: 'FORBIDDEN', message: 'Unauthorized room action' }));
             break;
           }
 
@@ -422,7 +517,10 @@ wss.on('connection', (ws, req) => {
         }
 
         case 'LEAVE_ROOM': {
-          if (!userId || !roomId) break;
+          if (!isAuthenticated || !userId || !roomId) {
+            ws.send(JSON.stringify({ type: 'ERROR', code: 'UNAUTHENTICATED', message: 'Authentication required' }));
+            break;
+          }
           const room = roomsState.get(roomId);
           if (room) {
             room.members.delete(userId);
@@ -436,6 +534,11 @@ wss.on('connection', (ws, req) => {
               payload: { userId, username }
             });
           }
+          break;
+        }
+
+        default: {
+          ws.send(JSON.stringify({ type: 'ERROR', code: 'UNKNOWN_TYPE', message: `Unknown message type: ${type}` }));
           break;
         }
       }
@@ -481,7 +584,23 @@ function broadcastToRoom(roomId, syncEvent) {
   }
 }
 
-// Start Server
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 NØTUNE Hardened Backend Server running on port ${PORT}`);
-});
+// Start Server if invoked directly
+if (require.main === module) {
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 NØTUNE Hardened Backend Server running on port ${PORT}`);
+  });
+}
+
+module.exports = {
+  app,
+  server,
+  pool,
+  wss,
+  requireAuth,
+  optionalAuth,
+  authenticateToken,
+  getValidatedJwtSecret,
+  isValidUuid,
+  signJwt,
+  verifyJwt
+};

@@ -24,7 +24,7 @@ services:
     environment:
       PORT: 8080
       DATABASE_URL: postgresql://postgres:notune_secure_password@postgres:5432/notunedb
-      JWT_SECRET: notune_docker_jwt_production_secret_2026
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set (minimum 32 characters)}
     depends_on:
       - postgres
 
