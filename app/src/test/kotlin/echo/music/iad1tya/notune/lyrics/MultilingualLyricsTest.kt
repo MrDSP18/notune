@@ -92,7 +92,8 @@ class MultilingualLyricsTest {
         val known = LyricsTranslationEngine().generateTranslation(
             listOf(line.copy(originalText = "Until I found you")), LyricsLanguage.TAMIL
         ).single()
-        assertEquals("நான் உன்னை கண்டுபிடிக்கும் வரை", known.translatedText)
+        assertNull(known.translatedText)
+        assertEquals("Until I found you", known.activeText(LyricsMode.TRANSLATION))
     }
 
     @Test
