@@ -48,12 +48,19 @@ class NoCoreOrchestrator @Inject constructor(
             4. Keep output concise, industrial, and helpful.
         """.trimIndent()
 
-        // 3. Execute reasoning loop with tool authorization check
-        val executor: suspend (ToolCall) -> String = toolExecutor ?: { call ->
-            if (guardSafety.isToolAuthorized(call.functionName)) {
-                toolManager.executeTool(call)
+        // 3. Execute reasoning loop with tool authorization and safety check
+        val executor: suspend (ToolCall) -> String = { call ->
+            val validation = guardSafety.validateToolCall(call)
+            if (!validation.isValid) {
+                if (validation.requiresConfirmation) {
+                    "Confirmation Required: ${validation.reason}"
+                } else {
+                    "Security Error: ${validation.reason}"
+                }
+            } else if (toolExecutor != null) {
+                toolExecutor(call)
             } else {
-                "Tool ${call.functionName} is not authorized by security policy"
+                toolManager.executeTool(call)
             }
         }
 

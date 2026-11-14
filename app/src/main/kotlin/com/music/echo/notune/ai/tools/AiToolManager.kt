@@ -38,8 +38,24 @@ class AiToolManager @Inject constructor(
     private val localMediaRepository: LocalMediaRepository,
     private val messagingRepository: MessagingRepository,
     private val playerConnectionManager: PlayerConnectionManager,
-    private val accountRepository: NotuneAccountRepository
+    private val accountRepository: NotuneAccountRepository,
+    private val guardSafety: echo.music.iad1tya.notune.ai.engine.NoGuardSafety
 ) {
+    constructor(
+        context: Context,
+        database: MusicDatabase,
+        aiSuiteManager: echo.music.iad1tya.notune.ai.suite.AiSuiteManager,
+        roomRepository: RoomRepository,
+        socialRepository: SocialRepository,
+        localMediaRepository: LocalMediaRepository,
+        messagingRepository: MessagingRepository,
+        playerConnectionManager: PlayerConnectionManager,
+        accountRepository: NotuneAccountRepository
+    ) : this(
+        context, database, aiSuiteManager, roomRepository, socialRepository,
+        localMediaRepository, messagingRepository, playerConnectionManager, accountRepository,
+        echo.music.iad1tya.notune.ai.engine.NoGuardSafety()
+    )
     // Injectable player connection access via manager
     private var _playerConnection: PlayerConnection? = null
     var playerConnection: PlayerConnection?
@@ -50,6 +66,15 @@ class AiToolManager @Inject constructor(
 
     suspend fun executeTool(toolCall: ToolCall): String {
         Timber.d("AI_TOOL: Executing %s", toolCall.functionName)
+        val validation = guardSafety.validateToolCall(toolCall)
+        if (!validation.isValid) {
+            Timber.w("AI_TOOL: Security check failed for %s: %s", toolCall.functionName, validation.reason)
+            return if (validation.requiresConfirmation) {
+                "Confirmation Required: ${validation.reason}"
+            } else {
+                "Security Error: ${validation.reason}"
+            }
+        }
         return when (toolCall.functionName) {
             "search_songs" -> {
                 val query = toolCall.arguments["query"] ?: return "Error: Missing query"
