@@ -1,6 +1,8 @@
 package echo.music.iad1tya.notune.ai.providers
 
 import com.music.echo.notune.personalization.repository.TasteProfileRepository
+import com.music.echo.localmedia.LocalRecommendationEngine
+import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.notune.ai.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -10,7 +12,8 @@ import org.json.JSONObject
 
 @Singleton
 class NoTuneBasicAiProvider @Inject constructor(
-    private val tasteProfileRepository: TasteProfileRepository
+    private val tasteProfileRepository: TasteProfileRepository,
+    private val database: MusicDatabase
 ) : AiProvider {
 
     override val type: AiProviderType = AiProviderType.NOTUNE_BASIC
@@ -148,9 +151,22 @@ class NoTuneBasicAiProvider @Inject constructor(
             }
 
             "recommend" in lowerPrompt || "suggestion" in lowerPrompt || "discover" in lowerPrompt -> {
-                val artists = tasteProfile.favoriteArtists.take(3).joinToString(", ")
-                val summary = if (artists.isNotBlank()) "tailored to your favorites ($artists)" else "based on top global acoustic trends"
-                "NØTUNE Free Neural AI: Here are recommended tracks $summary. Tap any song to play instantly."
+                val recommendations = runCatching {
+                    LocalRecommendationEngine.getLocalRecommendations(database, 5)
+                }.getOrDefault(emptyList())
+
+                if (recommendations.isEmpty()) {
+                    "I need a little listening history or local music library before I can make reliable personal recommendations. Try playing or liking a few tracks first."
+                } else {
+                    buildString {
+                        append("Your NØTUNE local music model ranked these tracks from your listening history and likes:\\n")
+                        recommendations.forEachIndexed { index, item ->
+                            val artists = item.artists.joinToString { it.name }.ifBlank { "Unknown artist" }
+                            append("${index + 1}. ${item.song.title} — $artists\\n")
+                        }
+                        append("These are ranked from your local library; no cloud model was needed.")
+                    }
+                }
             }
 
             "who are you" in lowerPrompt || "what are you" in lowerPrompt || "help" in lowerPrompt -> {
