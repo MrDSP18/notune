@@ -439,20 +439,12 @@ export default {
       );
     }
 
-    // Fail closed until authenticated, durable event ingestion is configured.
-    // Never let the generic API fallback return HTTP 200 for a sync write.
-    if (path === "/api/v1/sync" && request.method === "POST") {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "SYNC_STORAGE_NOT_CONFIGURED",
-          message: "Cloud sync ingestion is unavailable; retain events locally."
-        }),
-        {
-          status: 503,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
-      );
+    // Authenticated, idempotent sync ingestion backed by Cloudflare D1.
+    if (path === "/api/v1/sync") {
+      if (request.method !== "POST") {
+        return jsonResponse({ error: "METHOD_NOT_ALLOWED" }, 405, corsHeaders);
+      }
+      return handleSyncRequest(request, env, corsHeaders);
     }
 
     return new Response(
@@ -631,3 +623,175 @@ function detectIndianLanguage(title, artist) {
   return "en";
 }
 
+
+
+function jsonResponse(body, status, corsHeaders) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" }
+  });
+}
+
+function decodeBase64Url(value) {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - normalized.length % 4) % 4);
+  return Uint8Array.from(atob(padded), character => character.charCodeAt(0));
+}
+
+async function verifySyncToken(request, secret) {
+  const header = request.headers.get("Authorization") || "";
+  const match = /^Bearer ([A-Za-z0-9._~-]+)$/.exec(header);
+  if (!match) return null;
+
+  const parts = match[1].split(".");
+  if (parts.length !== 3) return null;
+
+  try {
+    const headerBytes = decodeBase64Url(parts[0]);
+    const claimsBytes = decodeBase64Url(parts[1]);
+    const jwtHeader = JSON.parse(new TextDecoder().decode(headerBytes));
+    const claims = JSON.parse(new TextDecoder().decode(claimsBytes));
+    if (jwtHeader.alg !== "HS256" || jwtHeader.typ && jwtHeader.typ !== "JWT") return null;
+    if (typeof claims.id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(claims.id)) return null;
+    const now = Math.floor(Date.now() / 1000);
+    if (!Number.isSafeInteger(claims.exp) || claims.exp <= now) return null;
+    if (claims.nbf !== undefined && (!Number.isSafeInteger(claims.nbf) || claims.nbf > now)) return null;
+
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+    const signatureInput = new TextEncoder().encode(parts[0] + "." + parts[1]);
+    const valid = await crypto.subtle.verify("HMAC", key, decodeBase64Url(parts[2]), signatureInput);
+    return valid ? claims.id : null;
+  } catch (_error) {
+    return null;
+  }
+}
+
+async function sha256Hex(value) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function handleSyncRequest(request, env, corsHeaders) {
+  if (!env || !env.DB || typeof env.JWT_SECRET !== "string" || env.JWT_SECRET.length < 32 || env.JWT_SECRET.includes("${")) {
+    return jsonResponse({ error: "SYNC_STORAGE_NOT_CONFIGURED" }, 503, corsHeaders);
+  }
+
+  const userId = await verifySyncToken(request, env.JWT_SECRET);
+  if (!userId) return jsonResponse({ error: "UNAUTHORIZED" }, 401, corsHeaders);
+
+  const idempotencyKey = request.headers.get("X-Idempotency-Key") || "";
+  const protocolVersion = request.headers.get("X-Sync-Protocol-Version") || "";
+  if (protocolVersion !== "1.0" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(idempotencyKey)) {
+    return jsonResponse({ error: "INVALID_SYNC_HEADERS" }, 400, corsHeaders);
+  }
+
+  let rawBody;
+  let body;
+  try {
+    rawBody = await request.text();
+    if (new TextEncoder().encode(rawBody).length > 262144) {
+      return jsonResponse({ error: "PAYLOAD_TOO_LARGE" }, 413, corsHeaders);
+    }
+    body = JSON.parse(rawBody);
+  } catch (_error) {
+    return jsonResponse({ error: "INVALID_JSON" }, 400, corsHeaders);
+  }
+
+  if (!body || body.batchId !== idempotencyKey || body.protocolVersion !== "1.0" ||
+      !Array.isArray(body.events) || body.events.length < 1 || body.events.length > 99) {
+    return jsonResponse({ error: "INVALID_SYNC_BATCH" }, 400, corsHeaders);
+  }
+
+  const now = Date.now();
+  const seen = new Set();
+  const normalizedEvents = [];
+  for (const event of body.events) {
+    if (!event || typeof event.eventId !== "string" ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(event.eventId) ||
+        seen.has(event.eventId) || typeof event.eventType !== "string" ||
+        !/^[A-Z][A-Z0-9_]{0,49}$/.test(event.eventType) ||
+        !Number.isSafeInteger(event.timestamp) || event.timestamp <= 0 ||
+        event.timestamp > now + 86400000 ||
+        typeof event.payload !== "string" || event.payload.length > 16384) {
+      return jsonResponse({ error: "INVALID_SYNC_EVENT" }, 400, corsHeaders);
+    }
+    let parsedPayload;
+    try {
+      parsedPayload = JSON.parse(event.payload);
+    } catch (_error) {
+      return jsonResponse({ error: "INVALID_EVENT_PAYLOAD" }, 400, corsHeaders);
+    }
+    if (!parsedPayload || Array.isArray(parsedPayload) || typeof parsedPayload !== "object") {
+      return jsonResponse({ error: "INVALID_EVENT_PAYLOAD" }, 400, corsHeaders);
+    }
+    seen.add(event.eventId);
+    normalizedEvents.push({
+      eventId: event.eventId,
+      eventType: event.eventType,
+      payload: event.payload,
+      timestamp: event.timestamp,
+      eventHash: await sha256Hex(JSON.stringify({
+        eventId: event.eventId,
+        eventType: event.eventType,
+        payload: event.payload,
+        timestamp: event.timestamp
+      }))
+    });
+  }
+
+  const requestHash = await sha256Hex(rawBody);
+  try {
+    const statements = [
+      env.DB.prepare(
+        "INSERT INTO sync_batches (user_id, idempotency_key, request_hash, created_at) VALUES (?, ?, ?, ?) ON CONFLICT(user_id, idempotency_key) DO NOTHING"
+      ).bind(userId, idempotencyKey, requestHash, now)
+    ];
+
+    for (const event of normalizedEvents) {
+      statements.push(env.DB.prepare(
+        "INSERT OR IGNORE INTO sync_events (user_id, event_id, event_type, payload_json, client_timestamp, event_hash, idempotency_key, created_at) SELECT ?, ?, ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM sync_batches WHERE user_id = ? AND idempotency_key = ? AND request_hash = ?)"
+      ).bind(
+        userId, event.eventId, event.eventType, event.payload, event.timestamp,
+        event.eventHash, idempotencyKey, now, userId, idempotencyKey, requestHash
+      ));
+    }
+
+    await env.DB.batch(statements);
+    const storedBatch = await env.DB.prepare(
+      "SELECT request_hash FROM sync_batches WHERE user_id = ? AND idempotency_key = ?"
+    ).bind(userId, idempotencyKey).first();
+
+    if (!storedBatch || storedBatch.request_hash !== requestHash) {
+      return jsonResponse({ error: "IDEMPOTENCY_KEY_REUSED" }, 409, corsHeaders);
+    }
+
+    const placeholders = normalizedEvents.map(() => "?").join(",");
+    const storedEvents = await env.DB.prepare(
+      "SELECT event_id, event_hash FROM sync_events WHERE user_id = ? AND event_id IN (" + placeholders + ")"
+    ).bind(userId, ...normalizedEvents.map(event => event.eventId)).all();
+
+    const hashes = new Map((storedEvents.results || []).map(row => [row.event_id, row.event_hash]));
+    const acknowledgedEventIds = normalizedEvents
+      .filter(event => hashes.get(event.eventId) === event.eventHash)
+      .map(event => event.eventId);
+    const rejectedEventIds = normalizedEvents
+      .filter(event => !hashes.has(event.eventId) || hashes.get(event.eventId) !== event.eventHash)
+      .map(event => event.eventId);
+
+    return jsonResponse({
+      success: true,
+      batchId: idempotencyKey,
+      acknowledgedEventIds,
+      acceptedEventIds: acknowledgedEventIds,
+      rejectedEventIds
+    }, 200, corsHeaders);
+  } catch (_error) {
+    return jsonResponse({ error: "SYNC_PERSISTENCE_FAILED" }, 503, corsHeaders);
+  }
+}
