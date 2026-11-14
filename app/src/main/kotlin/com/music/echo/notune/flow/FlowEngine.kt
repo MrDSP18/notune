@@ -1,7 +1,7 @@
 package echo.music.iad1tya.notune.flow
 
 import echo.music.iad1tya.models.MediaMetadata
-import com.music.echo.notune.MusicDnaRepository
+import echo.music.iad1tya.notune.MusicDnaRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
