@@ -1,6 +1,7 @@
 package echo.music.iad1tya.notune.flow
 
 import echo.music.iad1tya.models.MediaMetadata
+import echo.music.iad1tya.notune.MusicDnaRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,7 +23,8 @@ class FlowEngine @Inject constructor(
     private val candidateScorer: FlowCandidateScorer,
     private val queueOptimizer: FlowQueueOptimizer,
     private val feedbackProcessor: FlowFeedbackProcessor,
-    private val languageSessionTracker: LanguageSessionTracker
+    private val languageSessionTracker: LanguageSessionTracker,
+    private val musicDnaRepository: MusicDnaRepository
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val generationIdCounter = AtomicLong(1L)
@@ -134,6 +136,8 @@ class FlowEngine @Inject constructor(
                     contextMode = currentState.contextMode
                 )
 
+                val preferredGenres = runCatching { musicDnaRepository.getTopGenres(5) }.getOrDefault(emptyList())
+
                 val filteredCandidates = candidateFilter.filterCandidates(
                     candidates = rawCandidates,
                     currentTrack = currentTrack,
@@ -152,7 +156,8 @@ class FlowEngine @Inject constructor(
                     topArtistIds = feedbackProcessor.getBoostedArtistIds(),
                     favoriteTrackIds = feedbackProcessor.getFavoriteTrackIds(),
                     recentlySkippedTrackIds = feedbackProcessor.getRecentlySkippedTrackIds(),
-                    recommendationHistory = feedbackProcessor.getRecommendationHistory()
+                    recommendationHistory = feedbackProcessor.getRecommendationHistory(),
+                    preferredGenres = preferredGenres
                 )
 
                 val diversifiedScores = candidateFilter.diversifyCandidates(scoredCandidates)

@@ -16,6 +16,41 @@ class FlowCandidateScorerTest {
     }
 
     @Test
+    fun testPreferredMusicDnaGenreAffectsRankingAndReason() {
+        val tamil = FlowCandidate(
+            mediaMetadata = MediaMetadata(
+                id = "tamil",
+                title = "Tamil Melody",
+                artists = listOf(MediaMetadata.Artist(id = "artist-t", name = "Artist T")),
+                duration = 180
+            ),
+            candidateSource = "Library Fallback"
+        )
+        val other = FlowCandidate(
+            mediaMetadata = MediaMetadata(
+                id = "other",
+                title = "Instrumental Piece",
+                artists = listOf(MediaMetadata.Artist(id = "artist-o", name = "Artist O")),
+                duration = 180
+            ),
+            candidateSource = "Library Fallback"
+        )
+
+        val scored = scorer.scoreCandidates(
+            candidates = listOf(other, tamil),
+            currentTrack = null,
+            mode = FlowMode.AUTO_FLOW,
+            contextMode = FlowContextMode.NORMAL,
+            discoveryRatio = 0.3f,
+            preferredGenres = listOf("Tamil Pop")
+        )
+
+        assertEquals("tamil", scored.first().candidate.mediaMetadata.id)
+        assertEquals(FlowReasonType.GENRE_MATCH, scored.first().primaryReason.type)
+        assertTrue(scored.first().genreAffinity > 0f)
+    }
+
+    @Test
     fun testScoringRanksFavoriteAndArtistAffinityHigher() {
         val currentTrack = MediaMetadata(
             id = "song1",
