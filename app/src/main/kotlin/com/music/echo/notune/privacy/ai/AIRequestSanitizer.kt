@@ -14,6 +14,7 @@ class AIRequestSanitizer @Inject constructor() {
         Regex("(?i)(BEGIN|END)\\s+(RSA|EC|OPENSSH|DSA|ENCRYPTED)?\\s*PRIVATE\\s+KEY")
     )
 
+    private val privateKeyBlockPattern = Regex("(?s)-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----.*?-----END [A-Z0-9 ]*PRIVATE KEY-----")
     private val emailPattern = Regex("(?i)[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}")
     private val phonePattern = Regex("(?<!\\d)(?:\\+\\d{1,3}[- ]?)?\\(?\\d{3}\\)?[-. ]?\\d{3}[-. ]?\\d{4}(?!\\d)")
     private val ipPattern = Regex("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b")
@@ -22,6 +23,8 @@ class AIRequestSanitizer @Inject constructor() {
     fun sanitizePrompt(rawPrompt: String): String {
         var sanitized = rawPrompt
         
+        sanitized = privateKeyBlockPattern.replace(sanitized, "[REDACTED_SECRET]")
+
         for (pattern in secretPatterns) {
             sanitized = pattern.replace(sanitized, "[REDACTED_SECRET]")
         }
@@ -35,8 +38,12 @@ class AIRequestSanitizer @Inject constructor() {
     }
 
     fun containsProhibitedPayload(text: String): Boolean {
-        return text.contains("[REDACTED_SECRET]") || 
-               text.contains("[REDACTED_CARD]") || 
-               text.contains("PRIVATE_KEY")
+        return listOf(
+            "[REDACTED_SECRET]",
+            "[REDACTED_EMAIL]",
+            "[REDACTED_PHONE]",
+            "[REDACTED_IP]",
+            "[REDACTED_CARD]"
+        ).any(text::contains)
     }
 }

@@ -109,7 +109,7 @@ class AiEngine @Inject constructor(
                 )
                 if (result.isSuccess) return result
                 lastError = result.exceptionOrNull()
-                Timber.w("AI_ENGINE: Provider $providerType failed: ${lastError?.message}")
+                Timber.w("AI_ENGINE: Provider %s failed (%s)", providerType, lastError?.javaClass?.simpleName)
             }
         }
 
@@ -165,7 +165,7 @@ class AiEngine @Inject constructor(
             val toolResults = mutableListOf<String>()
 
             for (toolCall in toolCalls) {
-                Timber.d("AI_ENGINE: Executing tool %s with arguments: %s", toolCall.functionName, toolCall.arguments)
+                Timber.d("AI_ENGINE: Executing tool %s", toolCall.functionName)
                 val executionOutput = try {
                     executeSingleTool(toolCall)
                 } catch (e: Exception) {
