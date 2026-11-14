@@ -261,7 +261,7 @@ class CloudSyncManager @Inject constructor(
                     eventsArray.put(JSONObject().apply {
                         put("eventId", event.eventId)
                         put("eventType", event.eventType)
-                        put("payload", JSONObject(event.payloadJson))
+                        put("payload", event.payloadJson)
                         put("timestamp", event.timestamp)
                     })
                 }
@@ -306,17 +306,19 @@ class CloudSyncManager @Inject constructor(
                     return@withContext false
                 }
 
-                val remaining = synchronized(pendingSyncQueue) {
-                    pendingSyncQueue.filterNot { it.eventId in safeAcknowledgements }
+                val persisted = synchronized(pendingSyncQueue) {
+                    val remaining = pendingSyncQueue.filterNot { it.eventId in safeAcknowledgements }
+                    if (!persistOutbox(remaining)) {
+                        false
+                    } else {
+                        pendingSyncQueue.removeAll { it.eventId in safeAcknowledgements }
+                        _pendingQueueCount.value = pendingSyncQueue.size
+                        true
+                    }
                 }
-                if (!persistOutbox(remaining)) {
+                if (!persisted) {
                     _syncState.value = SyncStatus.ERROR
                     return@withContext false
-                }
-
-                synchronized(pendingSyncQueue) {
-                    pendingSyncQueue.removeAll { it.eventId in safeAcknowledgements }
-                    _pendingQueueCount.value = pendingSyncQueue.size
                 }
 
                 if (pendingSyncQueue.isEmpty()) {
