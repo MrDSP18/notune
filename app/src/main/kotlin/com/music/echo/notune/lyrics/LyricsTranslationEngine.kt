@@ -12,17 +12,12 @@ import timber.log.Timber
 class LyricsTranslationEngine @Inject constructor(
     private val aiEngine: AiEngine? = null
 ) {
-    /**
-     * Translates only lyrics already supplied by an authorized provider or the user.
-     * Original line IDs, timestamps, words and ordering are retained.
-     */
     suspend fun generateTranslation(
         lines: List<LyricLine>,
         targetLanguage: LyricsLanguage
     ): List<LyricLine> {
-        if (lines.isEmpty() || targetLanguage == LyricsLanguage.ENGLISH || aiEngine == null) {
-            return lines
-        }
+        val engine = aiEngine ?: return lines
+        if (lines.isEmpty() || targetLanguage == LyricsLanguage.ENGLISH) return lines
 
         val translated = ArrayList<LyricLine>(lines.size)
         for (batch in lines.chunked(MAX_LINES_PER_REQUEST)) {
@@ -35,32 +30,23 @@ class LyricsTranslationEngine @Inject constructor(
                 appendLine("Keep names and vocalizations when translating them would change their meaning.")
                 appendLine()
                 appendLine("SOURCE LINES:")
-                batch.forEachIndexed { index, line ->
-                    appendLine("${index + 1}. ${line.originalText}")
-                }
+                batch.forEachIndexed { index, line -> appendLine("${index + 1}. ${line.originalText}") }
             }
 
             val result = runCatching {
-                aiEngine.runNeuralMatrixLoop(
+                engine.runNeuralMatrixLoop(
                     prompt = prompt,
                     systemInstruction = "You are a precise line-preserving music lyric translator. Translate only the user-provided source lines. Output a JSON string array and nothing else."
                 ).getOrThrow()
             }
-
-            val values = result.getOrNull()?.text?.let {
-                parseTranslationResponse(it, batch.size)
-            }
-
+            val values = result.getOrNull()?.text?.let { parseTranslationResponse(it, batch.size) }
             if (values == null) {
                 result.exceptionOrNull()?.let { Timber.w(it, "LYRICS_AI: Translation request failed.") }
                 Timber.w("LYRICS_AI: Invalid translation payload; preserving original lines.")
                 translated.addAll(batch)
             } else {
                 batch.forEachIndexed { index, line ->
-                    translated += line.copy(
-                        translatedText = values[index],
-                        transformationVersion = 2
-                    )
+                    translated += line.copy(translatedText = values[index], transformationVersion = 2)
                 }
             }
         }
@@ -72,32 +58,20 @@ class LyricsTranslationEngine @Inject constructor(
     }
 }
 
-/**
- * Strictly accepts a JSON string array with one non-empty translation per source line.
- * Returns null rather than displaying malformed, incomplete, or misaligned output.
- */
-internal fun parseTranslationResponse(
-    response: String,
-    expectedLineCount: Int
-): List<String>? {
+internal fun parseTranslationResponse(response: String, expectedLineCount: Int): List<String>? {
     if (expectedLineCount <= 0 || response.isBlank()) return null
-
     val cleaned = response.trim()
         .removePrefix("```json")
         .removePrefix("```")
         .removeSuffix("```")
         .trim()
-
     val start = cleaned.indexOf('[')
     val end = cleaned.lastIndexOf(']')
     if (start < 0 || end <= start) return null
-
     val parsed = runCatching {
         Json.parseToJsonElement(cleaned.substring(start, end + 1)) as? JsonArray
     }.getOrNull() ?: return null
-
     if (parsed.size != expectedLineCount) return null
-
     val values = ArrayList<String>(parsed.size)
     for (element in parsed) {
         val value = runCatching { element.jsonPrimitive }.getOrNull() ?: return null
