@@ -97,6 +97,23 @@ jobs:
           path: app/build/outputs/bundle/universalFossDebug/app-universal-foss-debug.aab
           if-no-files-found: ignore
 
+
+  backend-tests:
+    name: Backend Sync Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Run backend tests
+        working-directory: notune-backend
+        run: npm test
+
   publish-preview:
     name: Publish Public Direct APK Release
     runs-on: ubuntu-latest

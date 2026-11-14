@@ -59,3 +59,33 @@ docker-compose up -d
 ```
 
 This starts PostgreSQL on `localhost:5432` and initializes `schema.sql` automatically.
+
+
+## 4. Cloudflare D1 Sync Ingestion
+
+The Worker sync endpoint accepts authenticated event batches at `POST /api/v1/sync`.
+It verifies the HS256 bearer token against the `JWT_SECRET` Worker secret, scopes
+all records to the verified token subject (`id` claim), and persists events in D1.
+The client must retain any event that is not explicitly returned in
+`acknowledgedEventIds`.
+
+The D1 migrations live in `d1-migrations/` deliberately: the existing
+`migrations/` directory contains PostgreSQL migrations and must not be applied to D1.
+
+Before deploying:
+
+1. Set the Cloudflare Worker secret to the exact same signing secret used by the
+   authentication API that issues the app's JWTs. Do not commit or paste the value
+   into source control:
+   `npx wrangler secret put JWT_SECRET`
+2. Apply the D1 migration:
+   `npx wrangler d1 migrations apply notune-db --remote`
+3. Deploy from this directory:
+   `npx wrangler deploy`
+4. Verify `GET /ready` reports the D1 database as ready, then test an authenticated
+   sync from a signed-in app account.
+
+The endpoint intentionally returns 503 when D1 or the JWT secret is unavailable,
+401 for missing/invalid tokens, and never trusts a user ID supplied in the JSON body.
+The auth API and Worker must share the same JWT signing secret; rotating it requires
+updating both services. No deployment or secret provisioning is performed by CI.

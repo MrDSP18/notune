@@ -1,6 +1,7 @@
 # Cloudflare Worker Configuration for NØTUNE Global Edge Server
 name = "notune-api"
 main = "worker.js"
+migrations_dir = "d1-migrations"
 compatibility_date = "2026-10-04"
 
 
@@ -11,7 +12,6 @@ database_id = "39d9cfd0-f146-42df-80c5-4d5254ce7b42"
 
 [vars]
 ENVIRONMENT = "production"
-JWT_SECRET = "${JWT_SECRET}"
 R2_ENDPOINT = "${CLOUDFLARE_R2_ENDPOINT}"
 R2_ACCESS_KEY_ID = "${CLOUDFLARE_R2_ACCESS_KEY_ID}"
 R2_SECRET_ACCESS_KEY = "${CLOUDFLARE_R2_SECRET_ACCESS_KEY}"
