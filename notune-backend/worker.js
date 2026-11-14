@@ -717,8 +717,64 @@ export default {
       return handleSyncRequest(request, env, corsHeaders);
     }
 
+    // Authentication Endpoints (Cloudflare D1-Native Web Crypto)
+    if (path === "/api/v1/auth/register" || path === "/auth/register") {
+      if (request.method !== "POST") {
+        return jsonResponse({ success: false, error: "METHOD_NOT_ALLOWED" }, 405, corsHeaders);
+      }
+      return handleRegister(request, env, corsHeaders);
+    }
+
+    if (path === "/api/v1/auth/login" || path === "/auth/login") {
+      if (request.method !== "POST") {
+        return jsonResponse({ success: false, error: "METHOD_NOT_ALLOWED" }, 405, corsHeaders);
+      }
+      return handleLogin(request, env, corsHeaders);
+    }
+
+    if (path === "/api/v1/auth/refresh" || path === "/auth/refresh") {
+      if (request.method !== "POST") {
+        return jsonResponse({ success: false, error: "METHOD_NOT_ALLOWED" }, 405, corsHeaders);
+      }
+      return handleRefresh(request, env, corsHeaders);
+    }
+
+    if (path === "/api/v1/auth/logout" || path === "/auth/logout") {
+      if (request.method !== "POST") {
+        return jsonResponse({ success: false, error: "METHOD_NOT_ALLOWED" }, 405, corsHeaders);
+      }
+      return handleLogout(request, env, corsHeaders);
+    }
+
+    if (path === "/api/v1/auth/me" || path === "/auth/me") {
+      if (request.method !== "GET") {
+        return jsonResponse({ success: false, error: "METHOD_NOT_ALLOWED" }, 405, corsHeaders);
+      }
+      return handleMe(request, env, corsHeaders);
+    }
+
     return new Response(
-      JSON.stringify({ service: "notune-api", status: "online", endpoints: ["/health", "/ready", "/api/v1/metrics", "/api/v1/version", "/api/v1/releases/latest", "/api/v1/shares", "/api/v1/social/feed", "/api/v1/recommendations/adaptive", "/api/v1/metadata/song/search"] }),
+      JSON.stringify({
+        service: "notune-api",
+        status: "online",
+        endpoints: [
+          "/health",
+          "/ready",
+          "/api/v1/metrics",
+          "/api/v1/version",
+          "/api/v1/releases/latest",
+          "/api/v1/shares",
+          "/api/v1/social/feed",
+          "/api/v1/recommendations/adaptive",
+          "/api/v1/metadata/song/search",
+          "/api/v1/sync",
+          "/api/v1/auth/register",
+          "/api/v1/auth/login",
+          "/api/v1/auth/refresh",
+          "/api/v1/auth/logout",
+          "/api/v1/auth/me"
+        ]
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   },
@@ -1064,4 +1120,501 @@ async function handleSyncRequest(request, env, corsHeaders) {
   } catch (_error) {
     return jsonResponse({ error: "SYNC_PERSISTENCE_FAILED" }, 503, corsHeaders);
   }
+}
+
+// --------------------------------------------------------------------------
+// Cloudflare D1-Native Authentication & Web Crypto Security Gateway
+// --------------------------------------------------------------------------
+
+const FORBIDDEN_PLACEHOLDER_SECRETS = new Set([
+  "notune_production_jwt_secret_key_2026",
+  "notune_docker_jwt_production_secret_2026",
+  "secret",
+  "jwt_secret",
+  "changeme",
+  "your_jwt_secret_here",
+  "your_jwt_signing_secret_min_32_chars",
+  "replace_with_openssl_generated_random_secret_at_least_32_bytes"
+]);
+
+function isJwtSecretValid(secret) {
+  if (typeof secret !== "string") return false;
+  const trimmed = secret.trim();
+  if (trimmed.length < 32) return false;
+  if (trimmed.includes("${")) return false;
+  if (FORBIDDEN_PLACEHOLDER_SECRETS.has(trimmed.toLowerCase())) return false;
+  return true;
+}
+
+function generateUuid() {
+  if (typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = uint8ArrayToHex(bytes);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+function encodeBase64Url(uint8Array) {
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(uint8Array).toString("base64url");
+  }
+  let binary = "";
+  const len = uint8Array.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(uint8Array[i]);
+  }
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+async function signJwtWebCrypto(payload, secret, options = {}) {
+  const header = { alg: "HS256", typ: "JWT", ...options.header };
+  const encodedHeader = encodeBase64Url(new TextEncoder().encode(JSON.stringify(header)));
+
+  const now = Math.floor(Date.now() / 1000);
+  const expiresInSeconds = options.expiresInSeconds !== undefined ? options.expiresInSeconds : 3600;
+  const fullPayload = {
+    ...payload,
+    iat: payload.iat !== undefined ? payload.iat : now,
+    exp: payload.exp !== undefined ? payload.exp : (now + expiresInSeconds)
+  };
+  const encodedPayload = encodeBase64Url(new TextEncoder().encode(JSON.stringify(fullPayload)));
+
+  const signatureInput = `${encodedHeader}.${encodedPayload}`;
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signatureBytes = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(signatureInput));
+  const encodedSignature = encodeBase64Url(new Uint8Array(signatureBytes));
+  return `${signatureInput}.${encodedSignature}`;
+}
+
+async function hashPasswordPbkdf2(password, saltHex, iterations = 100000) {
+  const saltBytes = hexToUint8Array(saltHex);
+  const baseKey = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"]
+  );
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: saltBytes,
+      iterations: iterations,
+      hash: "SHA-256"
+    },
+    baseKey,
+    256
+  );
+  return uint8ArrayToHex(new Uint8Array(derivedBits));
+}
+
+function generateRandomHex(byteLength = 16) {
+  const bytes = new Uint8Array(byteLength);
+  crypto.getRandomValues(bytes);
+  return uint8ArrayToHex(bytes);
+}
+
+function hexToUint8Array(hexString) {
+  const bytes = new Uint8Array(hexString.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(hexString.substring(i * 2, i * 2 + 2), 16);
+  }
+  return bytes;
+}
+
+function uint8ArrayToHex(bytes) {
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function constantTimeEqual(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+async function checkAuthRateLimit(db, identifier, clientIp) {
+  if (!db) return false;
+  const windowMs = 15 * 60 * 1000;
+  const cutoff = Date.now() - windowMs;
+  try {
+    const row = await db.prepare(
+      "SELECT COUNT(*) as failedCount FROM auth_attempts WHERE (identifier = ? OR ip_address = ?) AND success = 0 AND attempted_at >= ?"
+    ).bind(identifier.toLowerCase(), clientIp, cutoff).first();
+    const failedCount = row ? (row.failedCount || 0) : 0;
+    return failedCount >= 5;
+  } catch (_e) {
+    return false;
+  }
+}
+
+async function recordAuthAttempt(db, identifier, clientIp, success) {
+  if (!db) return;
+  try {
+    const id = generateUuid();
+    await db.prepare(
+      "INSERT INTO auth_attempts (id, identifier, ip_address, success, attempted_at) VALUES (?, ?, ?, ?, ?)"
+    ).bind(id, identifier.toLowerCase(), clientIp, success ? 1 : 0, Date.now()).run();
+  } catch (_e) {
+    // Non-blocking for audit logging
+  }
+}
+
+async function handleRegister(request, env, corsHeaders) {
+  if (!env || !env.DB || !isJwtSecretValid(env.JWT_SECRET)) {
+    return jsonResponse({ success: false, error: "SERVICE_UNAVAILABLE" }, 503, corsHeaders);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch (_e) {
+    return jsonResponse({ success: false, error: "INVALID_JSON", message: "Request body must be valid JSON." }, 400, corsHeaders);
+  }
+
+  const username = typeof body.username === "string" ? body.username.trim() : "";
+  const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  const password = typeof body.password === "string" ? body.password : "";
+  const displayName = typeof body.displayName === "string" ? body.displayName.trim() : (username || "Listener");
+  const deviceId = typeof body.deviceId === "string" ? body.deviceId.trim() : "unknown_device";
+
+  if (!username || !/^[a-zA-Z0-9_]{3,32}$/.test(username)) {
+    return jsonResponse({
+      success: false,
+      error: "INVALID_USERNAME",
+      message: "Username must be 3-32 characters long and contain only letters, numbers, and underscores."
+    }, 400, corsHeaders);
+  }
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 255) {
+    return jsonResponse({
+      success: false,
+      error: "INVALID_EMAIL",
+      message: "A valid email address is required."
+    }, 400, corsHeaders);
+  }
+
+  if (!password || password.length < 8 || password.length > 128) {
+    return jsonResponse({
+      success: false,
+      error: "INVALID_PASSWORD",
+      message: "Password must be between 8 and 128 characters long."
+    }, 400, corsHeaders);
+  }
+
+  const existingUser = await env.DB.prepare(
+    "SELECT id, username, email FROM users WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?)"
+  ).bind(username, email).first();
+
+  if (existingUser) {
+    if (existingUser.username?.toLowerCase() === username.toLowerCase()) {
+      return jsonResponse({
+        success: false,
+        error: "USERNAME_TAKEN",
+        message: "Username is already registered. Please choose another."
+      }, 409, corsHeaders);
+    }
+    return jsonResponse({
+      success: false,
+      error: "EMAIL_TAKEN",
+      message: "Email is already registered. Please log in or use another email."
+    }, 409, corsHeaders);
+  }
+
+  const userId = generateUuid();
+  const now = Date.now();
+  const salt = generateRandomHex(16);
+  const iterations = 100000;
+  const passwordHash = await hashPasswordPbkdf2(password, salt, iterations);
+
+  const userStmt = env.DB.prepare(
+    "INSERT INTO users (id, username, email, created_at) VALUES (?, ?, ?, ?)"
+  ).bind(userId, username, email, now);
+
+  const credsStmt = env.DB.prepare(
+    "INSERT INTO user_credentials (user_id, password_hash, salt, iterations, algorithm, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+  ).bind(userId, passwordHash, salt, iterations, "PBKDF2-SHA256", now, now);
+
+  const profileStmt = env.DB.prepare(
+    "INSERT INTO user_profiles (user_id, display_name, avatar_url, music_dna_json, liked_count, followers_count, following_count, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+  ).bind(userId, displayName, null, "{}", 0, 0, 0, now);
+
+  await env.DB.batch([userStmt, credsStmt, profileStmt]);
+
+  const accessToken = await signJwtWebCrypto(
+    { id: userId, username, email },
+    env.JWT_SECRET,
+    { expiresInSeconds: 3600 }
+  );
+  const rawRefreshToken = generateRandomHex(32);
+  const refreshTokenHash = await sha256Hex(rawRefreshToken);
+  const expiresAt = now + (30 * 24 * 3600 * 1000);
+  const sessionId = generateUuid();
+
+  await env.DB.prepare(
+    "INSERT INTO sessions (id, user_id, device_id, refresh_token_hash, is_revoked, expires_at, created_at, last_active_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+  ).bind(sessionId, userId, deviceId, refreshTokenHash, 0, expiresAt, now, now).run();
+
+  return jsonResponse({
+    success: true,
+    user: { id: userId, username, email, displayName },
+    tokens: {
+      accessToken,
+      refreshToken: rawRefreshToken,
+      expiresIn: 3600
+    }
+  }, 201, corsHeaders);
+}
+
+async function handleLogin(request, env, corsHeaders) {
+  if (!env || !env.DB || !isJwtSecretValid(env.JWT_SECRET)) {
+    return jsonResponse({ success: false, error: "SERVICE_UNAVAILABLE" }, 503, corsHeaders);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch (_e) {
+    return jsonResponse({ success: false, error: "INVALID_JSON", message: "Request body must be valid JSON." }, 400, corsHeaders);
+  }
+
+  const rawIdentifier = body.identifier || body.email || body.username || "";
+  const identifier = typeof rawIdentifier === "string" ? rawIdentifier.trim() : "";
+  const password = typeof body.password === "string" ? body.password : "";
+  const deviceId = typeof body.deviceId === "string" ? body.deviceId.trim() : "unknown_device";
+
+  if (!identifier) {
+    return jsonResponse({
+      success: false,
+      error: "IDENTIFIER_REQUIRED",
+      message: "Email or username is required."
+    }, 400, corsHeaders);
+  }
+
+  if (!password) {
+    return jsonResponse({
+      success: false,
+      error: "PASSWORD_REQUIRED",
+      message: "Password is required."
+    }, 400, corsHeaders);
+  }
+
+  const clientIp = request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "127.0.0.1";
+
+  const isThrottled = await checkAuthRateLimit(env.DB, identifier, clientIp);
+  if (isThrottled) {
+    return jsonResponse({
+      success: false,
+      error: "TOO_MANY_ATTEMPTS",
+      message: "Too many failed login attempts. Please wait 15 minutes before trying again."
+    }, 429, corsHeaders);
+  }
+
+  const user = await env.DB.prepare(
+    "SELECT id, username, email FROM users WHERE LOWER(email) = LOWER(?) OR LOWER(username) = LOWER(?)"
+  ).bind(identifier, identifier).first();
+
+  if (!user) {
+    await hashPasswordPbkdf2(password, "0123456789abcdef0123456789abcdef", 100000);
+    await recordAuthAttempt(env.DB, identifier, clientIp, false);
+    return jsonResponse({
+      success: false,
+      error: "INVALID_CREDENTIALS",
+      message: "Invalid email/username or password."
+    }, 401, corsHeaders);
+  }
+
+  const creds = await env.DB.prepare(
+    "SELECT password_hash, salt, iterations, algorithm FROM user_credentials WHERE user_id = ?"
+  ).bind(user.id).first();
+
+  if (!creds || !creds.password_hash || !creds.salt) {
+    await hashPasswordPbkdf2(password, "0123456789abcdef0123456789abcdef", 100000);
+    await recordAuthAttempt(env.DB, identifier, clientIp, false);
+    return jsonResponse({
+      success: false,
+      error: "INVALID_CREDENTIALS",
+      message: "Invalid email/username or password."
+    }, 401, corsHeaders);
+  }
+
+  const computedHash = await hashPasswordPbkdf2(password, creds.salt, creds.iterations || 100000);
+  const isPasswordValid = constantTimeEqual(computedHash, creds.password_hash);
+
+  if (!isPasswordValid) {
+    await recordAuthAttempt(env.DB, identifier, clientIp, false);
+    return jsonResponse({
+      success: false,
+      error: "INVALID_CREDENTIALS",
+      message: "Invalid email/username or password."
+    }, 401, corsHeaders);
+  }
+
+  await recordAuthAttempt(env.DB, identifier, clientIp, true);
+
+  const now = Date.now();
+  const accessToken = await signJwtWebCrypto(
+    { id: user.id, username: user.username, email: user.email },
+    env.JWT_SECRET,
+    { expiresInSeconds: 3600 }
+  );
+  const rawRefreshToken = generateRandomHex(32);
+  const refreshTokenHash = await sha256Hex(rawRefreshToken);
+  const expiresAt = now + (30 * 24 * 3600 * 1000);
+  const sessionId = generateUuid();
+
+  await env.DB.prepare(
+    "INSERT INTO sessions (id, user_id, device_id, refresh_token_hash, is_revoked, expires_at, created_at, last_active_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+  ).bind(sessionId, user.id, deviceId, refreshTokenHash, 0, expiresAt, now, now).run();
+
+  return jsonResponse({
+    success: true,
+    user: { id: user.id, username: user.username, email: user.email, displayName: user.username },
+    tokens: {
+      accessToken,
+      refreshToken: rawRefreshToken,
+      expiresIn: 3600
+    }
+  }, 200, corsHeaders);
+}
+
+async function handleRefresh(request, env, corsHeaders) {
+  if (!env || !env.DB || !isJwtSecretValid(env.JWT_SECRET)) {
+    return jsonResponse({ success: false, error: "SERVICE_UNAVAILABLE" }, 503, corsHeaders);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch (_e) {
+    return jsonResponse({ success: false, error: "INVALID_JSON" }, 400, corsHeaders);
+  }
+
+  const rawToken = typeof body.refreshToken === "string" ? body.refreshToken.trim() : "";
+  if (!rawToken) {
+    return jsonResponse({
+      success: false,
+      error: "MISSING_TOKEN",
+      message: "refreshToken is required."
+    }, 400, corsHeaders);
+  }
+
+  const tokenHash = await sha256Hex(rawToken);
+  const session = await env.DB.prepare(
+    "SELECT id, user_id, device_id, is_revoked, expires_at FROM sessions WHERE refresh_token_hash = ?"
+  ).bind(tokenHash).first();
+
+  if (!session || session.is_revoked === 1) {
+    return jsonResponse({
+      success: false,
+      error: "INVALID_REFRESH_TOKEN",
+      message: "Refresh token is invalid or revoked."
+    }, 401, corsHeaders);
+  }
+
+  const now = Date.now();
+  if (session.expires_at <= now) {
+    return jsonResponse({
+      success: false,
+      error: "TOKEN_EXPIRED",
+      message: "Refresh token has expired."
+    }, 401, corsHeaders);
+  }
+
+  const user = await env.DB.prepare(
+    "SELECT id, username, email FROM users WHERE id = ?"
+  ).bind(session.user_id).first();
+
+  if (!user) {
+    return jsonResponse({ success: false, error: "USER_NOT_FOUND" }, 404, corsHeaders);
+  }
+
+  await env.DB.prepare("UPDATE sessions SET is_revoked = 1 WHERE id = ?").bind(session.id).run();
+
+  const newAccessToken = await signJwtWebCrypto(
+    { id: user.id, username: user.username, email: user.email },
+    env.JWT_SECRET,
+    { expiresInSeconds: 3600 }
+  );
+  const newRawRefreshToken = generateRandomHex(32);
+  const newHash = await sha256Hex(newRawRefreshToken);
+  const expiresAt = now + (30 * 24 * 3600 * 1000);
+  const newSessionId = generateUuid();
+
+  await env.DB.prepare(
+    "INSERT INTO sessions (id, user_id, device_id, refresh_token_hash, is_revoked, expires_at, created_at, last_active_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+  ).bind(newSessionId, user.id, session.device_id || "rotated", newHash, 0, expiresAt, now, now).run();
+
+  return jsonResponse({
+    success: true,
+    tokens: {
+      accessToken: newAccessToken,
+      refreshToken: newRawRefreshToken,
+      expiresIn: 3600
+    }
+  }, 200, corsHeaders);
+}
+
+async function handleLogout(request, env, corsHeaders) {
+  if (!env || !env.DB) {
+    return jsonResponse({ success: false, error: "SERVICE_UNAVAILABLE" }, 503, corsHeaders);
+  }
+
+  try {
+    const body = await request.json();
+    const rawToken = typeof body.refreshToken === "string" ? body.refreshToken.trim() : "";
+    if (rawToken) {
+      const tokenHash = await sha256Hex(rawToken);
+      await env.DB.prepare("UPDATE sessions SET is_revoked = 1 WHERE refresh_token_hash = ?").bind(tokenHash).run();
+    }
+  } catch (_e) {}
+
+  return jsonResponse({ success: true, message: "Logged out successfully." }, 200, corsHeaders);
+}
+
+async function handleMe(request, env, corsHeaders) {
+  if (!env || !env.DB || !isJwtSecretValid(env.JWT_SECRET)) {
+    return jsonResponse({ success: false, error: "SERVICE_UNAVAILABLE" }, 503, corsHeaders);
+  }
+
+  const userId = await verifySyncToken(request, env.JWT_SECRET);
+  if (!userId) {
+    return jsonResponse({ success: false, error: "UNAUTHORIZED", message: "Authentication required." }, 401, corsHeaders);
+  }
+
+  const user = await env.DB.prepare(
+    "SELECT u.id, u.username, u.email, u.created_at, p.display_name, p.avatar_url FROM users u LEFT JOIN user_profiles p ON u.id = p.user_id WHERE u.id = ?"
+  ).bind(userId).first();
+
+  if (!user) {
+    return jsonResponse({ success: false, error: "USER_NOT_FOUND", message: "User account not found." }, 404, corsHeaders);
+  }
+
+  return jsonResponse({
+    success: true,
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      displayName: user.display_name || user.username,
+      avatarUrl: user.avatar_url || null,
+      createdAt: user.created_at
+    }
+  }, 200, corsHeaders);
 }
