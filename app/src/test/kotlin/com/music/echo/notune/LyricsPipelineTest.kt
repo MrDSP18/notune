@@ -72,12 +72,44 @@ class LyricsPipelineTest {
     @Test
     fun testFlexibleLrcTimestampParsing() {
         val lineRegex = echo.music.iad1tya.lyrics.LyricsUtils.LINE_REGEX
-        val timeRegex = echo.music.iad1tya.lyrics.LyricsUtils.TIME_REGEX
-
         val sampleLrcLine1 = "[01:23.45] Flexible Timestamp Line"
         val sampleLrcLine2 = "[1:23:456] Single Digit Minute Line"
 
         assertTrue(lineRegex.matches(sampleLrcLine1))
         assertTrue(lineRegex.matches(sampleLrcLine2))
+    }
+
+    @Test
+    fun testTranslationParserAcceptsExactJsonLineCount() {
+        val result = parseTranslationResponse(
+            """["வணக்கம்","நன்றி"]""",
+            expectedLineCount = 2
+        )
+
+        assertEquals(listOf("வணக்கம்", "நன்றி"), result)
+    }
+
+    @Test
+    fun testTranslationParserAcceptsFencedJson() {
+        val result = parseTranslationResponse(
+            "```json\n[\"வணக்கம்\",\"நன்றி\"]\n```",
+            expectedLineCount = 2
+        )
+
+        assertEquals(listOf("வணக்கம்", "நன்றி"), result)
+    }
+
+    @Test
+    fun testTranslationParserRejectsMissingOrExtraLines() {
+        assertNull(parseTranslationResponse("""["ஒன்று"]""", 2))
+        assertNull(parseTranslationResponse("""["ஒன்று","இரண்டு","மூன்று"]""", 2))
+    }
+
+    @Test
+    fun testTranslationParserRejectsInvalidAndBlankValues() {
+        assertNull(parseTranslationResponse("not json", 1))
+        assertNull(parseTranslationResponse("""[""]""", 1))
+        assertNull(parseTranslationResponse("""[1]""", 1))
+        assertNull(parseTranslationResponse("""["valid",null]""", 2))
     }
 }
