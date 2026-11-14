@@ -45,8 +45,18 @@ import dagger.hilt.android.EntryPointAccessors
 import echo.music.iad1tya.LocalDatabase
 import echo.music.iad1tya.LocalPlayerConnection
 import echo.music.iad1tya.R
+import echo.music.iad1tya.constants.AiProviderKey
+import echo.music.iad1tya.constants.DeeplApiKey
+import echo.music.iad1tya.constants.DeeplFormalityKey
+import echo.music.iad1tya.constants.OpenRouterApiKey
+import echo.music.iad1tya.constants.OpenRouterBaseUrlKey
+import echo.music.iad1tya.constants.OpenRouterModelKey
+import echo.music.iad1tya.constants.TranslateLanguageKey
+import echo.music.iad1tya.constants.TranslateModeKey
 import echo.music.iad1tya.db.entities.LyricsEntity
 import echo.music.iad1tya.lyrics.LyricsUtils.parseLyrics
+import echo.music.iad1tya.lyrics.LyricsTranslationHelper
+import echo.music.iad1tya.utils.rememberPreference
 import echo.music.iad1tya.models.MediaMetadata
 import echo.music.iad1tya.ui.component.shimmer.ShimmerHost
 import echo.music.iad1tya.ui.component.shimmer.TextPlaceholder
@@ -69,6 +79,15 @@ fun PlayerSyncedLyricsView(
     val coroutineScope = rememberCoroutineScope()
     var displayMode by remember { mutableStateOf(LyricsDisplayMode.DUAL_LYRICS) }
     val transliterator = remember { LyricsTransliterator() }
+    val openRouterApiKey by rememberPreference(OpenRouterApiKey, "")
+    val deeplApiKey by rememberPreference(DeeplApiKey, "")
+    val aiProvider by rememberPreference(AiProviderKey, "NØTUNE Neural")
+    val openRouterBaseUrl by rememberPreference(OpenRouterBaseUrlKey, "https://openrouter.ai/api/v1/chat/completions")
+    val openRouterModel by rememberPreference(OpenRouterModelKey, "google/gemini-2.5-flash-lite")
+    val translateLanguage by rememberPreference(TranslateLanguageKey, "ta")
+    val translateMode by rememberPreference(TranslateModeKey, "Literal")
+    val deeplFormality by rememberPreference(DeeplFormalityKey, "default")
+    val hasTranslations by LyricsTranslationHelper.hasActiveTranslations.collectAsState()
     
     LaunchedEffect(mediaMetadata?.id, currentLyrics) {
         if (mediaMetadata != null && currentLyrics == null) {
@@ -99,6 +118,19 @@ fun PlayerSyncedLyricsView(
         parseLyrics(lyricsText).filter { it.text.isNotBlank() }
     }
 
+    LaunchedEffect(mediaMetadata?.id, lines, translateLanguage, translateMode) {
+        val songId = mediaMetadata?.id ?: return@LaunchedEffect
+        val savedLyrics = withContext(Dispatchers.IO) {
+            runCatching { database.lyrics(songId).firstOrNull() }.getOrNull()
+        }
+        LyricsTranslationHelper.loadTranslationsFromDatabase(
+            lyrics = lines,
+            lyricsEntity = savedLyrics,
+            targetLanguage = translateLanguage,
+            mode = translateMode
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -127,8 +159,11 @@ fun PlayerSyncedLyricsView(
                     val index = lines.indexOfLast { it.time <= effectivePosition }
                     if (index >= 0) index else 0
                 }
-                val currentLineRaw = lines.getOrNull(currentLineIndex)?.text ?: ""
-                
+                val activeEntry = lines.getOrNull(currentLineIndex)
+                val currentLineRaw = activeEntry?.text.orEmpty()
+                val translatedText by (activeEntry?.translatedTextFlow?.collectAsState(initial = null)
+                    ?: remember(activeEntry) { mutableStateOf<String?>(null) })
+
                 // Phonetic transliteration (pronunciation)
                 val pronunciationText = remember(currentLineRaw) {
                     transliterator.transliterateToPronunciation(currentLineRaw, LyricsLanguage.TAMIL)
@@ -175,7 +210,7 @@ fun PlayerSyncedLyricsView(
                                 }
                                 LyricsDisplayMode.MEANING -> {
                                     Text(
-                                        text = lineText,
+                                        text = translatedText ?: "Tap TRANSLATE to load meaning",
                                         color = Color.White.copy(alpha = 0.9f),
                                         fontSize = 17.sp,
                                         fontWeight = FontWeight.Medium,
@@ -216,7 +251,7 @@ fun PlayerSyncedLyricsView(
                                         modifier = Modifier.padding(top = 2.dp)
                                     )
                                     Text(
-                                        text = lineText,
+                                        text = translatedText ?: "Tap TRANSLATE to load meaning",
                                         color = Color.White.copy(alpha = 0.7f),
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Normal,
@@ -227,6 +262,39 @@ fun PlayerSyncedLyricsView(
                             }
                         }
                     }
+                }
+
+                Surface(
+                    onClick = {
+                        LyricsTranslationHelper.translateLyrics(
+                            lyrics = lines,
+                            targetLanguage = translateLanguage,
+                            apiKey = openRouterApiKey,
+                            baseUrl = openRouterBaseUrl,
+                            model = openRouterModel,
+                            mode = translateMode,
+                            scope = coroutineScope,
+                            context = context,
+                            provider = aiProvider,
+                            deeplApiKey = deeplApiKey,
+                            deeplFormality = deeplFormality,
+                            useStreaming = true,
+                            songId = mediaMetadata?.id.orEmpty(),
+                            database = database,
+                            sourceLyrics = currentLyrics?.lyrics.orEmpty()
+                        )
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFF19B6A4).copy(alpha = 0.14f),
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                ) {
+                    Text(
+                        text = if (hasTranslations) "TRANSLATED" else "TRANSLATE",
+                        color = Color(0xFF57D8C6),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 5.dp)
+                    )
                 }
 
                 Surface(
