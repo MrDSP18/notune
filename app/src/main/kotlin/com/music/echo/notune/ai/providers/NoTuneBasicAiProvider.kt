@@ -159,10 +159,10 @@ class NoTuneBasicAiProvider @Inject constructor(
                     "I need a little listening history or local music library before I can make reliable personal recommendations. Try playing or liking a few tracks first."
                 } else {
                     buildString {
-                        append("Your NØTUNE local music model ranked these tracks from your listening history and likes:\\n")
+                        append("Your NØTUNE local music model ranked these tracks from your listening history and likes:\n")
                         recommendations.forEachIndexed { index, item ->
                             val artists = item.artists.joinToString { it.name }.ifBlank { "Unknown artist" }
-                            append("${index + 1}. ${item.song.title} — $artists\\n")
+                            append("${index + 1}. ${item.song.title} — $artists\n")
                         }
                         append("These are ranked from your local library; no cloud model was needed.")
                     }
