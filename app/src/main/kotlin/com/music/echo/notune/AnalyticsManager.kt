@@ -1,5 +1,6 @@
 package com.music.echo.notune
 
+import com.music.echo.notune.privacy.PrivateSessionManager
 import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.db.entities.Event
 import echo.music.iad1tya.di.ApplicationScope
@@ -16,6 +17,7 @@ import timber.log.Timber
 class AnalyticsManager @Inject constructor(
     private val eventRepository: EventRepository,
     private val database: MusicDatabase,
+    private val privateSessionManager: PrivateSessionManager,
     @echo.music.iad1tya.di.ApplicationScope private val scope: CoroutineScope
 ) {
     private var job: kotlinx.coroutines.Job? = null
@@ -29,6 +31,10 @@ class AnalyticsManager @Inject constructor(
     }
 
     private fun handleEvent(event: AppEvent) {
+        if (!privateSessionManager.shouldRecordHistoryAndPersonalization()) {
+            Timber.tag("Analytics").d("Event suppressed due to active Private Session: %s", event)
+            return
+        }
         when (event) {
             is AppEvent.PlaybackCompleted -> {
                 Timber.tag("Analytics").d("Playback Completed: ${event.song.title} (${event.playTimeMs}ms)")
