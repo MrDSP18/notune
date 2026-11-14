@@ -5,6 +5,7 @@ package echo.music.iad1tya.discord
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import echo.music.iad1tya.BuildConfig
 
 class DiscordOAuthCallbackActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,6 +21,9 @@ class DiscordOAuthCallbackActivity : Activity() {
     }
 
     private fun handleIntent(intent: Intent?) {
-        intent?.data?.let(DiscordAuthCoordinator::emit)
+        val uri = intent?.data ?: return
+        if (uri.scheme.equals(BuildConfig.DISCORD_REDIRECT_SCHEME, ignoreCase = true)) {
+            DiscordAuthCoordinator.emit(uri)
+        }
     }
 }

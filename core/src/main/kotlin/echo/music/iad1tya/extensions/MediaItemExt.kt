@@ -17,6 +17,17 @@ import java.util.Locale
 val MediaItem.metadata: MediaMetadata?
     get() = localConfiguration?.tag as? MediaMetadata
 
+val MediaItem.safeMetadata: MediaMetadata
+    get() = metadata ?: MediaMetadata(
+        id = mediaId,
+        title = mediaMetadata.title?.toString()?.takeIf { it.isNotBlank() } ?: mediaId,
+        artists = mediaMetadata.artist?.toString()?.split(",")?.map {
+            MediaMetadata.Artist(id = null, name = it.trim())
+        } ?: emptyList(),
+        duration = 0,
+        thumbnailUrl = mediaMetadata.artworkUri?.toString()
+    )
+
 fun playbackSeedUri(mediaId: String): String {
     val cleanId = mediaId.removePrefix("yt_").removePrefix("local_")
     val scheme = mediaId.toUri().scheme?.lowercase(Locale.US)

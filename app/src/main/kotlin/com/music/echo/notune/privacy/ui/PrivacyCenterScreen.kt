@@ -275,7 +275,7 @@ fun PrivacyCenterScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedButton(
                     onClick = {
-                        val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+                        val uri = FileProvider.getUriForFile(context, "${context.packageName}.FileProvider", file)
                         val intent = Intent(Intent.ACTION_SEND).apply {
                             type = "application/zip"
                             putExtra(Intent.EXTRA_STREAM, uri)

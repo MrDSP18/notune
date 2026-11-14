@@ -52,12 +52,15 @@ class SleepTimer(
         val fadeDuration = 3000L
         val steps = 30
         val stepDelay = fadeDuration / steps
-        for (i in steps downTo 1) {
-            player.volume = initialVolume * (i.toFloat() / steps)
-            delay(stepDelay)
+        try {
+            for (i in steps downTo 1) {
+                player.volume = initialVolume * (i.toFloat() / steps)
+                delay(stepDelay)
+            }
+            player.pause()
+        } finally {
+            player.volume = initialVolume
         }
-        player.pause()
-        player.volume = initialVolume
     }
 
     

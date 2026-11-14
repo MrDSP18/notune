@@ -120,6 +120,7 @@ import echo.music.iad1tya.constants.QueueEditLockKey
 import echo.music.iad1tya.constants.ShowCommentButtonKey
 import echo.music.iad1tya.constants.UseNewPlayerDesignKey
 import echo.music.iad1tya.extensions.metadata
+import echo.music.iad1tya.extensions.safeMetadata
 import echo.music.iad1tya.extensions.move
 import echo.music.iad1tya.extensions.toggleRepeatMode
 import echo.music.iad1tya.listentogether.RoomRole
@@ -692,7 +693,7 @@ fun Queue(
         val mutableQueueWindows = remember { mutableStateListOf<Timeline.Window>() }
         val queueLength =
             remember(queueWindows) {
-                queueWindows.sumOf { it.mediaItem.metadata!!.duration }
+                queueWindows.sumOf { it.mediaItem.metadata?.duration ?: 0 }
             }
 
         val coroutineScope = rememberCoroutineScope()
@@ -1197,7 +1198,7 @@ fun Queue(
                                     modifier = Modifier.animateItem(),
                                 ) {
                                     MediaMetadataListItem(
-                                        mediaMetadata = window.mediaItem.metadata!!,
+                                        mediaMetadata = window.mediaItem.safeMetadata,
                                         isSelected = false,
                                         isActive = isActive,
                                         isPlaying = isPlaying && isActive,
@@ -1214,7 +1215,7 @@ fun Queue(
                                                         onClick = {
                                                             menuState.show {
                                                                 QueueMenu(
-                                                                    mediaMetadata = window.mediaItem.metadata!!,
+                                                                    mediaMetadata = window.mediaItem.safeMetadata,
                                                                     navController = navController,
                                                                     playerBottomSheetState = playerBottomSheetState,
                                                                     onShowDetailsDialog = {
@@ -1332,7 +1333,7 @@ fun Queue(
                                 horizontalArrangement = Arrangement.Center,
                             ) {
                                 MediaMetadataListItem(
-                                    mediaMetadata = item.metadata!!,
+                                    mediaMetadata = item.safeMetadata,
                                     shape = listItemShape(index, automix.size),
                                     trailingContent = {
                                         if (!isListenTogetherGuest) {
@@ -1372,7 +1373,7 @@ fun Queue(
                                                 onLongClick = {
                                                     menuState.show {
                                                         QueueMenu(
-                                                            mediaMetadata = item.metadata!!,
+                                                            mediaMetadata = item.safeMetadata,
                                                             navController = navController,
                                                             playerBottomSheetState = playerBottomSheetState,
                                                             onShowDetailsDialog = {

@@ -73,10 +73,10 @@ fun PlayerSyncedLyricsView(
     LaunchedEffect(mediaMetadata?.id, currentLyrics) {
         if (mediaMetadata != null && currentLyrics == null) {
             delay(500)
-            coroutineScope.launch(Dispatchers.IO) {
+            kotlinx.coroutines.withContext(Dispatchers.IO) {
                 try {
                     val existing = database.lyrics(mediaMetadata.id).firstOrNull()
-                    if (existing != null) return@launch
+                    if (existing != null) return@withContext
                     val entryPoint = EntryPointAccessors.fromApplication(
                         context.applicationContext,
                         echo.music.iad1tya.di.LyricsHelperEntryPoint::class.java

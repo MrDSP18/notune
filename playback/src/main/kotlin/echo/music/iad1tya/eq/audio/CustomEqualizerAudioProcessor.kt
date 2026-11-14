@@ -114,7 +114,7 @@ class CustomEqualizerAudioProcessor : AudioProcessor {
         }
 
         
-        if (encoding != C.ENCODING_PCM_16BIT || channelCount > 2) {
+        if (encoding != C.ENCODING_PCM_16BIT || channelCount !in 1..2 || sampleRate <= 0) {
             val exception = AudioProcessor.UnhandledAudioFormatException(inputAudioFormat)
             throw exception 
         }

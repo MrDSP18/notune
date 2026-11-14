@@ -40,7 +40,7 @@ class StereoWidenerAudioProcessor : AudioProcessor {
         channelCount = inputAudioFormat.channelCount
         encoding = inputAudioFormat.encoding
 
-        if (encoding != C.ENCODING_PCM_16BIT || channelCount > 2) {
+        if (encoding != C.ENCODING_PCM_16BIT || channelCount !in 1..2) {
             throw AudioProcessor.UnhandledAudioFormatException(inputAudioFormat)
         }
 

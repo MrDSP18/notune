@@ -39,15 +39,34 @@ class BiquadFilter(
     }
 
     
+    private fun setPassthrough() {
+        b0 = 1.0; b1 = 0.0; b2 = 0.0
+        a0 = 1.0; a1 = 0.0; a2 = 0.0
+    }
+
+    private fun normalizeCoefficients(rawB0: Double, rawB1: Double, rawB2: Double, rawA0: Double, rawA1: Double, rawA2: Double) {
+        if (rawA0 == 0.0 || rawA0.isNaN() || rawA0.isInfinite()) {
+            setPassthrough()
+            return
+        }
+        b0 = rawB0 / rawA0
+        b1 = rawB1 / rawA0
+        b2 = rawB2 / rawA0
+        a1 = rawA1 / rawA0
+        a2 = rawA2 / rawA0
+        a0 = 1.0
+    }
+
     private fun calculateCoefficients() {
+        if (sampleRate <= 0 || frequency <= 0.0 || frequency >= sampleRate / 2.0 || q <= 0.0) {
+            setPassthrough()
+            return
+        }
         when (filterType) {
             FilterType.PK -> calculatePeakingCoefficients()
             FilterType.LSC -> calculateLowShelfCoefficients()
             FilterType.HSC -> calculateHighShelfCoefficients()
-            else -> {
-                
-                calculatePeakingCoefficients()
-            }
+            else -> calculatePeakingCoefficients()
         }
     }
 
@@ -68,12 +87,7 @@ class BiquadFilter(
         a2 = 1.0 - alpha / A
 
         
-        b0 /= a0
-        b1 /= a0
-        b2 /= a0
-        a1 /= a0
-        a2 /= a0
-        a0 = 1.0
+        normalizeCoefficients(b0, b1, b2, a0, a1, a2)
     }
 
     
@@ -99,12 +113,7 @@ class BiquadFilter(
         a2 = aPlusOne + aMinusOne * cosOmega - twoSqrtAAlpha
 
         
-        b0 /= a0
-        b1 /= a0
-        b2 /= a0
-        a1 /= a0
-        a2 /= a0
-        a0 = 1.0
+        normalizeCoefficients(b0, b1, b2, a0, a1, a2)
     }
 
     
@@ -130,12 +139,7 @@ class BiquadFilter(
         a2 = aPlusOne - aMinusOne * cosOmega - twoSqrtAAlpha
 
         
-        b0 /= a0
-        b1 /= a0
-        b2 /= a0
-        a1 /= a0
-        a2 /= a0
-        a0 = 1.0
+        normalizeCoefficients(b0, b1, b2, a0, a1, a2)
     }
 
     

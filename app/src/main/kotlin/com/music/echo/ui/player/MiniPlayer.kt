@@ -452,10 +452,10 @@ private fun NewMiniPlayer(
                         tint = primaryColor,
                         modifier = Modifier.size(20.dp)
                     )
-                    if (castDeviceName != null) {
+                    castDeviceName?.let { deviceName ->
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = castDeviceName!!,
+                            text = deviceName,
                             style = MaterialTheme.typography.labelSmall,
                             color = primaryColor,
                             maxLines = 1

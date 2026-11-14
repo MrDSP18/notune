@@ -41,7 +41,7 @@ class SilenceDetectorAudioProcessor(
         channelCount = inputAudioFormat.channelCount
         encoding = inputAudioFormat.encoding
 
-        if (encoding != C.ENCODING_PCM_16BIT) {
+        if (encoding != C.ENCODING_PCM_16BIT || channelCount <= 0 || sampleRate <= 0) {
             throw AudioProcessor.UnhandledAudioFormatException(inputAudioFormat)
         }
 

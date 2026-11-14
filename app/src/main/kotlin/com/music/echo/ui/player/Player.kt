@@ -1465,7 +1465,8 @@ fun BottomSheetPlayer(
             label = "playPauseRoundness",
         )
 
-        if (playerStyle == PlayerStyleVariant.LUX && mediaMetadata != null) {
+        val currentMediaMetadata = mediaMetadata
+        if (playerStyle == PlayerStyleVariant.LUX && currentMediaMetadata != null) {
             val lyrics by playerConnection.currentLyrics.collectAsState(initial = null)
             val lyricsLines = remember(lyrics) {
                 lyrics?.lyrics?.lines()?.filter { it.isNotBlank() } ?: emptyList()
@@ -1473,7 +1474,7 @@ fun BottomSheetPlayer(
             val shuffleModeEnabled by playerConnection.shuffleModeEnabled.collectAsState()
 
             LuxPlayerContent(
-                mediaMetadata = mediaMetadata!!,
+                mediaMetadata = currentMediaMetadata,
                 position = effectivePosition,
                 duration = duration,
                 isPlaying = effectiveIsPlaying,
@@ -1511,7 +1512,7 @@ fun BottomSheetPlayer(
                 onMoreClick = {
                     menuState.show {
                         PlayerMenu(
-                            mediaMetadata = mediaMetadata!!,
+                            mediaMetadata = currentMediaMetadata,
                             navController = navController,
                             playerBottomSheetState = state,
                             onShowDetailsDialog = {
@@ -3012,8 +3013,8 @@ fun BottomSheetPlayer(
                             )
                         }
 
-                        if (mediaMetadata != null) {
-                            ControlsContent(mediaMetadata!!)
+                        mediaMetadata?.let {
+                            ControlsContent(it)
                         }
 
                         Spacer(Modifier.weight(1f))
@@ -3087,8 +3088,8 @@ fun BottomSheetPlayer(
                         )
                     }
 
-                    if (mediaMetadata != null) {
-                        ControlsContent(mediaMetadata!!)
+                    mediaMetadata?.let {
+                        ControlsContent(it)
                     }
 
                     Spacer(Modifier.height(10.dp))

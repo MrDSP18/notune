@@ -48,6 +48,10 @@ class PoTokenWebView private constructor(
         webViewSettings.javaScriptEnabled = true
         webViewSettings.userAgentString = USER_AGENT
         webViewSettings.blockNetworkLoads = true // the WebView does not need internet access
+        webViewSettings.allowFileAccess = false
+        webViewSettings.allowContentAccess = false
+        webViewSettings.allowFileAccessFromFileURLs = false
+        webViewSettings.allowUniversalAccessFromFileURLs = false
 
         // so that we can run async functions and get back the result
         webView.addJavascriptInterface(this, JS_INTERFACE)
