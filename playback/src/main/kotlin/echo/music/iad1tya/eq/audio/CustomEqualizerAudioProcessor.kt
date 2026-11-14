@@ -248,7 +248,7 @@ class CustomEqualizerAudioProcessor : AudioProcessor {
         }
     }
 
-    private fun limitSample(sample: Double): Double {
+    internal fun limitSample(sample: Double): Double {
         if (!sample.isFinite()) return 0.0
         val magnitude = abs(sample)
         if (magnitude <= 0.95) return sample
