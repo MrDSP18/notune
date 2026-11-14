@@ -92,15 +92,17 @@ internal fun parseTranslationResponse(
     val end = cleaned.lastIndexOf(']')
     if (start < 0 || end <= start) return null
 
-    return runCatching {
-        val parsed = Json.parseToJsonElement(cleaned.substring(start, end + 1)) as? JsonArray
-            ?: return null
-        if (parsed.size != expectedLineCount) return null
+    val parsed = runCatching {
+        Json.parseToJsonElement(cleaned.substring(start, end + 1)) as? JsonArray
+    }.getOrNull() ?: return null
 
-        parsed.map { element ->
-            val value = element.jsonPrimitive
-            if (!value.isString || value.content.isBlank()) return null
-            value.content
-        }
-    }.getOrNull()
+    if (parsed.size != expectedLineCount) return null
+
+    val values = ArrayList<String>(parsed.size)
+    for (element in parsed) {
+        val value = runCatching { element.jsonPrimitive }.getOrNull() ?: return null
+        if (!value.isString || value.content.isBlank()) return null
+        values += value.content
+    }
+    return values
 }
