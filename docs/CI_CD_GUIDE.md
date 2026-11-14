@@ -49,3 +49,25 @@ flowchart TD
 ### 3. `codeql.yml` (Security Code Scanning)
 - **Triggers**: Weekly cron and pushes to `main`.
 - **Tasks**: Static analysis for security vulnerabilities in Java/Kotlin codebase.
+
+---
+
+## 3. GitHub Actions Permission Configuration
+
+### Resolving `Resource not accessible by integration`
+
+When GitHub Actions attempts to create or update a GitHub Release (e.g. via `softprops/action-gh-release@v2`), GitHub may return:
+```
+HttpError: Resource not accessible by integration - https://docs.github.com/rest/releases/releases#update-a-release
+```
+
+This error occurs when the default `GITHUB_TOKEN` permissions in the GitHub repository settings are restricted to Read-Only.
+
+#### How to Enable Workflow Write Permissions:
+1. Navigate to your GitHub repository in your browser: `https://github.com/MrDSP18/notune/settings/actions`
+2. Scroll down to the **Workflow permissions** section.
+3. Select **"Read and write permissions"** (Workflows have read and write permissions in the repository for all scopes).
+4. *(Optional but recommended)* Check **"Allow GitHub Actions to create and approve pull requests"**.
+5. Click **Save**.
+
+Once saved, future pushes to `main` or release tag creations will have the necessary authorization for `softprops/action-gh-release` to attach APK binaries to GitHub Releases. The CI workflow also has `continue-on-error: true` so that temporary permission restrictions do not cause build/test verification steps to fail.
