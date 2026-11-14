@@ -16,7 +16,7 @@ class NoCoreOrchestrator @Inject constructor(
     private val guardSafety: NoGuardSafety
 ) {
     suspend fun processUserRequest(prompt: String): Result<AiResponse> {
-        Timber.d("NøCore: Processing prompt '$prompt'")
+        Timber.d("NøCore: Processing user request")
         
         // 1. Sanitize prompt
         val cleanPrompt = guardSafety.sanitizePrompt(prompt)
