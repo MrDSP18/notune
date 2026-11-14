@@ -40,6 +40,7 @@ class NoGuardSafety @Inject constructor(
         "toggle_flow" to Pair(ToolPermission.LOW_RISK_WRITE, ActionPolicy()),
         "set_sleep_timer" to Pair(ToolPermission.LOW_RISK_WRITE, ActionPolicy()),
         "set_equalizer_preset" to Pair(ToolPermission.LOW_RISK_WRITE, ActionPolicy()),
+        "generate_lyrics" to Pair(ToolPermission.LOW_RISK_WRITE, ActionPolicy()),
         "change_theme" to Pair(ToolPermission.LOW_RISK_WRITE, ActionPolicy()),
         "change_logo" to Pair(ToolPermission.LOW_RISK_WRITE, ActionPolicy()),
         "change_font" to Pair(ToolPermission.LOW_RISK_WRITE, ActionPolicy()),
