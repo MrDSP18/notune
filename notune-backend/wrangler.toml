@@ -1,5 +1,5 @@
 # Cloudflare Worker Configuration for NØTUNE Global Edge Server
-name = "notune-api"
+name = "notune"
 main = "worker.js"
 migrations_dir = "d1-migrations"
 compatibility_date = "2026-10-04"
