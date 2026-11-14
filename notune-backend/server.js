@@ -18,7 +18,8 @@ const crypto = require('crypto');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 10000;
-const JWT_SECRET = process.env.JWT_SECRET || 'notune_production_jwt_secret_key_2026';
+const { getJwtSecret } = require('./authConfig');
+const JWT_SECRET = getJwtSecret();
 const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/notune_db';
 
 const app = express();
