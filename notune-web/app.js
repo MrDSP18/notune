@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
     queueIndex: 0,
     likedSongIds: new Set(),
     history: [],
+    adaptiveQueueInFlight: false,
     shuffle: false,
     repeat: false, // 'none', 'all', 'one'
     activeRoom: null,
@@ -306,6 +307,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function nextTrack() {
     if (state.queue.length === 0) return;
+    if (state.currentTrack && state.currentTrack.id) {
+      state.history.push(state.currentTrack.id);
+      state.history = state.history.slice(-50);
+    }
     state.queueIndex = (state.queueIndex + 1) % state.queue.length;
     loadTrack(state.queue[state.queueIndex], true);
     triggerAdaptiveQueueCheck();
@@ -409,18 +414,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  }
-
-  // --------------------------------------------------------------------------
-  // 5. ADAPTIVE QUEUE ENGINE
-  // --------------------------------------------------------------------------
-  function triggerAdaptiveQueueCheck() {
-    // If remaining queue items after current is less than 3, auto-append recommended tracks
-    if (state.queue.length - state.queueIndex < 3) {
-      const recs = CATALOG.filter(t => t.id !== state.currentTrack.id);
-      state.queue.push(...recs);
-      renderQueueList();
-    }
   }
 
   function renderQueueList() {
@@ -690,34 +683,75 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --------------------------------------------------------------------------
-  // 5. ADAPTIVE QUEUE ENGINE (Connected to Production API)
+  // 5. ADAPTIVE QUEUE ENGINE
   // --------------------------------------------------------------------------
   async function triggerAdaptiveQueueCheck() {
-    // If remaining queue items after current is less than 3, request dynamic adaptive recommendations
-    if (state.queue.length - state.queueIndex < 3) {
+    const remaining = state.queue.length - state.queueIndex - 1;
+    if (remaining >= 3 || state.adaptiveQueueInFlight || !state.currentTrack) return;
+
+    state.adaptiveQueueInFlight = true;
+    const current = state.currentTrack;
+    const upcomingIds = new Set(state.queue.slice(state.queueIndex + 1).map(track => track.id));
+    const recentIds = new Set(state.history.slice(-3));
+    const canAppend = track =>
+      track &&
+      typeof track.id === "string" &&
+      typeof track.audioUrl === "string" &&
+      track.id !== current.id &&
+      !upcomingIds.has(track.id) &&
+      !recentIds.has(track.id);
+
+    try {
+      let recommendations = [];
       try {
         const res = await fetch(`${API_BASE}/api/v1/recommendations/adaptive`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            currentSong: state.currentTrack ? state.currentTrack.id : "track_1",
-            mood: state.currentTrack ? (state.currentTrack.mood || "chill") : "chill",
-            history: state.history.slice(-5)
+            currentSong: current.id,
+            mood: current.mood || "chill",
+            history: state.history.slice(-10)
           })
         });
+        if (!res.ok) throw new Error(`Recommendation API returned HTTP ${res.status}`);
         const data = await res.json();
-        if (data.success && data.recommendations && data.recommendations.length > 0) {
-          state.queue.push(...data.recommendations);
-          renderQueueList();
-          return;
+        if (data.success && Array.isArray(data.recommendations)) {
+          const seen = new Set(upcomingIds);
+          seen.add(current.id);
+          recommendations = data.recommendations.filter(track => {
+            if (!canAppend(track) || seen.has(track.id)) return false;
+            seen.add(track.id);
+            return true;
+          });
         }
       } catch (err) {
-        console.warn("API adaptive queue fallback:", err);
+        console.warn("Adaptive recommendation API unavailable; using local ranking:", err);
       }
-      // Fallback
-      const recs = CATALOG.filter(t => t.id !== state.currentTrack.id);
-      state.queue.push(...recs);
-      renderQueueList();
+
+      if (recommendations.length === 0) {
+        const currentArtist = (current.artist || "").toLowerCase();
+        const currentMood = (current.mood || "").toLowerCase();
+        const currentLanguage = (current.language || "").toLowerCase();
+        recommendations = CATALOG
+          .filter(canAppend)
+          .map(track => {
+            let score = 0;
+            if (currentMood && (track.mood || "").toLowerCase() === currentMood) score += 3;
+            if (currentArtist && (track.artist || "").toLowerCase() === currentArtist) score += 2;
+            if (currentLanguage && (track.language || "").toLowerCase() === currentLanguage) score += 1;
+            if (state.likedSongIds.has(track.id)) score += 2;
+            return { track, score };
+          })
+          .sort((a, b) => b.score - a.score || a.track.title.localeCompare(b.track.title))
+          .map(item => item.track);
+      }
+
+      if (recommendations.length > 0) {
+        state.queue.push(...recommendations);
+        renderQueueList();
+      }
+    } finally {
+      state.adaptiveQueueInFlight = false;
     }
   }
 
