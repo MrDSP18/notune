@@ -1,5 +1,8 @@
 package echo.music.iad1tya.notune.ai.safety
 
+import javax.inject.Inject
+import javax.inject.Singleton
+
 enum class ToolPermission {
     READ,
     LOW_RISK_WRITE,
@@ -14,13 +17,14 @@ data class ActionPolicy(
     val allowedInRoom: Boolean = true
 )
 
-class ToolGuard {
+@Singleton
+class ToolGuard @Inject constructor() {
     fun validateAction(
         permission: ToolPermission,
         policy: ActionPolicy,
         userConfirmed: Boolean = false
     ): Boolean {
-        if (policy.isDestructive || permission == ToolPermission.HIGH_RISK) {
+        if (policy.isDestructive || policy.requiresConfirmation || permission == ToolPermission.HIGH_RISK) {
             return userConfirmed
         }
         return true
