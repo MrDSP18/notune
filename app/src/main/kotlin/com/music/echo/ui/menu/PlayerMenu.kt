@@ -785,6 +785,21 @@ fun PlayerMenu(
                             }
                         ),
                         Material3MenuItemData(
+                            title = { Text(text = "Audio Lab 2.0") },
+                            description = { Text(text = "DSP Pipeline, ReplayGain & Bass Boost") },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.graphic_eq),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            onClick = {
+                                navController.navigate("settings/equalizer")
+                                onDismiss()
+                            }
+                        ),
+                        Material3MenuItemData(
                             title = { Text(text = stringResource(R.string.advanced)) },
                             description = { Text(text = stringResource(R.string.advanced_desc)) },
                             icon = {

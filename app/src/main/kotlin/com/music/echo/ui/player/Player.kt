@@ -1562,6 +1562,15 @@ fun BottomSheetPlayer(
                 },
                 modifier = Modifier.fillMaxSize()
             )
+        } else if (playerStyle == PlayerStyleVariant.MINIMAL && mediaMetadata != null) {
+            com.music.echo.notune.ui.player.PlayerMinimalMode(
+                songTitle = mediaMetadata?.title ?: "",
+                artistName = mediaMetadata?.artists?.joinToString { it.name } ?: "",
+                isPlaying = effectiveIsPlaying,
+                onPlayPause = playerConnection::togglePlayPause,
+                onExitMinimal = { state.collapseSoft() },
+                modifier = Modifier.fillMaxSize()
+            )
         } else {
             @Composable
             fun ColumnScope.ControlsContent(mediaMetadata: MediaMetadata) {
