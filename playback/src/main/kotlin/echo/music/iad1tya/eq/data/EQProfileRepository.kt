@@ -17,6 +17,14 @@ import javax.inject.Singleton
 
 
 @Serializable
+enum class AudioOutputDeviceType {
+    SPEAKER,
+    BLUETOOTH,
+    WIRED_HEADSET,
+    DEFAULT
+}
+
+@Serializable
 data class SavedEQProfile(
     val id: String,                       
     val name: String,                     
@@ -278,9 +286,21 @@ class EQProfileRepository @Inject constructor(
 
     
     fun getSortedProfiles(): List<SavedEQProfile> {
-        
         return _profiles.value
             .filter { it.isCustom }
             .sortedByDescending { it.addedTimestamp }
+    }
+
+    fun getProfileForDevice(deviceType: AudioOutputDeviceType): SavedEQProfile? {
+        val assignedId = prefs.getString("eq_device_profile_${deviceType.name}", null)
+        return if (assignedId != null) {
+            _profiles.value.find { it.id == assignedId }
+        } else {
+            _activeProfile.value
+        }
+    }
+
+    suspend fun assignProfileToDevice(deviceType: AudioOutputDeviceType, profileId: String) = withContext(Dispatchers.IO) {
+        prefs.edit { putString("eq_device_profile_${deviceType.name}", profileId) }
     }
 }

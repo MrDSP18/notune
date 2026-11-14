@@ -1045,7 +1045,11 @@ class MusicService :
 
 
         if (dataStore.get(PersistentQueueKey, true)) {
-            val queueFile = filesDir.resolve(PERSISTENT_QUEUE_FILE)
+            val queueFile = filesDir.resolve(PERSISTENT_QUEUE_FILE).let {
+                if (!it.exists() && filesDir.resolve("$PERSISTENT_QUEUE_FILE.tmp").exists()) {
+                    filesDir.resolve("$PERSISTENT_QUEUE_FILE.tmp").also { tmp -> tmp.renameTo(it) }
+                } else it
+            }
             if (queueFile.exists()) {
                 runCatching {
                     queueFile.inputStream().use { fis ->
@@ -1078,7 +1082,11 @@ class MusicService :
             }
         }
 
-            val automixFile = filesDir.resolve(PERSISTENT_AUTOMIX_FILE)
+            val automixFile = filesDir.resolve(PERSISTENT_AUTOMIX_FILE).let {
+                if (!it.exists() && filesDir.resolve("$PERSISTENT_AUTOMIX_FILE.tmp").exists()) {
+                    filesDir.resolve("$PERSISTENT_AUTOMIX_FILE.tmp").also { tmp -> tmp.renameTo(it) }
+                } else it
+            }
             if (automixFile.exists()) {
                 runCatching {
                     automixFile.inputStream().use { fis ->
@@ -1100,7 +1108,11 @@ class MusicService :
         }
 
             
-            val playerStateFile = filesDir.resolve(PERSISTENT_PLAYER_STATE_FILE)
+            val playerStateFile = filesDir.resolve(PERSISTENT_PLAYER_STATE_FILE).let {
+                if (!it.exists() && filesDir.resolve("$PERSISTENT_PLAYER_STATE_FILE.tmp").exists()) {
+                    filesDir.resolve("$PERSISTENT_PLAYER_STATE_FILE.tmp").also { tmp -> tmp.renameTo(it) }
+                } else it
+            }
             if (playerStateFile.exists()) {
                 runCatching {
                     playerStateFile.inputStream().use { fis ->
@@ -1111,17 +1123,12 @@ class MusicService :
                 }.onSuccess { playerState ->
                     
                     scope.launch {
-                        delay(1000) 
-                        
-                        
-                        
+                        playerInitialized.first { it }
                         playerVolume.value = restorePlayerVolume(playerState.volume)
-
-                        
-                        if (playerState.currentMediaItemIndex < player.mediaItemCount) {
+                        if (playerState.currentMediaItemIndex in 0 until player.mediaItemCount) {
                             player.seekTo(playerState.currentMediaItemIndex, playerState.currentPosition)
+                        }
                     }
-                }
                 }.onFailure { error ->
                     Timber.tag(TAG).w(error, "Failed to read player state, clearing data")
                     clearPersistedQueueFiles()
@@ -1333,29 +1340,19 @@ class MusicService :
 }
 
     fun clearPersistedQueueFiles(): Boolean {
-        val queueDeleted = runCatching {
-            val file = filesDir.resolve(PERSISTENT_QUEUE_FILE)
-            if (!file.exists()) true else file.delete()
-        }.getOrDefault(false)
-
-        runCatching {
-            val file = filesDir.resolve(PERSISTENT_AUTOMIX_FILE)
-            if (file.exists()) file.delete()
-    }
-
-        runCatching {
-            val file = filesDir.resolve(PERSISTENT_PLAYER_STATE_FILE)
-            if (file.exists()) file.delete()
-    }
-
-        if (!queueDeleted) {
+        listOf(
+            PERSISTENT_QUEUE_FILE, "$PERSISTENT_QUEUE_FILE.tmp",
+            PERSISTENT_AUTOMIX_FILE, "$PERSISTENT_AUTOMIX_FILE.tmp",
+            PERSISTENT_PLAYER_STATE_FILE, "$PERSISTENT_PLAYER_STATE_FILE.tmp"
+        ).forEach { fileName ->
             runCatching {
-                filesDir.resolve(PERSISTENT_QUEUE_FILE).writeBytes(byteArrayOf())
+                val f = filesDir.resolve(fileName)
+                if (f.exists()) f.delete()
+            }
         }
+        val file = filesDir.resolve(PERSISTENT_QUEUE_FILE)
+        return !file.exists()
     }
-
-        return queueDeleted
-}
 
     fun hasAudioFocusForPlayback(): Boolean {
         return hasAudioFocus
@@ -3368,15 +3365,29 @@ class MusicService :
         }
     }
 
+    private fun atomicWriteObject(fileName: String, obj: java.io.Serializable) {
+        val targetFile = filesDir.resolve(fileName)
+        val tempFile = filesDir.resolve("$fileName.tmp")
+        tempFile.outputStream().use { fos ->
+            java.io.ObjectOutputStream(fos).use { oos ->
+                oos.writeObject(obj)
+                oos.flush()
+            }
+        }
+        if (tempFile.exists()) {
+            if (targetFile.exists()) targetFile.delete()
+            tempFile.renameTo(targetFile)
+        }
+    }
+
     private fun saveQueueToDisk() {
         if (player.mediaItemCount == 0) {
             Timber.tag(TAG).d("Clearing persisted queue - no media items")
             clearPersistedQueueFiles()
             return
-    }
+        }
 
         try {
-            
             val timeline = player.currentTimeline
             val shuffledIndicesList = if (!timeline.isEmpty && player.shuffleModeEnabled) {
                 val indices = mutableListOf<Int>()
@@ -3384,7 +3395,7 @@ class MusicService :
                 while (index != androidx.media3.common.C.INDEX_UNSET) {
                     indices.add(index)
                     index = timeline.getNextWindowIndex(index, androidx.media3.common.Player.REPEAT_MODE_OFF, true)
-            }
+                }
                 indices
             } else null
 
@@ -3403,7 +3414,6 @@ class MusicService :
                     position = 0,
                 )
 
-            
             val persistPlayerState = PersistPlayerState(
                 playWhenReady = player.playWhenReady,
                 repeatMode = player.repeatMode,
@@ -3415,45 +3425,33 @@ class MusicService :
             )
 
             runCatching {
-                filesDir.resolve(PERSISTENT_QUEUE_FILE).outputStream().use { fos ->
-                    ObjectOutputStream(fos).use { oos ->
-                        oos.writeObject(persistQueue)
-                }
-            }
+                atomicWriteObject(PERSISTENT_QUEUE_FILE, persistQueue)
                 Timber.tag(TAG).d("Queue saved successfully")
             }.onFailure {
                 Timber.tag(TAG).e(it, "Failed to save queue")
                 reportException(it)
-        }
+            }
 
             runCatching {
-            filesDir.resolve(PERSISTENT_AUTOMIX_FILE).outputStream().use { fos ->
-                ObjectOutputStream(fos).use { oos ->
-                        oos.writeObject(persistAutomix)
-                }
-            }
+                atomicWriteObject(PERSISTENT_AUTOMIX_FILE, persistAutomix)
                 Timber.tag(TAG).d("Automix saved successfully")
             }.onFailure {
                 Timber.tag(TAG).e(it, "Failed to save automix")
                 reportException(it)
-        }
+            }
 
             runCatching {
-                filesDir.resolve(PERSISTENT_PLAYER_STATE_FILE).outputStream().use { fos ->
-                    ObjectOutputStream(fos).use { oos ->
-                        oos.writeObject(persistPlayerState)
-                }
-            }
+                atomicWriteObject(PERSISTENT_PLAYER_STATE_FILE, persistPlayerState)
                 Timber.tag(TAG).d("Player state saved successfully")
             }.onFailure {
                 Timber.tag(TAG).e(it, "Failed to save player state")
                 reportException(it)
-        }
+            }
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Error during queue save operation")
             reportException(e)
+        }
     }
-}
 
     /**
      * Starts the sleep timer and, for minute-based timers, also kicks off the

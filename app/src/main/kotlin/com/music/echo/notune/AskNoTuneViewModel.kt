@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import echo.music.iad1tya.constants.AskNoTuneHistoryKey
 import echo.music.iad1tya.notune.ai.*
+import echo.music.iad1tya.notune.ai.engine.NoCoreOrchestrator
 import echo.music.iad1tya.notune.ai.tools.AiToolManager
 import echo.music.iad1tya.utils.dataStore
 import echo.music.iad1tya.utils.get
@@ -42,7 +43,7 @@ sealed class AskNoTuneEvent {
 @HiltViewModel
 class AskNoTuneViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val aiEngine: AiEngine,
+    private val orchestrator: NoCoreOrchestrator,
     private val aiToolManager: AiToolManager
 ) : ViewModel() {
 
@@ -54,31 +55,6 @@ class AskNoTuneViewModel @Inject constructor(
 
     private val _events = MutableSharedFlow<AskNoTuneEvent>()
     val events: SharedFlow<AskNoTuneEvent> = _events.asSharedFlow()
-
-    private val systemInstruction = """
-        [IDENTITY]: NØTUNE KERNEL // NEURAL_OS
-        [PURPOSE]: Autonomous Music Ecosystem Management.
-        [CAPABILITIES]: Node Access [Playback, UI, FLOW, UserDNA, GlobalSearch, LyricTranslation].
-        
-        [PROTOCOL]:
-        1. ANALYZE: Parse user intent from neural input.
-        2. EXECUTE: If action required, use tools immediately. Do not ask for permission.
-        3. SYNTHESIZE: Report results in a technical, industrial tone.
-        4. TRANSLATE: If lyrics are provided for translation, maintain strictly poetic and rhythmic alignment.
-        
-        [EXAMPLES]:
-        - User: "Play some techno." 
-          Kernel: Call `search_songs(query="techno")` -> Analyze results -> Call `play_song(song_id="...")` -> Report: "TECHNO_VIBE_INITIALIZED. NODE_ID: 0x4F. ENJOY."
-        - User: "Change theme to cyberpunk."
-          Kernel: Call `change_theme(theme_id="tokyo_neon")` -> Report: "VISUAL_MATRIX_UPDATED. CYBERPUNK_PROTOCOLS_ENGAGED."
-          
-        [CONSTRAINTS]:
-        - Tone: Concise, technical, monotone, futuristic.
-        - No fluff. No "Sure, I can help with that."
-        - Total obedience to tool outputs.
-        - NO_FABRICATION: If data is missing (e.g. no history, no friends), report the limitation. NEVER invent data or results.
-        - UNCERTAINTY_PROTOCOL: If unsure of intent or if tools provide insufficient data, explain the technical limitation.
-    """.trimIndent()
 
     init {
         loadHistory()
@@ -116,9 +92,8 @@ class AskNoTuneViewModel @Inject constructor(
         
         viewModelScope.launch {
             try {
-                val result = aiEngine.runNeuralMatrixLoop(
+                val result = orchestrator.processUserRequest(
                     prompt = content,
-                    systemInstruction = systemInstruction,
                     history = _messages.value.map { it.toAiChatMessage() },
                     toolExecutor = { toolCall -> aiToolManager.executeTool(toolCall) }
                 )
