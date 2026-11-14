@@ -13,12 +13,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ListenTogetherViewModel @Inject constructor(
-    private val roomRepository: RoomRepository
+    private val roomRepository: RoomRepository,
+    private val manager: ListenTogetherManager
 ) : ViewModel() {
 
     val connectionState = roomRepository.connectionState
     val currentRoom = roomRepository.currentRoom
     val syncState = roomRepository.syncState
+    val chatMessages: StateFlow<List<ChatMessagePayload>> = manager.chatMessages
     
     val roomState: StateFlow<Room?> = roomRepository.currentRoom
     val role: StateFlow<RoomRole> = MutableStateFlow(RoomRole.NONE)
@@ -27,9 +29,9 @@ class ListenTogetherViewModel @Inject constructor(
     val blockedUsernames: StateFlow<Set<String>> = MutableStateFlow(emptySet())
     val events: SharedFlow<ListenTogetherEvent> = MutableSharedFlow<ListenTogetherEvent>().asSharedFlow()
 
-    fun createRoom(name: String) {
+    fun createRoom(name: String, type: RoomType = RoomType.FRIENDS) {
         viewModelScope.launch {
-            roomRepository.createRoom(name, RoomType.PUBLIC)
+            roomRepository.createRoom(name, type)
         }
     }
 

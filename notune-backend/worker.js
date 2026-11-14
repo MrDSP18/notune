@@ -169,19 +169,238 @@ export default {
       });
     }
 
-    // Per-Room Durable Object Sharding: /api/v1/rooms/:roomId/ws
-    if (path.startsWith("/api/v1/rooms/") && path.endsWith("/ws")) {
+    // WebSocket and Per-Room Listening Gateway: /ws and /api/v1/rooms/:roomId/ws
+    if (path === "/ws" || (path.startsWith("/api/v1/rooms/") && path.endsWith("/ws"))) {
       const parts = path.split("/");
       const roomId = parts[4] || "default-room";
-      if (env && env.ROOM) {
-        const id = env.ROOM.idFromName(roomId);
-        const roomObject = env.ROOM.get(id);
-        return roomObject.fetch(request);
-      } else {
-        return new Response(
-          JSON.stringify({ error: "Durable Object binding env.ROOM unavailable in standalone worker test" }),
-          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (request.headers.get("Upgrade") === "websocket") {
+        if (env && env.ROOM) {
+          const id = env.ROOM.idFromName(roomId);
+          const roomObject = env.ROOM.get(id);
+          return roomObject.fetch(request);
+        } else if (typeof WebSocketPair !== "undefined") {
+          const pair = new WebSocketPair();
+          const clientWs = pair[0];
+          const serverWs = pair[1];
+          serverWs.accept();
+          handleWorkerWebSocket(serverWs, env, url);
+          return new Response(null, { status: 101, webSocket: clientWs });
+        } else {
+          return new Response(
+            JSON.stringify({ status: "ws_upgrade_mock", message: "WebSocket upgrade requested", roomId }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+      return new Response(
+        JSON.stringify({ status: "ok", service: "notune-listen-together-gateway", endpoint: path }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // GET /api/v1/rooms - List Active Rooms (Couple, Friends, Team, Public)
+    if (path === "/api/v1/rooms" && request.method === "GET") {
+      const typeFilter = url.searchParams.get("type");
+      try {
+        if (env && env.DB) {
+          let query = "SELECT id, room_code, name, room_type, host_id, host_username, current_track_title, current_track_artist, is_playing, max_members, created_at FROM rooms WHERE is_active = 1";
+          const bindings = [];
+          if (typeFilter) {
+            query += " AND room_type = ?";
+            bindings.push(typeFilter.toUpperCase());
+          }
+          query += " ORDER BY created_at DESC LIMIT 50";
+          const stmt = env.DB.prepare(query);
+          const bound = bindings.length > 0 ? stmt.bind(...bindings) : stmt;
+          const { results } = await bound.all();
+          return new Response(JSON.stringify({ success: true, rooms: results || [] }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+        const rooms = Array.from(memoryRooms.values())
+          .filter(r => !typeFilter || r.roomType.toUpperCase() === typeFilter.toUpperCase());
+        return new Response(JSON.stringify({ success: true, rooms }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ success: false, error: err.message }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
+
+    // POST /api/v1/rooms - Create Room (Couple, Friends, Team, Public)
+    if (path === "/api/v1/rooms" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        const name = (body.name || "NØTUNE Stage").trim();
+        const rawType = (body.roomType || body.type || "FRIENDS").toUpperCase();
+        const validTypes = ["COUPLE", "FRIENDS", "TEAM", "PUBLIC"];
+        const roomType = validTypes.includes(rawType) ? rawType : "FRIENDS";
+        const maxMembers = roomType === "COUPLE" ? 2 : (roomType === "TEAM" ? 50 : (roomType === "PUBLIC" ? 100 : 10));
+        
+        const hostUsername = (body.hostUsername || body.username || "Host").trim();
+        const hostId = body.hostId || ("host_" + Math.random().toString(36).substring(2, 9));
+        
+        const codeChars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+        let roomCode = "";
+        const randomBytes = new Uint8Array(6);
+        crypto.getRandomValues(randomBytes);
+        for (let i = 0; i < 6; i++) {
+          roomCode += codeChars[randomBytes[i] % codeChars.length];
+        }
+        
+        const roomId = "room_" + Math.random().toString(36).substring(2, 11);
+        const now = Date.now();
+
+        if (env && env.DB) {
+          await env.DB.prepare(
+            "INSERT INTO rooms (id, room_code, name, room_type, host_id, host_username, max_members, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)"
+          ).bind(roomId, roomCode, name, roomType, hostId, hostUsername, maxMembers, now, now).run();
+
+          await env.DB.prepare(
+            "INSERT INTO room_members (room_id, user_id, username, role, is_connected, joined_at, last_seen_at) VALUES (?, ?, ?, 'HOST', 1, ?, ?)"
+          ).bind(roomId, hostId, hostUsername, now, now).run();
+        }
+
+        memoryRooms.set(roomCode, {
+          id: roomId,
+          roomCode,
+          name,
+          roomType,
+          hostId,
+          hostUsername,
+          maxMembers,
+          createdAt: now
+        });
+
+        return new Response(JSON.stringify({
+          success: true,
+          room: {
+            id: roomId,
+            roomCode,
+            name,
+            roomType,
+            maxMembers,
+            hostId,
+            hostUsername,
+            createdAt: now
+          }
+        }), {
+          status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ success: false, error: err.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
+
+    // GET /api/v1/rooms/:code - Room Details
+    if (path.startsWith("/api/v1/rooms/") && !path.endsWith("/messages") && !path.endsWith("/ws") && request.method === "GET") {
+      const code = path.split("/")[4]?.toUpperCase();
+      if (!code) {
+        return new Response(JSON.stringify({ success: false, error: "MISSING_CODE" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+      try {
+        if (env && env.DB) {
+          const room = await env.DB.prepare("SELECT * FROM rooms WHERE room_code = ?").bind(code).first();
+          if (!room) {
+            return new Response(JSON.stringify({ success: false, error: "ROOM_NOT_FOUND" }), {
+              status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" }
+            });
+          }
+          const { results: members } = await env.DB.prepare("SELECT * FROM room_members WHERE room_id = ?").bind(room.id).all();
+          return new Response(JSON.stringify({ success: true, room, members: members || [] }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+        const memRoom = memoryRooms.get(code);
+        if (!memRoom) {
+          return new Response(JSON.stringify({ success: false, error: "ROOM_NOT_FOUND" }), {
+            status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+        return new Response(JSON.stringify({ success: true, room: memRoom }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ success: false, error: err.message }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
+
+    // POST /api/v1/rooms/:code/messages - Send Room Chat Message
+    if (path.startsWith("/api/v1/rooms/") && path.endsWith("/messages") && request.method === "POST") {
+      const code = path.split("/")[4]?.toUpperCase();
+      try {
+        const body = await request.json();
+        const content = (body.content || body.message || "").trim();
+        if (!content) {
+          return new Response(JSON.stringify({ success: false, error: "EMPTY_MESSAGE" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+        const username = (body.username || "User").trim();
+        const userId = body.userId || ("usr_" + Math.random().toString(36).substring(2, 9));
+        const messageType = body.messageType || (content.startsWith("REACTION:") ? "REACTION" : "CHAT");
+        const msgId = "msg_" + Math.random().toString(36).substring(2, 11);
+        const now = Date.now();
+
+        if (env && env.DB) {
+          const room = await env.DB.prepare("SELECT id FROM rooms WHERE room_code = ?").bind(code).first();
+          if (room) {
+            await env.DB.prepare(
+              "INSERT INTO room_messages (id, room_id, user_id, username, content, message_type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+            ).bind(msgId, room.id, userId, username, content, messageType, now).run();
+          }
+        }
+
+        let msgs = memoryRoomMessages.get(code);
+        if (!msgs) {
+          msgs = [];
+          memoryRoomMessages.set(code, msgs);
+        }
+        const msgObj = { id: msgId, roomCode: code, userId, username, content, messageType, createdAt: now };
+        msgs.push(msgObj);
+        if (msgs.length > 100) msgs.shift();
+
+        return new Response(JSON.stringify({ success: true, message: msgObj }), {
+          status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ success: false, error: err.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
+
+    // GET /api/v1/rooms/:code/messages - Get Room Chat History
+    if (path.startsWith("/api/v1/rooms/") && path.endsWith("/messages") && request.method === "GET") {
+      const code = path.split("/")[4]?.toUpperCase();
+      try {
+        if (env && env.DB) {
+          const room = await env.DB.prepare("SELECT id FROM rooms WHERE room_code = ?").bind(code).first();
+          if (room) {
+            const { results } = await env.DB.prepare(
+              "SELECT id, room_id, user_id, username, content, message_type, created_at FROM room_messages WHERE room_id = ? ORDER BY created_at ASC LIMIT 50"
+            ).bind(room.id).all();
+            return new Response(JSON.stringify({ success: true, messages: results || [] }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" }
+            });
+          }
+        }
+        const msgs = memoryRoomMessages.get(code) || [];
+        return new Response(JSON.stringify({ success: true, messages: msgs }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ success: false, error: err.message }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
       }
     }
 
@@ -1617,4 +1836,153 @@ async function handleMe(request, env, corsHeaders) {
       createdAt: user.created_at
     }
   }, 200, corsHeaders);
+}
+
+// In-Memory Fallback Stores for Edge Listen-Together Rooms & Chat
+const memoryRooms = new Map();
+const memoryRoomMessages = new Map();
+
+function handleWorkerWebSocket(serverWs, env, url) {
+  let userSession = {
+    userId: "usr_" + Math.random().toString(36).substring(2, 9),
+    username: "User",
+    roomId: null
+  };
+
+  serverWs.addEventListener("message", async (event) => {
+    try {
+      const data = typeof event.data === "string" ? JSON.parse(event.data) : JSON.parse(new TextDecoder().decode(event.data));
+      const type = data.type;
+      const payload = data.payload || {};
+
+      switch (type) {
+        case "ping":
+          serverWs.send(JSON.stringify({ type: "pong", payload: { timestamp: Date.now() } }));
+          break;
+
+        case "create_room": {
+          const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+          const username = payload.username || userSession.username;
+          const roomType = payload.room_type || payload.roomType || "FRIENDS";
+          userSession.username = username;
+          userSession.roomId = roomCode;
+
+          memoryRooms.set(roomCode, {
+            roomCode,
+            name: payload.name || `Room ${roomCode}`,
+            roomType,
+            hostId: userSession.userId,
+            hostUsername: username,
+            users: [{ userId: userSession.userId, username, isHost: true, isConnected: true }],
+            isPlaying: false,
+            position: 0,
+            queue: []
+          });
+
+          serverWs.send(JSON.stringify({
+            type: "room_created",
+            payload: {
+              room_code: roomCode,
+              user_id: userSession.userId,
+              session_token: "st_" + Math.random().toString(36).substring(2, 15)
+            }
+          }));
+          break;
+        }
+
+        case "join_room": {
+          const roomCode = (payload.room_code || "").toUpperCase();
+          const username = payload.username || userSession.username;
+          userSession.username = username;
+          userSession.roomId = roomCode;
+
+          let room = memoryRooms.get(roomCode);
+          if (!room) {
+            room = {
+              roomCode,
+              name: `Room ${roomCode}`,
+              roomType: "FRIENDS",
+              hostId: "host_" + roomCode,
+              hostUsername: "Host",
+              users: [],
+              isPlaying: false,
+              position: 0,
+              queue: []
+            };
+            memoryRooms.set(roomCode, room);
+          }
+
+          const existingUser = room.users.find(u => u.userId === userSession.userId);
+          if (!existingUser) {
+            room.users.push({ userId: userSession.userId, username, isHost: false, isConnected: true });
+          }
+
+          serverWs.send(JSON.stringify({
+            type: "join_approved",
+            payload: {
+              room_code: roomCode,
+              user_id: userSession.userId,
+              state: {
+                room_code: roomCode,
+                users: room.users.map(u => ({
+                  user_id: u.userId,
+                  username: u.username,
+                  is_host: u.isHost,
+                  is_connected: u.isConnected
+                })),
+                is_playing: room.isPlaying,
+                position: room.position,
+                queue: room.queue
+              }
+            }
+          }));
+          break;
+        }
+
+        case "chat": {
+          const text = payload.message || payload.content || "";
+          const msgObj = {
+            sender: userSession.username,
+            user_id: userSession.userId,
+            message: text,
+            timestamp: Date.now()
+          };
+
+          if (userSession.roomId) {
+            let msgs = memoryRoomMessages.get(userSession.roomId);
+            if (!msgs) {
+              msgs = [];
+              memoryRoomMessages.set(userSession.roomId, msgs);
+            }
+            msgs.push(msgObj);
+            if (msgs.length > 100) msgs.shift();
+          }
+
+          serverWs.send(JSON.stringify({
+            type: "chat",
+            payload: msgObj
+          }));
+          break;
+        }
+
+        case "playback_action": {
+          serverWs.send(JSON.stringify({
+            type: "sync_playback",
+            payload: {
+              action: payload.action,
+              position: payload.position || 0,
+              track_info: payload.track_info,
+              server_time: Date.now()
+            }
+          }));
+          break;
+        }
+
+        case "leave_room": {
+          userSession.roomId = null;
+          break;
+        }
+      }
+    } catch (_e) {}
+  });
 }

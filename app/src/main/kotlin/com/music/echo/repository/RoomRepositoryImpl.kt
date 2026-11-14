@@ -30,12 +30,14 @@ class RoomRepositoryImpl @Inject constructor(
         }
     }.stateIn(scope, SharingStarted.Eagerly, RoomConnectionState.IDLE)
 
+    private var currentRoomType: RoomType = RoomType.FRIENDS
+
     override val currentRoom: StateFlow<Room?> = client.roomState.map { state ->
         state?.let {
             Room(
                 roomId = it.roomCode,
                 name = "Room ${it.roomCode}",
-                type = RoomType.PUBLIC, 
+                type = currentRoomType, 
                 hostId = it.hostId,
                 members = it.users.map { user ->
                     RoomMember(
@@ -80,6 +82,7 @@ class RoomRepositoryImpl @Inject constructor(
     override val syncState = MutableStateFlow(RoomSyncState())
 
     override suspend fun createRoom(name: String, type: RoomType): Result<Room> {
+        currentRoomType = type
         client.createRoom(name)
         return currentRoom.filterNotNull().first().let { Result.success(it) }
     }

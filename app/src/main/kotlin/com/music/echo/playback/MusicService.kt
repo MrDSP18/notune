@@ -391,6 +391,13 @@ class MusicService :
 
     private var scope = CoroutineScope(Dispatchers.Main) + Job()
 
+    private val autoQueueCooldownManager by lazy {
+        echo.music.iad1tya.notune.flow.AutoQueueCooldownManager.getInstance(this)
+    }
+    private val attributeQueueRecommender by lazy {
+        echo.music.iad1tya.notune.flow.AttributeBasedQueueRecommender(autoQueueCooldownManager)
+    }
+
     private val binder = MusicBinder()
 
     inner class MusicBinder : Binder() {
@@ -1179,8 +1186,14 @@ class MusicService :
             .setRenderersFactory(createRenderersFactory(eqProcessor, silenceProcessor, duckProcessor, stereoWidener))
             .setLoadControl(
                 DefaultLoadControl.Builder()
-                    .setBufferDurationsMs(2_500, 30_000, 1_000, 1_500)
+                    .setBufferDurationsMs(
+                        10_000,  // minBufferMs (10s buffer minimum)
+                        120_000, // maxBufferMs (up to 2 minutes ahead for zero stalls in low network areas)
+                        1_500,   // bufferForPlaybackMs (instant start)
+                        3_000    // bufferForPlaybackAfterRebufferMs (fast recovery)
+                    )
                     .setPrioritizeTimeOverSizeThresholds(true)
+                    .setBackBuffer(30_000, true)
                     .build()
             )
             .setHandleAudioBecomingNoisy(true)
@@ -2271,16 +2284,25 @@ class MusicService :
                     currentQueue.nextPage()
                         .filterExplicit(dataStore.get(HideExplicitKey, false))
                         .filterVideoSongs(dataStore.get(HideVideoSongsKey, false) || dataStore.get(echo.music.iad1tya.constants.DataSaverEnabledKey, false))
-            }
+                }
                 if (player.playbackState != STATE_IDLE && mediaItems.isNotEmpty()) {
-                    player.addMediaItems(mediaItems)
-                    if (player.shuffleModeEnabled) {
-                        val shufflePlaylistFirst = dataStore.get(ShufflePlaylistFirstKey, false)
-                        applyShuffleOrder(player.currentMediaItemIndex, player.mediaItemCount, shufflePlaylistFirst)
+                    val activeQueueIds = (0 until player.mediaItemCount).mapNotNull { player.getMediaItemAt(it).mediaId }.toSet()
+                    val rankedAndFiltered = attributeQueueRecommender.filterAndRankQueue(
+                        currentTrack = player.currentMetadata,
+                        candidates = mediaItems,
+                        activeQueueIds = activeQueueIds
+                    )
+                    if (rankedAndFiltered.isNotEmpty()) {
+                        player.addMediaItems(rankedAndFiltered)
+                        autoQueueCooldownManager.recordAutoAdded(rankedAndFiltered.map { it.mediaId })
+                        if (player.shuffleModeEnabled) {
+                            val shufflePlaylistFirst = dataStore.get(ShufflePlaylistFirstKey, false)
+                            applyShuffleOrder(player.currentMediaItemIndex, player.mediaItemCount, shufflePlaylistFirst)
+                        }
+                    }
                 }
             }
         }
-    }
 
         
         if (dataStore.get(PersistentQueueKey, true)) {

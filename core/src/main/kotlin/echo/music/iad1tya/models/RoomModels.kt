@@ -3,7 +3,7 @@ package echo.music.iad1tya.models
 import java.time.LocalDateTime
 
 enum class RoomType {
-    PUBLIC, FRIENDS, PRIVATE, COUPLE
+    PUBLIC, FRIENDS, PRIVATE, COUPLE, TEAM
 }
 
 enum class RoomRole {

@@ -804,19 +804,59 @@ object YTPlayerUtils {
     ): PlayerResponse.StreamingData.Format? {
         Timber.tag(logTag).d("Finding format with audioQuality: $audioQuality, network metered: ${connectivityManager.isActiveNetworkMetered}")
 
-        val format = playerResponse.streamingData?.adaptiveFormats
-            ?.filter { it.isAudio && it.isOriginal }
-            ?.maxByOrNull {
-                it.bitrate * 1 + (if (it.mimeType.startsWith("audio/webm")) 10240 else 0)
-            }
+        val audioFormats = playerResponse.streamingData?.adaptiveFormats
+            ?.filter { it.isAudio } ?: emptyList()
+        if (audioFormats.isEmpty()) {
+            Timber.tag(logTag).w("No audio formats available in player response")
+            return null
+        }
 
-        if (format != null) {
-            Timber.tag(logTag).d("Selected format: ${format.mimeType}, bitrate: ${format.bitrate}")
+        // Prefer original streams, but gracefully fall back to all audio formats if isOriginal is false
+        val candidates = audioFormats.filter { it.isOriginal }.ifEmpty { audioFormats }
+
+        val isMeteredOrLowNetwork = connectivityManager.isActiveNetworkMetered
+        val selectedFormat = when (audioQuality) {
+            AudioQuality.DATA_SAVER -> {
+                // Low Network / Data Saver: pick lightweight uninterrupted stream (50k-70k Opus) to avoid stalling
+                candidates.filter { it.mimeType.startsWith("audio/webm") }
+                    .minByOrNull { it.bitrate } ?: candidates.minByOrNull { it.bitrate }
+            }
+            AudioQuality.BALANCED -> {
+                // Balanced: optimal 128k-160k Opus
+                candidates.minByOrNull { kotlin.math.abs(it.bitrate - 128000) }
+            }
+            AudioQuality.HIGH_QUALITY, AudioQuality.ORIGINAL -> {
+                // Best Music Quality: absolute highest bitrate Opus/WebM (160k-256k transparent audiophile)
+                candidates.maxByOrNull {
+                    it.bitrate * 1 + (if (it.mimeType.startsWith("audio/webm")) 15000 else 0)
+                }
+            }
+            AudioQuality.AUTO -> {
+                if (isMeteredOrLowNetwork) {
+                    // Metered/cellular: pick reliable balanced stream
+                    candidates.minByOrNull { kotlin.math.abs(it.bitrate - 128000) } ?: candidates.firstOrNull()
+                } else {
+                    // Fast Wi-Fi / Unmetered: pick top audiophile quality
+                    candidates.maxByOrNull {
+                        it.bitrate * 1 + (if (it.mimeType.startsWith("audio/webm")) 15000 else 0)
+                    }
+                }
+            }
+            else -> {
+                // Default / OPUS: pick highest fidelity stream
+                candidates.maxByOrNull {
+                    it.bitrate * 1 + (if (it.mimeType.startsWith("audio/webm")) 15000 else 0)
+                }
+            }
+        } ?: candidates.firstOrNull()
+
+        if (selectedFormat != null) {
+            Timber.tag(logTag).d("Selected format: ${selectedFormat.mimeType}, bitrate: ${selectedFormat.bitrate}")
         } else {
             Timber.tag(logTag).d("No suitable audio format found")
         }
 
-        return format
+        return selectedFormat
     }
     /**
      * Checks if the stream url returns a successful status.
