@@ -305,7 +305,7 @@ class CloudSyncManager @Inject constructor(
                 val batchId = UUID.nameUUIDFromBytes(
                     eventIds.joinToString("|").toByteArray(Charsets.UTF_8)
                 ).toString()
-                val url = URL("https://notune.dharansundarapandiyan24.workers.dev/api/v1/sync")
+                val url = URL(com.music.echo.notune.config.PlatformConfig.syncEndpoint())
                 connection = (url.openConnection() as HttpURLConnection).apply {
                     requestMethod = "POST"
                     connectTimeout = 4000

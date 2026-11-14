@@ -162,6 +162,55 @@ class NoTuneAuthManager @Inject constructor(
         }
     }
 
+    suspend fun refreshTokens(): Boolean = withContext(Dispatchers.IO) {
+        val currentRefreshToken = secureStorageManager.getSecret(KEY_REFRESH_TOKEN)
+        if (currentRefreshToken.isNullOrBlank()) {
+            return@withContext false
+        }
+        try {
+            val url = URL(PlatformConfig.authRefreshEndpoint())
+            val conn = (url.openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                connectTimeout = 8000
+                readTimeout = 8000
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+            }
+
+            val body = JSONObject().apply {
+                put("refreshToken", currentRefreshToken.trim())
+            }.toString()
+
+            conn.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+            val responseCode = conn.responseCode
+            val responseText = (if (responseCode in 200..299) conn.inputStream else conn.errorStream)
+                ?.bufferedReader()?.use { it.readText() } ?: ""
+
+            val json = JSONObject(responseText)
+            if (responseCode == 200 && json.optBoolean("success")) {
+                val tokens = json.getJSONObject("tokens")
+                val newAccessToken = tokens.getString("accessToken")
+                val newRefreshToken = tokens.getString("refreshToken")
+
+                secureStorageManager.storeSecret(KEY_ACCESS_TOKEN, newAccessToken)
+                secureStorageManager.storeSecret(KEY_REFRESH_TOKEN, newRefreshToken)
+                Timber.d("NoTune auth tokens successfully rotated")
+                true
+            } else {
+                Timber.w("Token refresh failed with HTTP %d: %s", responseCode, json.optString("error"))
+                if (responseCode == 401) {
+                    secureStorageManager.removeSecret(KEY_ACCESS_TOKEN)
+                    secureStorageManager.removeSecret(KEY_REFRESH_TOKEN)
+                    accountRepository.signOut()
+                }
+                false
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Token refresh network exception")
+            false
+        }
+    }
+
     suspend fun logout(): Boolean = withContext(Dispatchers.IO) {
         val refreshToken = secureStorageManager.getSecret(KEY_REFRESH_TOKEN)
         if (!refreshToken.isNullOrEmpty()) {

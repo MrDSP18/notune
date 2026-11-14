@@ -41,6 +41,9 @@ object PlatformConfig {
 
     fun sharesEndpoint(): String = "${getBaseUrl()}/api/v1/shares"
     fun syncEndpoint(): String = "${getBaseUrl()}/api/v1/sync"
+    fun roomsEndpoint(): String = "${getBaseUrl()}/api/v1/rooms"
+    fun roomMessagesEndpoint(roomCode: String): String = "${getBaseUrl()}/api/v1/rooms/${roomCode.trim().uppercase()}/messages"
+    fun storageEndpoint(key: String): String = "${getBaseUrl()}/api/v1/storage/${key.trim()}"
 
     fun authRegisterEndpoint(): String = "${getBaseUrl()}/api/v1/auth/register"
     fun authLoginEndpoint(): String = "${getBaseUrl()}/api/v1/auth/login"

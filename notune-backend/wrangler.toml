@@ -10,6 +10,10 @@ binding = "DB"
 database_name = "notune-db"
 database_id = "39d9cfd0-f146-42df-80c5-4d5254ce7b42"
 
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "notune-media"
+
 [vars]
 ENVIRONMENT = "production"
 R2_ENDPOINT = "${CLOUDFLARE_R2_ENDPOINT}"

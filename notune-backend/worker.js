@@ -97,7 +97,7 @@ export default {
           wsConnections: 0,
           rateLimitCapacity: "100req/min",
           d1Status,
-          r2Status: env && env.R2_ENDPOINT ? "healthy" : "unavailable",
+          r2Status: (env && (env.BUCKET || env.R2 || env.MEDIA_BUCKET || env.R2_ENDPOINT)) ? "healthy" : "unavailable",
           metrics: {
             syncEvents: syncEventsCount,
             syncBatches: syncBatchesCount,
@@ -972,6 +972,11 @@ export default {
       return handleMe(request, env, corsHeaders);
     }
 
+    // Cloudflare R2 Media & Asset Storage Gateway (/api/v1/storage/:key)
+    if (path.startsWith("/api/v1/storage/")) {
+      return handleStorageRequest(request, env, corsHeaders, path);
+    }
+
     return new Response(
       JSON.stringify({
         service: "notune-api",
@@ -983,6 +988,8 @@ export default {
           "/api/v1/version",
           "/api/v1/releases/latest",
           "/api/v1/shares",
+          "/api/v1/rooms",
+          "/api/v1/storage/:key",
           "/api/v1/social/feed",
           "/api/v1/recommendations/adaptive",
           "/api/v1/metadata/song/search",
@@ -1836,6 +1843,104 @@ async function handleMe(request, env, corsHeaders) {
       createdAt: user.created_at
     }
   }, 200, corsHeaders);
+}
+
+// --------------------------------------------------------------------------
+// Cloudflare R2 Media & Asset Storage Gateway
+// --------------------------------------------------------------------------
+
+const memoryStorage = new Map();
+
+async function handleStorageRequest(request, env, corsHeaders, path) {
+  const key = path.replace(/^\/api\/v1\/storage\//, "").trim();
+  if (!key || key.includes("..") || !/^[a-zA-Z0-9_\-\.\/]+$/.test(key)) {
+    return jsonResponse({ success: false, error: "INVALID_STORAGE_KEY", message: "Key contains invalid characters." }, 400, corsHeaders);
+  }
+
+  const bucket = env?.BUCKET || env?.R2 || env?.MEDIA_BUCKET;
+
+  if (request.method === "GET") {
+    if (bucket && typeof bucket.get === "function") {
+      try {
+        const object = await bucket.get(key);
+        if (!object) {
+          return jsonResponse({ success: false, error: "OBJECT_NOT_FOUND", message: "Requested object does not exist." }, 404, corsHeaders);
+        }
+        const headers = new Headers(corsHeaders);
+        if (typeof object.writeHttpMetadata === "function") {
+          object.writeHttpMetadata(headers);
+        } else if (object.httpMetadata?.contentType) {
+          headers.set("Content-Type", object.httpMetadata.contentType);
+        }
+        if (object.httpEtag) headers.set("ETag", object.httpEtag);
+        headers.set("Cache-Control", "public, max-age=86400");
+        return new Response(object.body, { headers });
+      } catch (err) {
+        return jsonResponse({ success: false, error: err.message }, 500, corsHeaders);
+      }
+    }
+    const item = memoryStorage.get(key);
+    if (item) {
+      return new Response(item.data, {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": item.contentType || "application/octet-stream",
+          "Cache-Control": "public, max-age=86400"
+        }
+      });
+    }
+    return jsonResponse({ success: false, error: "STORAGE_UNAVAILABLE", message: "R2 bucket is not configured." }, 503, corsHeaders);
+  }
+
+  if (request.method === "PUT") {
+    const contentType = request.headers.get("Content-Type") || "application/octet-stream";
+    const bodyBuffer = await request.arrayBuffer();
+    if (bodyBuffer.byteLength > 10 * 1024 * 1024) {
+      return jsonResponse({ success: false, error: "PAYLOAD_TOO_LARGE", message: "Object exceeds 10MB limit." }, 413, corsHeaders);
+    }
+
+    if (bucket && typeof bucket.put === "function") {
+      try {
+        await bucket.put(key, bodyBuffer, {
+          httpMetadata: { contentType }
+        });
+        return jsonResponse({
+          success: true,
+          key,
+          size: bodyBuffer.byteLength,
+          contentType,
+          url: `/api/v1/storage/${key}`
+        }, 201, corsHeaders);
+      } catch (err) {
+        return jsonResponse({ success: false, error: err.message }, 500, corsHeaders);
+      }
+    }
+
+    memoryStorage.set(key, { data: bodyBuffer, contentType });
+    return jsonResponse({
+      success: true,
+      key,
+      size: bodyBuffer.byteLength,
+      contentType,
+      url: `/api/v1/storage/${key}`,
+      persisted: "memory_fallback"
+    }, 201, corsHeaders);
+  }
+
+  if (request.method === "DELETE") {
+    if (bucket && typeof bucket.delete === "function") {
+      try {
+        await bucket.delete(key);
+        return jsonResponse({ success: true, key, deleted: true }, 200, corsHeaders);
+      } catch (err) {
+        return jsonResponse({ success: false, error: err.message }, 500, corsHeaders);
+      }
+    }
+    memoryStorage.delete(key);
+    return jsonResponse({ success: true, key, deleted: true }, 200, corsHeaders);
+  }
+
+  return jsonResponse({ success: false, error: "METHOD_NOT_ALLOWED" }, 405, corsHeaders);
 }
 
 // In-Memory Fallback Stores for Edge Listen-Together Rooms & Chat
