@@ -35,12 +35,12 @@ class CustomEqualizerSafetyTest {
         input.flip()
 
         processor.queueInput(input)
-        val output = processor.output
+        val output = processor.getOutput()
 
         assertEquals(16, output.remaining())
         while (output.remaining() >= 2) {
             val sample = output.short.toInt()
-            assertTrue(sample in Short.MIN_VALUE..Short.MAX_VALUE)
+            assertTrue(sample >= Short.MIN_VALUE.toInt() && sample <= Short.MAX_VALUE.toInt())
             assertTrue(abs(sample) <= 32767)
         }
     }
