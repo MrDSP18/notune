@@ -704,7 +704,7 @@ async function handleSyncRequest(request, env, corsHeaders) {
   }
 
   if (!body || body.batchId !== idempotencyKey || body.protocolVersion !== "1.0" ||
-      !Array.isArray(body.events) || body.events.length < 1 || body.events.length > 99) {
+      !Array.isArray(body.events) || body.events.length < 1 || body.events.length > 99 || body.eventsCount !== body.events.length) {
     return jsonResponse({ error: "INVALID_SYNC_BATCH" }, 400, corsHeaders);
   }
 
@@ -745,7 +745,7 @@ async function handleSyncRequest(request, env, corsHeaders) {
     });
   }
 
-  const requestHash = await sha256Hex(rawBody);
+  const requestHash = await sha256Hex(JSON.stringify({ batchId: body.batchId, protocolVersion: body.protocolVersion, events: normalizedEvents }));
   try {
     const statements = [
       env.DB.prepare(
