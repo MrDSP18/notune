@@ -986,8 +986,9 @@ fun HomeScreen(
                 // NØTUNE NOW Context Engine Header
                 item {
                     com.music.echo.notune.ui.home.NotuneNowHeader(
-                        currentSongTitle = mediaMetadata?.title ?: "Husn",
-                        currentArtistName = mediaMetadata?.artists?.joinToString(", ") { it.name } ?: "Anuv Jain",
+                        currentSongTitle = mediaMetadata?.title.orEmpty(),
+                        currentArtistName = mediaMetadata?.artists?.joinToString(", ") { it.name }.orEmpty(),
+                        isTrackAvailable = mediaMetadata != null,
                         onPlayClick = {
                             playerConnection.togglePlayPause()
                         }
