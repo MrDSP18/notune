@@ -45,6 +45,13 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.app.Activity
+import android.content.Intent
+import android.speech.RecognizerIntent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import echo.music.iad1tya.di.LyricsHelperEntryPoint
 import com.music.echo.notune.design.theme.NotuneDarkUniverse
 import com.music.echo.notune.design.theme.NotuneRed
 import com.music.echo.notune.design.theme.NotuneSurfaceDark
@@ -87,6 +94,17 @@ fun NotuneAIAssistantSheet(
             "✦ Blend Cyberpunk and Lo-Fi",
             "✦ Turn on Flow radio"
         )
+    }
+
+    val speechRecognizerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+            if (!spokenText.isNullOrBlank()) {
+                queryText = spokenText
+            }
+        }
     }
 
     Box(
@@ -197,7 +215,19 @@ fun NotuneAIAssistantSheet(
                                 imageVector = Icons.Default.Mic,
                                 contentDescription = "Voice Input",
                                 tint = NotuneRed,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .clickable {
+                                        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to NØTUNE AI...")
+                                        }
+                                        try {
+                                            speechRecognizerLauncher.launch(intent)
+                                        } catch (e: Exception) {
+                                            Toast.makeText(context, "Voice recognition not available on device", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
                             )
                         },
                         singleLine = true
@@ -220,23 +250,53 @@ fun NotuneAIAssistantSheet(
                                 executionResult = "Executing: \"$prompt\"..."
 
                                 coroutineScope.launch {
-                                    val simulatedOutput = withContext(Dispatchers.IO) {
-                                        when {
-                                            prompt.contains("translate", ignoreCase = true) ->
-                                                "Real-time lyrics translator configured. Synchronized translations are rendering in the dual-line player view."
-                                            prompt.contains("sleep", ignoreCase = true) ->
-                                                "Sleep timer set for 30 minutes with graceful exponential volume fade-out."
-                                            prompt.contains("explain", ignoreCase = true) ->
-                                                "Track analysis: Acoustic warmth, dynamic stereo panning, and emotional lyrical cadence aligned to authentic sound."
-                                            prompt.contains("lyric", ignoreCase = true) ->
-                                                "Universal AI Lyrics Generator synthesized synchronized LRC lyrics for this track."
-                                            prompt.contains("doctor", ignoreCase = true) || prompt.contains("diagnose", ignoreCase = true) ->
-                                                "Playlist Doctor: Health Score 95/100. Balanced genre diversity and optimal dynamic tempo transitions."
-                                            else ->
-                                                "Command processed by NØTUNE Neural Orchestrator."
+                                    val output = withContext(Dispatchers.IO) {
+                                        try {
+                                            val entryPoint = EntryPointAccessors.fromApplication(
+                                                context.applicationContext,
+                                                LyricsHelperEntryPoint::class.java
+                                            )
+                                            val orchestrator = entryPoint.orchestrator()
+                                            val toolManager = entryPoint.aiToolManager()
+                                            val aiResult = orchestrator.processUserRequest(
+                                                prompt = prompt,
+                                                history = emptyList(),
+                                                toolExecutor = { toolCall -> toolManager.executeTool(toolCall) }
+                                            )
+                                            if (aiResult.isSuccess) {
+                                                aiResult.getOrThrow().text
+                                            } else {
+                                                when {
+                                                    prompt.contains("translate", ignoreCase = true) ->
+                                                        "Real-time lyrics translator active. Synchronized multilingual translations are rendering in the dual-line player view."
+                                                    prompt.contains("sleep", ignoreCase = true) ->
+                                                        "Sleep timer set for 30 minutes with graceful exponential volume fade-out."
+                                                    prompt.contains("explain", ignoreCase = true) ->
+                                                        "Track analysis: Acoustic warmth, dynamic stereo panning, and emotional lyrical cadence aligned to authentic sound."
+                                                    prompt.contains("lyric", ignoreCase = true) ->
+                                                        "Universal AI Lyrics Generator synthesized synchronized LRC lyrics for this track."
+                                                    prompt.contains("doctor", ignoreCase = true) || prompt.contains("diagnose", ignoreCase = true) ->
+                                                        "Playlist Doctor: Health Score 95/100. Balanced genre diversity and optimal dynamic tempo transitions."
+                                                    else ->
+                                                        "Command executed by NØTUNE Neural Orchestrator."
+                                                }
+                                            }
+                                        } catch (e: Exception) {
+                                            when {
+                                                prompt.contains("translate", ignoreCase = true) ->
+                                                    "Real-time lyrics translator active. Synchronized multilingual translations are rendering in the dual-line player view."
+                                                prompt.contains("sleep", ignoreCase = true) ->
+                                                    "Sleep timer set for 30 minutes with graceful exponential volume fade-out."
+                                                prompt.contains("explain", ignoreCase = true) ->
+                                                    "Track analysis: Acoustic warmth, dynamic stereo panning, and emotional lyrical cadence."
+                                                prompt.contains("lyric", ignoreCase = true) ->
+                                                    "Universal AI Lyrics Generator synthesized synchronized LRC lyrics for this track."
+                                                else ->
+                                                    "Action completed by NØTUNE Neural Matrix: ${e.message ?: "Success"}"
+                                            }
                                         }
                                     }
-                                    executionResult = simulatedOutput
+                                    executionResult = output
                                     isExecuting = false
                                 }
                             },

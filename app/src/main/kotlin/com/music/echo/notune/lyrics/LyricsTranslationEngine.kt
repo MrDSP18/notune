@@ -156,6 +156,69 @@ class LyricsTranslationEngine @Inject constructor() {
                 LyricsLanguage.FRENCH to "Dans la nuit",
                 LyricsLanguage.JAPANESE to "夜の中に",
                 LyricsLanguage.KOREAN to "밤에"
+            ),
+            "die with a smile" to mapOf(
+                LyricsLanguage.TAMIL to "புன்னகையோடு உன்னுடன்",
+                LyricsLanguage.HINDI to "एक मुस्कान के साथ",
+                LyricsLanguage.TELUGU to "చిరునవ్వుతో నీతో",
+                LyricsLanguage.SPANISH to "Morir con una sonrisa",
+                LyricsLanguage.FRENCH to "Mourir avec un sourire",
+                LyricsLanguage.JAPANESE to "笑顔で",
+                LyricsLanguage.KOREAN to "미소 지으며"
+            ),
+            "all of me" to mapOf(
+                LyricsLanguage.TAMIL to "என் முழுமையும் உனக்கு",
+                LyricsLanguage.HINDI to "मेरा सब कुछ तुम्हारा है",
+                LyricsLanguage.TELUGU to "నా సర్వస్వం నీదే",
+                LyricsLanguage.SPANISH to "Todo de mí te ama",
+                LyricsLanguage.FRENCH to "Tout de moi t'aime",
+                LyricsLanguage.JAPANESE to "私のすべて",
+                LyricsLanguage.KOREAN to "나의 모든 것"
+            ),
+            "shape of you" to mapOf(
+                LyricsLanguage.TAMIL to "உன் அழகிய வடிவம்",
+                LyricsLanguage.HINDI to "तुम्हारी प्यारी सूरत",
+                LyricsLanguage.TELUGU to "నీ అందమైన రూపం",
+                LyricsLanguage.SPANISH to "Tu hermosa figura",
+                LyricsLanguage.FRENCH to "Ta belle silhouette",
+                LyricsLanguage.JAPANESE to "あなたの姿に恋して",
+                LyricsLanguage.KOREAN to "너의 아름다운 모습"
+            ),
+            "tum hi ho" to mapOf(
+                LyricsLanguage.TAMIL to "நீ மட்டுமே என் உலகம்",
+                LyricsLanguage.HINDI to "तुम ही हो अब तुम ही हो",
+                LyricsLanguage.TELUGU to "నువ్వే నా సర్వస్వం",
+                LyricsLanguage.SPANISH to "Solo tú eres mi vida",
+                LyricsLanguage.FRENCH to "Tu es mon seul amour",
+                LyricsLanguage.JAPANESE to "あなただけがすべて",
+                LyricsLanguage.KOREAN to "오직 너만이 나의 전부"
+            ),
+            "munbe vaa" to mapOf(
+                LyricsLanguage.TAMIL to "முன்பே வா என் அன்பே வா",
+                LyricsLanguage.HINDI to "मेरे पास आओ मेरी जान",
+                LyricsLanguage.TELUGU to "ముందు రా నా ప్రియతమా",
+                LyricsLanguage.SPANISH to "Ven a mí mi amor",
+                LyricsLanguage.FRENCH to "Viens à moi mon amour",
+                LyricsLanguage.JAPANESE to "私の元へ来て愛しい人",
+                LyricsLanguage.KOREAN to "내 곁으로 와요 내 사랑"
+            ),
+            "katchi sera" to mapOf(
+                LyricsLanguage.TAMIL to "கட்சி சேர வந்தவளே",
+                LyricsLanguage.HINDI to "मेरे पास आने वाली हसीं",
+                LyricsLanguage.TELUGU to "దగ్గరకు వచ్చిన ప్రేయసి",
+                LyricsLanguage.SPANISH to "La que vino a estar conmigo",
+                LyricsLanguage.FRENCH to "Celle qui est venue à moi",
+                LyricsLanguage.JAPANESE to "私の元へ来た人",
+                LyricsLanguage.KOREAN to "내게 다가온 그대"
+            ),
+            "kesariya" to mapOf(
+                LyricsLanguage.TAMIL to "குங்குமப்பூ நிற காதல்",
+                LyricsLanguage.HINDI to "केसरिया तेरा इश्क़ है पिया",
+                LyricsLanguage.TELUGU to "కుంకుమపువ్వు వంటి ప్రేమ",
+                LyricsLanguage.SPANISH to "Tu amor color azafrán",
+                LyricsLanguage.FRENCH to "Ton amour safran",
+                LyricsLanguage.JAPANESE to "サフラン色のあなたの愛",
+                LyricsLanguage.KOREAN to "너의 사프란 빛 사랑"
             )
         )
 
@@ -204,6 +267,69 @@ class LyricsTranslationEngine @Inject constructor() {
                 LyricsLanguage.FRENCH to "pour toujours",
                 LyricsLanguage.JAPANESE to "永遠に",
                 LyricsLanguage.KOREAN to "영원히"
+            ),
+            "baby" to mapOf(
+                LyricsLanguage.TAMIL to "அன்பே",
+                LyricsLanguage.HINDI to "जानेमन",
+                LyricsLanguage.TELUGU to "ప్రియా",
+                LyricsLanguage.SPANISH to "bebé",
+                LyricsLanguage.FRENCH to "bébé",
+                LyricsLanguage.JAPANESE to "ベイビー",
+                LyricsLanguage.KOREAN to "그대"
+            ),
+            "smile" to mapOf(
+                LyricsLanguage.TAMIL to "புன்னகை",
+                LyricsLanguage.HINDI to "मुस्कान",
+                LyricsLanguage.TELUGU to "చిరునవ్వు",
+                LyricsLanguage.SPANISH to "sonrisa",
+                LyricsLanguage.FRENCH to "sourire",
+                LyricsLanguage.JAPANESE to "笑顔",
+                LyricsLanguage.KOREAN to "미소"
+            ),
+            "eyes" to mapOf(
+                LyricsLanguage.TAMIL to "விழிகள்",
+                LyricsLanguage.HINDI to "आँखें",
+                LyricsLanguage.TELUGU to "కళ్లు",
+                LyricsLanguage.SPANISH to "ojos",
+                LyricsLanguage.FRENCH to "yeux",
+                LyricsLanguage.JAPANESE to "瞳",
+                LyricsLanguage.KOREAN to "눈빛"
+            ),
+            "music" to mapOf(
+                LyricsLanguage.TAMIL to "இசை",
+                LyricsLanguage.HINDI to "संगीत",
+                LyricsLanguage.TELUGU to "సంగీతం",
+                LyricsLanguage.SPANISH to "música",
+                LyricsLanguage.FRENCH to "musique",
+                LyricsLanguage.JAPANESE to "音楽",
+                LyricsLanguage.KOREAN to "음악"
+            ),
+            "soul" to mapOf(
+                LyricsLanguage.TAMIL to "ஆன்மா",
+                LyricsLanguage.HINDI to "रूह",
+                LyricsLanguage.TELUGU to "ఆత్మ",
+                LyricsLanguage.SPANISH to "alma",
+                LyricsLanguage.FRENCH to "âme",
+                LyricsLanguage.JAPANESE to "魂",
+                LyricsLanguage.KOREAN to "영혼"
+            ),
+            "world" to mapOf(
+                LyricsLanguage.TAMIL to "உலகம்",
+                LyricsLanguage.HINDI to "दुनिया",
+                LyricsLanguage.TELUGU to "ప్రపంచం",
+                LyricsLanguage.SPANISH to "mundo",
+                LyricsLanguage.FRENCH to "monde",
+                LyricsLanguage.JAPANESE to "世界",
+                LyricsLanguage.KOREAN to "세상"
+            ),
+            "light" to mapOf(
+                LyricsLanguage.TAMIL to "வெளிச்சம்",
+                LyricsLanguage.HINDI to "रोशनी",
+                LyricsLanguage.TELUGU to "వెలుగు",
+                LyricsLanguage.SPANISH to "luz",
+                LyricsLanguage.FRENCH to "lumière",
+                LyricsLanguage.JAPANESE to "光",
+                LyricsLanguage.KOREAN to "빛"
             )
         )
     }

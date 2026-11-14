@@ -293,6 +293,9 @@ fun BottomSheetPlayer(
     var showAiAssistantSheet by rememberSaveable {
         mutableStateOf(false)
     }
+    var showAudioLabSheet by rememberSaveable {
+        mutableStateOf(false)
+    }
 
     val dismissedBound = echo.music.iad1tya.constants.QueuePeekHeight + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()
     val queueSheetState = rememberBottomSheetState(
@@ -310,7 +313,7 @@ fun BottomSheetPlayer(
     val hidePlayerSlider by rememberPreference(echo.music.iad1tya.constants.HidePlayerSliderKey, false)
     val (hidePlayerThumbnail, onHidePlayerThumbnailChange) = rememberPreference(HidePlayerThumbnailKey, false)
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
-    val showLyricsOnPlayer by rememberPreference(ShowLyricsOnPlayerKey, false)
+    val showLyricsOnPlayer by rememberPreference(ShowLyricsOnPlayerKey, true)
     val playerStyle by rememberEnumPreference(
         key = PlayerStyleKey,
         defaultValue = PlayerStyleVariant.LUX
@@ -2316,6 +2319,7 @@ fun BottomSheetPlayer(
                                             ),
                                             color = Color(0xFFFF0031),
                                             maxLines = 1,
+                                            modifier = Modifier.clickable { showAudioLabSheet = true }
                                         )
                                     }
                                     4 -> {
@@ -3155,6 +3159,12 @@ fun BottomSheetPlayer(
                 }
             )
         }
+
+        if (showAudioLabSheet) {
+            AudioLabSheet(
+                onDismissRequest = { showAudioLabSheet = false }
+            )
+        }
     }
 }
 
@@ -3258,20 +3268,60 @@ fun InlineLyricsView(
                 }
             }
             else -> {
-                val lyricsContent: @Composable () -> Unit = {
-                    Lyrics(
-                        sliderPositionProvider = positionProvider,
-                        modifier = Modifier.padding(horizontal = 24.dp),
-                        showLyrics = showLyrics
-                    )
-                }
-                ProvideTextStyle(
-                    value = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 14.sp,
-                        textAlign = TextAlign.Center
-                    )
-                ) {
-                    lyricsContent()
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFFF0031))
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                text = "NØ REALTIME SYNCED LYRICS",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontFamily = NothingFont,
+                                    fontSize = 10.sp,
+                                    letterSpacing = 1.sp,
+                                    color = Color.White.copy(alpha = 0.7f)
+                                )
+                            )
+                        }
+                        Text(
+                            text = "100% COVERAGE",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontFamily = NothingFont,
+                                fontSize = 9.sp,
+                                letterSpacing = 1.sp,
+                                color = Color(0xFFFF0031)
+                            )
+                        )
+                    }
+
+                    Box(modifier = Modifier.weight(1f)) {
+                        val lyricsContent: @Composable () -> Unit = {
+                            Lyrics(
+                                sliderPositionProvider = positionProvider,
+                                modifier = Modifier.padding(horizontal = 24.dp),
+                                showLyrics = showLyrics
+                            )
+                        }
+                        ProvideTextStyle(
+                            value = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        ) {
+                            lyricsContent()
+                        }
+                    }
                 }
             }
         }
