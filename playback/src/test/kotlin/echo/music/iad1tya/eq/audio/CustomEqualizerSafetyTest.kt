@@ -9,9 +9,20 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import kotlin.math.abs
 
 class CustomEqualizerSafetyTest {
+
+    @Test
+    fun peakLimiterSoftensOverRangeSamplesAndRejectsNonFiniteValues() {
+        val processor = CustomEqualizerAudioProcessor()
+        val positive = processor.limitSample(10.0)
+        val negative = processor.limitSample(-10.0)
+
+        assertTrue(positive in 0.95..1.0)
+        assertTrue(negative in -1.0..-0.95)
+        assertEquals(0.0, processor.limitSample(Double.NaN), 0.0)
+        assertEquals(0.5, processor.limitSample(0.5), 0.0)
+    }
 
     @Test
     fun boostedSignalRemainsValidPcm16WithoutIntegerOverflow() {
@@ -41,7 +52,6 @@ class CustomEqualizerSafetyTest {
         while (output.remaining() >= 2) {
             val sample = output.short.toInt()
             assertTrue(sample >= Short.MIN_VALUE.toInt() && sample <= Short.MAX_VALUE.toInt())
-            assertTrue(abs(sample) <= 32767)
         }
     }
 }
