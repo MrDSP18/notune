@@ -26,7 +26,7 @@ class AIRequestSanitizerTest {
     @Test
     fun redactsEntirePemPrivateKeyBlock() {
         val sanitized = sanitizer.sanitizePrompt(
-            "key=-----BEGIN PRIVATE KEY-----\\nTOP_SECRET_MATERIAL\\n-----END PRIVATE KEY-----"
+            "key=-----BEGIN PRIVATE KEY-----\nTOP_SECRET_MATERIAL\n-----END PRIVATE KEY-----"
         )
 
         assertTrue(sanitized.contains("[REDACTED_SECRET]"))
