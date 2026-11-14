@@ -1,10 +1,16 @@
 package echo.music.iad1tya.notune.ai.engine
 
+import android.content.Context
+import com.music.echo.notune.privacy.PrivateSessionManager
+import dagger.hilt.android.qualifiers.ApplicationContext
+import echo.music.iad1tya.constants.AiPersonalizationKey
 import echo.music.iad1tya.notune.ai.AiChatMessage
 import echo.music.iad1tya.notune.ai.AiEngine
 import echo.music.iad1tya.notune.ai.AiResponse
 import echo.music.iad1tya.notune.ai.ToolCall
 import echo.music.iad1tya.notune.ai.tools.AiToolManager
+import echo.music.iad1tya.utils.dataStore
+import echo.music.iad1tya.utils.get
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -12,11 +18,13 @@ import timber.log.Timber
 
 @Singleton
 class NoCoreOrchestrator @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val aiEngine: AiEngine,
     private val toolManager: AiToolManager,
     private val mindMemory: NoMindMemory,
     private val dnaEngine: NoDnaEngine,
-    private val guardSafety: NoGuardSafety
+    private val guardSafety: NoGuardSafety,
+    private val privateSessionManager: PrivateSessionManager
 ) {
     suspend fun processUserRequest(
         prompt: String,
@@ -28,9 +36,21 @@ class NoCoreOrchestrator @Inject constructor(
         // 1. Sanitize prompt via Safety Gateway
         val cleanPrompt = guardSafety.sanitizePrompt(prompt)
 
-        // 2. Fetch context & Music DNA & Mind Memory
-        val dnaSummary = dnaEngine.getDnaSummary()
-        val memories = runCatching { mindMemory.memoryFacts.first() }.getOrDefault(emptyList())
+        // 2. Evaluate Privacy & Personalization Gateway
+        val isPrivateSession = privateSessionManager.isPrivateSession.value
+        val isPersonalizationEnabled = runCatching {
+            context.dataStore.get(AiPersonalizationKey, true)
+        }.getOrDefault(true)
+
+        val allowPersonalization = !isPrivateSession && isPersonalizationEnabled
+
+        // 3. Fetch context & Music DNA & Mind Memory
+        val dnaSummary = if (allowPersonalization) dnaEngine.getDnaSummary() else "Default / Unpersonalized (Privacy Mode Active)"
+        val memories = if (allowPersonalization) {
+            runCatching { mindMemory.memoryFacts.first() }.getOrDefault(emptyList())
+        } else {
+            emptyList()
+        }
         val memoryContext = if (memories.isNotEmpty()) {
             "\nRECALLED USER PREFERENCES & MEMORIES:\n" + memories.take(10).joinToString("\n") { "- $it" }
         } else ""
@@ -48,7 +68,7 @@ class NoCoreOrchestrator @Inject constructor(
             4. Keep output concise, industrial, and helpful.
         """.trimIndent()
 
-        // 3. Execute reasoning loop with tool authorization and safety check
+        // 4. Execute reasoning loop with tool authorization and safety check
         val executor: suspend (ToolCall) -> String = { call ->
             val validation = guardSafety.validateToolCall(call)
             if (!validation.isValid) {
@@ -71,10 +91,12 @@ class NoCoreOrchestrator @Inject constructor(
             toolExecutor = executor
         )
 
-        // 4. Memory extraction: learn preferences
-        extractAndRememberPreferences(cleanPrompt)
+        // 5. Memory extraction: learn preferences only when personalization is allowed
+        if (allowPersonalization) {
+            extractAndRememberPreferences(cleanPrompt)
+        }
 
-        // 5. Sanitize output text before returning
+        // 6. Sanitize output text before returning
         return result.map { response ->
             response.copy(text = guardSafety.sanitizeOutput(response.text))
         }

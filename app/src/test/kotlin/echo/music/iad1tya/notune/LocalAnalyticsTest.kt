@@ -1,25 +1,25 @@
 package echo.music.iad1tya.notune
 
 import com.music.echo.notune.AnalyticsManager
+import com.music.echo.notune.privacy.PrivateSessionManager
 import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.models.AppEvent
 import echo.music.iad1tya.models.MediaMetadata
 import echo.music.iad1tya.repository.EventRepository
 import io.mockk.*
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LocalAnalyticsTest {
 
     private val eventRepository = mockk<EventRepository>()
     private val database = mockk<MusicDatabase>(relaxed = true)
+    private val privateSessionManager = mockk<PrivateSessionManager>()
     private val events = MutableSharedFlow<AppEvent>()
     private val testScope = TestScope()
     private lateinit var analyticsManager: AnalyticsManager
@@ -27,7 +27,8 @@ class LocalAnalyticsTest {
     @Before
     fun setUp() {
         every { eventRepository.events } returns events
-        analyticsManager = AnalyticsManager(eventRepository, database, testScope)
+        every { privateSessionManager.shouldRecordHistoryAndPersonalization() } returns true
+        analyticsManager = AnalyticsManager(eventRepository, database, privateSessionManager, testScope)
     }
 
     @Test
@@ -58,6 +59,34 @@ class LocalAnalyticsTest {
         
             verify { database.incrementTotalPlayTime(localId, 180000L) }
             verify { database.insert(any<echo.music.iad1tya.db.entities.Event>()) }
+        } finally {
+            analyticsManager.release()
+        }
+    }
+
+    @Test
+    fun `test private session suppresses database updates`() = testScope.runTest {
+        try {
+            every { privateSessionManager.shouldRecordHistoryAndPersonalization() } returns false
+            clearMocks(database, answers = false, recordedCalls = true)
+
+            val localId = "content://media/private_123"
+            val metadata = MediaMetadata(
+                id = localId,
+                title = "Private Song",
+                artists = emptyList(),
+                duration = 200,
+                thumbnailUrl = null
+            )
+
+            val event = AppEvent.PlaybackCompleted(metadata, 200000L)
+            events.emit(event)
+
+            testScope.testScheduler.advanceUntilIdle()
+
+            // Verify database query was never invoked
+            verify(exactly = 0) { database.query(any()) }
+            verify(exactly = 0) { database.incrementTotalPlayTime(any(), any()) }
         } finally {
             analyticsManager.release()
         }

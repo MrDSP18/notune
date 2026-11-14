@@ -2,6 +2,7 @@ package echo.music.iad1tya.notune.ai
 
 import android.content.Context
 import com.music.echo.notune.identity.NotuneAccountRepository
+import com.music.echo.notune.privacy.PrivateSessionManager
 import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.notune.ai.engine.NoCoreOrchestrator
 import echo.music.iad1tya.notune.ai.engine.NoDnaEngine
@@ -34,6 +35,7 @@ class AiToolAuthorizationGatewayTest {
     private val playerConnectionManager = mockk<PlayerConnectionManager>(relaxed = true)
     private val accountRepository = mockk<NotuneAccountRepository>(relaxed = true)
     private val playerConnection = mockk<PlayerConnection>(relaxed = true)
+    private val privateSessionManager = mockk<PrivateSessionManager>(relaxed = true)
     private val aiEngine = mockk<AiEngine>(relaxed = true)
     private val mindMemory = mockk<NoMindMemory>(relaxed = true)
     private val dnaEngine = mockk<NoDnaEngine>(relaxed = true)
@@ -61,13 +63,16 @@ class AiToolAuthorizationGatewayTest {
 
         every { mindMemory.memoryFacts } returns flowOf(emptyList())
         coEvery { dnaEngine.getDnaSummary() } returns "Rock 40%, Jazz 60%"
+        every { privateSessionManager.isPrivateSession.value } returns false
 
         orchestrator = NoCoreOrchestrator(
+            context = context,
             aiEngine = aiEngine,
             toolManager = toolManager,
             mindMemory = mindMemory,
             dnaEngine = dnaEngine,
-            guardSafety = guardSafety
+            guardSafety = guardSafety,
+            privateSessionManager = privateSessionManager
         )
     }
 

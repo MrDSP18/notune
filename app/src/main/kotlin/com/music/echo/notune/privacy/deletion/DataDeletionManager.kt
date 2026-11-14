@@ -1,8 +1,10 @@
 package com.music.echo.notune.privacy.deletion
 
 import android.content.Context
+import com.music.echo.notune.sync.CloudSyncManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import echo.music.iad1tya.db.MusicDatabase
+import echo.music.iad1tya.notune.ai.engine.NoMindMemory
 import echo.music.iad1tya.utils.dataStore
 import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +17,9 @@ import javax.inject.Singleton
 @Singleton
 class DataDeletionManager @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val database: MusicDatabase
+    private val database: MusicDatabase,
+    private val mindMemory: NoMindMemory,
+    private val cloudSyncManager: CloudSyncManager
 ) {
 
     suspend fun clearListeningHistory() = withContext(Dispatchers.IO) {
@@ -46,7 +50,8 @@ class DataDeletionManager @Inject constructor(
             if (aiCacheDir.exists()) {
                 aiCacheDir.deleteRecursively()
             }
-            Timber.d("DATA_DELETION: AI cached data cleared.")
+            mindMemory.clearMemory()
+            Timber.d("DATA_DELETION: AI cached data and learned memory facts cleared.")
         } catch (e: Exception) {
             Timber.e(e, "DATA_DELETION: Failed to clear AI data.")
         }
@@ -57,11 +62,12 @@ class DataDeletionManager @Inject constructor(
             clearListeningHistory()
             clearSearchHistory()
             clearAiData()
+            cloudSyncManager.clearPendingOutbox()
             database.clearAllData()
             context.dataStore.edit { it.clear() }
             clearDirectoryChildren(context.cacheDir)
             clearDirectoryChildren(context.filesDir)
-            clearDirectoryChildren(context.noBackupFilesDir)
+            runCatching { context.noBackupFilesDir }.getOrNull()?.let { clearDirectoryChildren(it) }
 
             // Delete exported files
             val exportDir = File(context.cacheDir, "exports")
