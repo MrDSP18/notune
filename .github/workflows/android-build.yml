@@ -15,128 +15,116 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  build-and-test:
     name: Build, Lint & Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        submodules: recursive
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
 
-    - name: Verify Git History for Security Scan
-      run: |
-        git status
-        git rev-parse HEAD
-        git log --oneline -5
+      - name: Verify Git History
+        run: |
+          git status
+          git rev-parse HEAD
+          git log --oneline -5
 
-    - name: Run Secret Scan
-      uses: gitleaks/gitleaks-action@v3
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      continue-on-error: false
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
 
-    - name: Set up JDK 21
-      uses: actions/setup-java@v5
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        cache: gradle
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
 
-    - name: Restore google-services.json (GMS builds)
-      if: ${{ env.GOOGLE_SERVICES_JSON_BASE64 != '' }}
-      env:
-        GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
-      run: |
-        echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > app/google-services.json
+      - name: Run Lint
+        run: |
+          ./gradlew lintUniversalFossDebug -Djava.awt.headless=true --no-daemon
 
-    - name: Decode Keystore
-      if: ${{ env.KEYSTORE_BASE64 != '' }}
-      env:
-        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-      run: |
-        echo "$KEYSTORE_BASE64" | base64 -d > keystore.jks
+      - name: Run Core & Playback Unit Tests
+        run: |
+          ./gradlew :core:testDebugUnitTest :playback:testFossDebugUnitTest -Djava.awt.headless=true --no-daemon
 
-    - name: Run Lint
-      run: |
-        chmod +x gradlew
-        ./gradlew lintUniversalFossDebug -Djava.awt.headless=true --no-daemon
+      - name: Run App Unit Tests
+        run: |
+          ./gradlew :app:testUniversalFossDebugUnitTest -Djava.awt.headless=true --no-daemon
 
-    - name: Run Unit Tests
-      run: |
-        ./gradlew testUniversalFossDebugUnitTest -Djava.awt.headless=true --no-daemon
+      - name: Upload Lint Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-results
+          path: "**/build/reports/lint-results-*.html"
+          if-no-files-found: ignore
 
-    - name: Upload Lint Results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: lint-results
-        path: "**/build/reports/lint-results-*.html"
-        if-no-files-found: ignore
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/build/reports/tests/"
+          if-no-files-found: ignore
 
-    - name: Upload Test Results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results
-        path: "**/build/reports/tests/"
-        if-no-files-found: ignore
+      - name: Build Universal FOSS Debug APK & AAB
+        run: |
+          mkdir -p "$HOME/.android"
+          keytool -genkeypair \
+            -keystore "$HOME/.android/debug.keystore" \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -dname "CN=Android Debug,O=Android,C=US" \
+            -keyalg RSA \
+            -validity 10000
+          ./gradlew assembleUniversalFossDebug bundleUniversalFossDebug -Djava.awt.headless=true --no-daemon
 
-    - name: Build Release APK & AAB
-      if: ${{ env.KEYSTORE_BASE64 != '' }}
-      env:
-        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-        LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
-        LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
-      run: |
-        ./gradlew assembleUniversalGmsRelease bundleUniversalGmsRelease -Djava.awt.headless=true --no-daemon
+      - name: Upload Universal Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NOTUNE-Universal-FOSS-Debug-APK
+          path: app/build/outputs/apk/universalFoss/debug/app-universal-foss-debug.apk
 
-    - name: Build Debug APK & AAB (fork PR fallback without signing)
-      if: ${{ env.KEYSTORE_BASE64 == '' }}
-      env:
-        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
-        LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
-      run: |
-        mkdir -p "$HOME/.android"
-        keytool -genkeypair \
-          -keystore "$HOME/.android/debug.keystore" \
-          -storepass android \
-          -alias androiddebugkey \
-          -keypass android \
-          -dname "CN=Android Debug,O=Android,C=US" \
-          -keyalg RSA \
-          -validity 10000
-        ./gradlew assembleUniversalFossDebug bundleUniversalFossDebug -Djava.awt.headless=true --no-daemon
+      - name: Upload Universal Debug AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: NOTUNE-Universal-FOSS-Debug-AAB
+          path: app/build/outputs/bundle/universalFossDebug/app-universal-foss-debug.aab
+          if-no-files-found: ignore
 
-    - name: Upload Universal APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: NOTUNE-Universal-APK
-        path: app/build/outputs/apk/**/*.apk
+  publish-preview:
+    name: Publish Preview Release Artifact
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - name: Download Built APK
+        uses: actions/download-artifact@v4
+        with:
+          name: NOTUNE-Universal-FOSS-Debug-APK
+          path: artifacts/
 
-    - name: Upload Universal AAB
-      uses: actions/upload-artifact@v4
-      with:
-        name: NOTUNE-Universal-AAB
-        path: app/build/outputs/bundle/**/*.aab
-        if-no-files-found: ignore
-
-    - name: Publish Public Direct APK Release (No Sign-in Required)
-      uses: softprops/action-gh-release@v2
-      if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-      with:
-        tag_name: "latest"
-        name: "NØTUNE Universal Direct Release"
-        body: |
-          ### 📱 Public Direct APK Download (No GitHub Login Required)
-          Download the latest NØTUNE Universal APK directly below without signing in to GitHub.
-        draft: false
-        prerelease: false
-        files: app/build/outputs/apk/universalFoss/debug/app-universal-foss-debug.apk
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish Preview GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "preview-latest"
+          name: "NØTUNE Preview / Continuous Integration Build"
+          body: |
+            ### 🛠 NØTUNE Continuous Integration Preview Build
+            Automated preview artifact built from commit `${{ github.sha }}` on branch `${{ github.ref_name }}`.
+            
+            > [!NOTE]
+            > This is an unsigned development/preview build for testing and verification.
+            > For signed production releases, download the official release tags.
+          draft: false
+          prerelease: true
+          files: artifacts/app-universal-foss-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

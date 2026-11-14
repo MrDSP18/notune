@@ -2,6 +2,12 @@ package com.music.echo.notune.sync
 
 import android.content.Context
 import com.music.echo.notune.privacy.security.SecureStorageManager
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import echo.music.iad1tya.models.AppEvent
 import echo.music.iad1tya.repository.EventRepository
@@ -11,12 +17,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import timber.log.Timber
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -157,6 +165,29 @@ class CloudSyncManager @Inject constructor(
         saveOutboxToDisk()
         Timber.d("Enqueued local sync event: %s. Outbox queue size: %d", eventType, pendingSyncQueue.size)
         triggerPendingSync()
+        scheduleBackgroundSync()
+    }
+
+    /**
+     * Schedules reliable background synchronization via WorkManager with network constraints.
+     */
+    fun scheduleBackgroundSync() {
+        try {
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
+            val syncWork = OneTimeWorkRequestBuilder<CloudSyncWorker>()
+                .setConstraints(constraints)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
+                .build()
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                "notune_cloud_sync_worker",
+                ExistingWorkPolicy.KEEP,
+                syncWork
+            )
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to schedule background WorkManager sync")
+        }
     }
 
     /**
@@ -165,73 +196,87 @@ class CloudSyncManager @Inject constructor(
      */
     fun triggerPendingSync() {
         scope.launch {
-            val sessionToken = secureStorageManager.getSecret("user_session_token")
+            syncPendingEventsNow()
+        }
+    }
 
-            val eventsToSync = synchronized(pendingSyncQueue) {
-                pendingSyncQueue.toList()
+    /**
+     * Synchronizes all currently pending outbox events against the NØTUNE Cloud Sync API.
+     * Returns true if successfully transmitted and acknowledged by the server.
+     */
+    suspend fun syncPendingEventsNow(): Boolean = withContext(Dispatchers.IO) {
+        val sessionToken = secureStorageManager.getSecret("user_session_token")
+
+        val eventsToSync = synchronized(pendingSyncQueue) {
+            pendingSyncQueue.toList()
+        }
+
+        if (eventsToSync.isEmpty()) {
+            _syncState.value = SyncStatus.IDLE
+            return@withContext true
+        }
+
+        _syncState.value = SyncStatus.SYNCING
+        try {
+            val batchId = java.util.UUID.randomUUID().toString()
+            val backendUrlStr = "https://notune.dharansundarapandiyan24.workers.dev/api/v1/sync"
+            val url = URL(backendUrlStr)
+            val connection = (url.openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                connectTimeout = 4000
+                readTimeout = 4000
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+                setRequestProperty("X-Sync-Protocol-Version", "1.0")
+                setRequestProperty("X-Idempotency-Key", batchId)
+                if (sessionToken != null) {
+                    setRequestProperty("Authorization", "Bearer $sessionToken")
+                }
             }
 
-            if (eventsToSync.isEmpty()) {
+            // Construct complete batch payload with serialized events
+            val eventsArray = JSONArray()
+            for (event in eventsToSync) {
+                val eventObj = JSONObject().apply {
+                    put("eventId", event.eventId)
+                    put("eventType", event.eventType)
+                    put("payload", event.payloadJson)
+                    put("timestamp", event.timestamp)
+                }
+                eventsArray.put(eventObj)
+            }
+
+            val jsonBody = JSONObject().apply {
+                put("batchId", batchId)
+                put("protocolVersion", "1.0")
+                put("eventsCount", eventsToSync.size)
+                put("events", eventsArray)
+                put("clientTimestamp", System.currentTimeMillis())
+            }.toString()
+
+            connection.outputStream.use { os ->
+                os.write(jsonBody.toByteArray(Charsets.UTF_8))
+            }
+
+            val responseCode = connection.responseCode
+            if (responseCode in 200..299) {
+                synchronized(pendingSyncQueue) {
+                    pendingSyncQueue.removeAll(eventsToSync)
+                    _pendingQueueCount.value = pendingSyncQueue.size
+                }
+                saveOutboxToDisk()
                 _syncState.value = SyncStatus.IDLE
-                return@launch
-            }
-
-            _syncState.value = SyncStatus.SYNCING
-            try {
-                // Network HTTP dispatch attempt to NØTUNE Cloud Backend API
-                val backendUrlStr = "https://notune.dharansundarapandiyan24.workers.dev/api/v1/sync"
-                val url = URL(backendUrlStr)
-                val connection = (url.openConnection() as HttpURLConnection).apply {
-                    requestMethod = "POST"
-                    connectTimeout = 3000
-                    readTimeout = 3000
-                    doOutput = true
-                    setRequestProperty("Content-Type", "application/json")
-                    if (sessionToken != null) {
-                        setRequestProperty("Authorization", "Bearer $sessionToken")
-                    }
-                }
-
-                // Construct complete batch payload with serialized events
-                val eventsArray = JSONArray()
-                for (event in eventsToSync) {
-                    val eventObj = JSONObject().apply {
-                        put("eventId", event.eventId)
-                        put("eventType", event.eventType)
-                        put("payload", event.payloadJson)
-                        put("timestamp", event.timestamp)
-                    }
-                    eventsArray.put(eventObj)
-                }
-
-                val jsonBody = JSONObject().apply {
-                    put("batchId", java.util.UUID.randomUUID().toString())
-                    put("eventsCount", eventsToSync.size)
-                    put("events", eventsArray)
-                    put("clientTimestamp", System.currentTimeMillis())
-                }.toString()
-
-                connection.outputStream.use { os ->
-                    os.write(jsonBody.toByteArray(Charsets.UTF_8))
-                }
-
-                val responseCode = connection.responseCode
-                if (responseCode in 200..299) {
-                    synchronized(pendingSyncQueue) {
-                        pendingSyncQueue.removeAll(eventsToSync)
-                        _pendingQueueCount.value = pendingSyncQueue.size
-                    }
-                    saveOutboxToDisk()
-                    _syncState.value = SyncStatus.IDLE
-                    Timber.i("Successfully synced %d events to NØTUNE Cloud API.", eventsToSync.size)
-                } else {
-                    _syncState.value = SyncStatus.OFFLINE
-                    Timber.w("Server returned response code %d. Retaining events in local outbox queue.", responseCode)
-                }
-            } catch (e: Exception) {
+                Timber.i("Successfully synced %d events to NØTUNE Cloud API.", eventsToSync.size)
+                true
+            } else {
                 _syncState.value = SyncStatus.OFFLINE
-                Timber.w("Network connection unavailable. Retaining %d events in local outbox queue.", eventsToSync.size)
+                Timber.w("Server returned response code %d. Retaining events in local outbox queue.", responseCode)
+                false
             }
+        } catch (e: Exception) {
+            _syncState.value = SyncStatus.OFFLINE
+            Timber.w("Network connection unavailable. Retaining %d events in local outbox queue.", eventsToSync.size)
+            false
         }
     }
 }
