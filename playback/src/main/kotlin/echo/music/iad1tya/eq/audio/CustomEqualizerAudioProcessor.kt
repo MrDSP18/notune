@@ -253,7 +253,8 @@ class CustomEqualizerAudioProcessor : AudioProcessor {
         val magnitude = abs(sample)
         if (magnitude <= 0.95) return sample
         val limited = 0.95 + 0.05 * tanh((magnitude - 0.95) / 0.05)
-        return if (sample < 0.0) -limited else limited
+        val headroomLimited = limited.coerceAtMost(0.999)
+        return if (sample < 0.0) -headroomLimited else headroomLimited
     }
 
     override fun getOutput(): ByteBuffer {
