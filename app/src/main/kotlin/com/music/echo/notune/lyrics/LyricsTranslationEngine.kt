@@ -331,6 +331,8 @@ class LyricsTranslationEngine @Inject constructor() {
     
 }
 
+}
+
 internal fun parseTranslationResponse(response: String, expectedLineCount: Int): List<String>? {
     if (expectedLineCount <= 0 || response.isBlank()) return null
     val cleaned = response.trim()
