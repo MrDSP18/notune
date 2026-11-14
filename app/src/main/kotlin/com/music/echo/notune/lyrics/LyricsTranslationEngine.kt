@@ -3,6 +3,9 @@ package com.music.echo.notune.lyrics
 import echo.music.iad1tya.notune.ai.AiEngine
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.jsonPrimitive
 import timber.log.Timber
 
 @Singleton
@@ -20,43 +23,52 @@ class LyricsTranslationEngine @Inject constructor() {
         lines: List<LyricLine>,
         targetLanguage: LyricsLanguage
     ): List<LyricLine> {
-        if (targetLanguage == LyricsLanguage.ENGLISH) {
+        val engine = aiEngine ?: return lines
+        if (lines.isEmpty() || targetLanguage == LyricsLanguage.ENGLISH) {
             return lines
         }
 
-        val engine = aiEngine
-        if (engine != null) {
-            val fullText = lines.joinToString("\n") { it.originalText }
-            val prompt = """
-                Translate the following lyrics into ${targetLanguage.name}. 
-                Maintain the original emotion, slang, and cultural nuances. 
-                Respond ONLY with the translated lines, one per line, matching the original count exactly.
-                
-                LYRICS:
-                $fullText
-            """.trimIndent()
-
-            val result = engine.runNeuralMatrixLoop(prompt)
-            result.onSuccess { response ->
-                val translatedLines = response.text.lines().filter { it.isNotBlank() }
-                if (translatedLines.size == lines.size) {
-                    return lines.mapIndexed { index, line ->
-                        line.copy(translatedText = translatedLines[index], transformationVersion = 2)
-                    }
+        val translated = ArrayList<LyricLine>(lines.size)
+        for (batch in lines.chunked(MAX_LINES_PER_REQUEST)) {
+            val prompt = buildString {
+                appendLine("Translate each supplied lyric line into ${targetLanguage.displayName} (${targetLanguage.nativeName}).")
+                appendLine("Preserve meaning, tone, idioms and cultural context.")
+                appendLine("Return ONLY a valid JSON array of strings.")
+                appendLine("The array must contain exactly ${batch.size} strings in the same order.")
+                appendLine("Do not add, remove, explain, summarize, or invent any lyric content.")
+                appendLine("Keep names and vocalizations when translating them would change their meaning.")
+                appendLine()
+                appendLine("SOURCE LINES:")
+                batch.forEachIndexed { index, line ->
+                    appendLine("${index + 1}. ${line.originalText}")
                 }
-                Timber.w("LYRICS_AI: Line count mismatch in translation. Falling back to rule-based.")
-            }.onFailure {
-                Timber.e(it, "LYRICS_AI: Neural translation failed.")
+            }
+
+            val result = runCatching {
+                engine.runNeuralMatrixLoop(
+                    prompt = prompt,
+                    systemInstruction = "You are a precise line-preserving music lyric translator. Translate only the user-provided source lines. Output a JSON string array and nothing else."
+                ).getOrThrow()
+            }
+
+            val values = result.getOrNull()?.text?.let {
+                parseTranslationResponse(it, batch.size)
+            }
+
+            if (values == null) {
+                result.exceptionOrNull()?.let { Timber.w(it, "LYRICS_AI: Translation request failed.") }
+                Timber.w("LYRICS_AI: Invalid translation payload; preserving original lines.")
+                translated.addAll(batch)
+            } else {
+                batch.forEachIndexed { index, line ->
+                    translated += line.copy(
+                        translatedText = values[index],
+                        transformationVersion = 2
+                    )
+                }
             }
         }
-
-        return lines.map { line ->
-            val translatedText = ruleBasedTranslate(line.originalText, targetLanguage)
-            line.copy(
-                translatedText = translatedText.takeIf { it != line.originalText },
-                transformationVersion = 1
-            )
-        }
+        return translated
     }
 
     /**
@@ -91,6 +103,7 @@ class LyricsTranslationEngine @Inject constructor() {
     }
 
     companion object {
+        private const val MAX_LINES_PER_REQUEST = 20
         val COMMON_TRANSLATION_DICTIONARY: Map<String, Map<LyricsLanguage, String>> = mapOf(
             "until i found you" to mapOf(
                 LyricsLanguage.TAMIL to "நான் உன்னை கண்டுபிடிக்கும் வரை",
@@ -333,4 +346,27 @@ class LyricsTranslationEngine @Inject constructor() {
             )
         )
     }
+}
+
+internal fun parseTranslationResponse(response: String, expectedLineCount: Int): List<String>? {
+    if (expectedLineCount <= 0 || response.isBlank()) return null
+    val cleaned = response.trim()
+        .removePrefix("```json")
+        .removePrefix("```")
+        .removeSuffix("```")
+        .trim()
+    val start = cleaned.indexOf('[')
+    val end = cleaned.lastIndexOf(']')
+    if (start < 0 || end <= start) return null
+    val parsed = runCatching {
+        Json.parseToJsonElement(cleaned.substring(start, end + 1)) as? JsonArray
+    }.getOrNull() ?: return null
+    if (parsed.size != expectedLineCount) return null
+    val values = ArrayList<String>(parsed.size)
+    for (element in parsed) {
+        val value = runCatching { element.jsonPrimitive }.getOrNull() ?: return null
+        if (!value.isString || value.content.isBlank()) return null
+        values += value.content
+    }
+    return values
 }

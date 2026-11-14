@@ -31,8 +31,9 @@ import java.util.Locale
 
 @Composable
 fun NotuneNowHeader(
-    currentSongTitle: String = "Husn",
-    currentArtistName: String = "Anuv Jain",
+    currentSongTitle: String = "",
+    currentArtistName: String = "",
+    isTrackAvailable: Boolean = currentSongTitle.isNotBlank(),
     onPlayClick: () -> Unit = {},
     onEnvironmentSelect: (EnvironmentProfile) -> Unit = {},
     onVibeSelect: (String) -> Unit = {},
@@ -133,7 +134,7 @@ fun NotuneNowHeader(
                             )
                         )
                     )
-                    .clickable { onPlayClick() }
+                    .clickable(enabled = isTrackAvailable) { onPlayClick() }
                     .padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -161,7 +162,7 @@ fun NotuneNowHeader(
 
                     Column {
                         Text(
-                            text = "CONTINUE LISTENING",
+                            text = if (isTrackAvailable) "CONTINUE LISTENING" else "NOTHING PLAYING",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontFamily = NothingFont,
                                 fontWeight = FontWeight.Bold,
@@ -170,14 +171,14 @@ fun NotuneNowHeader(
                             color = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = currentSongTitle,
+                            text = currentSongTitle.ifBlank { "Choose a track to start listening" },
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
-                            text = currentArtistName,
+                            text = currentArtistName.ifBlank { "Your next sound starts here" },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
