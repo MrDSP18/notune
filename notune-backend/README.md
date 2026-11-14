@@ -60,8 +60,35 @@ docker-compose up -d
 
 This starts PostgreSQL on `localhost:5432` and initializes `schema.sql` automatically.
 
+---
 
-## 4. Cloudflare D1 Sync Ingestion
+## 4. Authentication Architecture & Token Security
+
+NØTUNE backend services enforce cryptographic authentication using HS256 JSON Web Tokens with strict fail-closed security properties:
+
+### A. Secret Configuration & Fail-Closed Startup
+- `JWT_SECRET` is **mandatory** and must be at least 32 characters (256 bits).
+- All predictable and hardcoded defaults (`notune_production_jwt_secret_key_2026`, `secret`, `changeme`, etc.) are actively detected and rejected.
+- In production (`NODE_ENV=production` or `STRICT_AUTH=true`), the service terminates immediately on startup (`process.exit(1)`) if `JWT_SECRET` is missing, short, or placeholder.
+- Generate a production secret using OpenSSL:
+  ```bash
+  openssl rand -hex 32
+  ```
+
+### B. Route Access Classification
+- **Public**: Health probes (`/health`, `/ready`), metadata resolution (`/api/v1/metadata/*`), registration (`POST /api/v1/auth/register`), and login (`POST /api/v1/auth/login`).
+- **Protected (`requireAuth`)**: Social connections (`GET /api/v1/friends`), post creation (`POST /api/v1/posts`), identity self-inspection (`GET /api/v1/auth/me`), and cloud sync (`POST /api/v1/sync`). Unauthenticated requests are rejected with `401 Unauthorized` and **never** fall back to a shared guest identity.
+- **Optional (`optionalAuth`)**: Public feed (`GET /api/v1/feed`). If no token is provided, public content is returned without user context. If an invalid or expired token is provided, the request is rejected with `401`.
+
+### C. WebSocket Authentication
+- WebSocket connections cannot join rooms or broadcast events without explicit authentication.
+- Clients must send `AUTHENTICATE` with a valid JWT token signed by `JWT_SECRET`.
+- The user identity is strictly extracted from verified claims (`id` UUID); client-supplied `userId` fields are discarded.
+- Forged, expired, or missing tokens terminate the WebSocket connection with error code `4001` or `4003`.
+
+---
+
+## 5. Cloudflare D1 Sync Ingestion
 
 The Worker sync endpoint accepts authenticated event batches at `POST /api/v1/sync`.
 It verifies the HS256 bearer token against the `JWT_SECRET` Worker secret, scopes
