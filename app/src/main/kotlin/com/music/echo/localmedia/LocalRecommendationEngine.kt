@@ -4,12 +4,15 @@ import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.db.entities.Song
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import kotlin.math.ln1p
 
 object LocalRecommendationEngine {
     private const val DEFAULT_LIMIT = 30
     private const val ARTIST_DIVERSITY_PENALTY = 0.22
     private const val ALBUM_DIVERSITY_PENALTY = 0.12
+
+    private fun String.key() = trim().lowercase(Locale.ROOT)
 
     suspend fun getLocalRecommendations(database: MusicDatabase, limit: Int = DEFAULT_LIMIT): List<Song> =
         withContext(Dispatchers.IO) {
@@ -27,21 +30,22 @@ object LocalRecommendationEngine {
         songs.forEach { item ->
             val playTime = item.song.totalPlayTime.coerceAtLeast(0L)
             item.artists.forEach { artist ->
-                val key = artist.name.trim().lowercase()
+                val key = artist.name.key()
                 if (key.isNotEmpty()) artistTotals[key] = (artistTotals[key] ?: 0L) + playTime
             }
-            val album = item.song.albumName?.trim()?.lowercase().orEmpty()
+            val album = item.song.albumName.orEmpty().key()
             if (album.isNotEmpty()) albumTotals[album] = (albumTotals[album] ?: 0L) + playTime
         }
 
-        val maxArtist = artistTotals.values.maxOrNull()?.let { ln1p(it.toDouble()) } ?: 1.0
-        val maxAlbum = albumTotals.values.maxOrNull()?.let { ln1p(it.toDouble()) } ?: 1.0
-        val maxTrack = songs.maxOfOrNull { ln1p(it.song.totalPlayTime.coerceAtLeast(0L).toDouble()) } ?: 1.0
+        val maxArtist = (artistTotals.values.maxOrNull()?.let { ln1p(it.toDouble()) } ?: 0.0).coerceAtLeast(1.0)
+        val maxAlbum = (albumTotals.values.maxOrNull()?.let { ln1p(it.toDouble()) } ?: 0.0).coerceAtLeast(1.0)
+        val maxTrack = (songs.maxOfOrNull { ln1p(it.song.totalPlayTime.coerceAtLeast(0L).toDouble()) } ?: 0.0)
+            .coerceAtLeast(1.0)
 
         val candidates = songs.map { item ->
-            val artistAffinity = item.artists.mapNotNull { artistTotals[it.name.trim().lowercase()] }
+            val artistAffinity = item.artists.mapNotNull { artistTotals[it.name.key()] }
                 .maxOrNull()?.let { (ln1p(it.toDouble()) / maxArtist).coerceIn(0.0, 1.0) } ?: 0.0
-            val albumKey = item.song.albumName?.trim()?.lowercase().orEmpty()
+            val albumKey = item.song.albumName.orEmpty().key()
             val albumAffinity = albumTotals[albumKey]?.let {
                 (ln1p(it.toDouble()) / maxAlbum).coerceIn(0.0, 1.0)
             } ?: 0.0
@@ -56,7 +60,7 @@ object LocalRecommendationEngine {
             item to score
         }.sortedWith(
             compareByDescending<Pair<Song, Double>> { it.second }
-                .thenBy { it.first.song.title.lowercase() }
+                .thenBy { it.first.song.title.key() }
                 .thenBy { it.first.song.id }
         )
 
@@ -69,8 +73,8 @@ object LocalRecommendationEngine {
             val bestIndex = remaining.indices.maxWithOrNull(
                 compareBy<Int> { index ->
                     val item = remaining[index].first
-                    val artist = item.artists.firstOrNull()?.name?.trim()?.lowercase().orEmpty()
-                    val album = item.song.albumName?.trim()?.lowercase().orEmpty()
+                    val artist = item.artists.firstOrNull()?.name.orEmpty().key()
+                    val album = item.song.albumName.orEmpty().key()
                     remaining[index].second -
                         (artistCounts[artist] ?: 0) * ARTIST_DIVERSITY_PENALTY -
                         (albumCounts[album] ?: 0) * ALBUM_DIVERSITY_PENALTY
@@ -79,8 +83,8 @@ object LocalRecommendationEngine {
 
             val selected = remaining.removeAt(bestIndex).first
             result += selected
-            val artist = selected.artists.firstOrNull()?.name?.trim()?.lowercase().orEmpty()
-            val album = selected.song.albumName?.trim()?.lowercase().orEmpty()
+            val artist = selected.artists.firstOrNull()?.name.orEmpty().key()
+            val album = selected.song.albumName.orEmpty().key()
             if (artist.isNotEmpty()) artistCounts[artist] = (artistCounts[artist] ?: 0) + 1
             if (album.isNotEmpty()) albumCounts[album] = (albumCounts[album] ?: 0) + 1
         }
