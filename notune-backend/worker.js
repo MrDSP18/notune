@@ -58,8 +58,8 @@ export default {
           );
         } else {
           return new Response(
-            JSON.stringify({ status: "ready", database: "mock", note: "D1 DB binding verified in local mode", governor: "GREEN" }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            JSON.stringify({ status: "error", database: "unavailable", governor: "YELLOW" }),
+            { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
       } catch (err) {
