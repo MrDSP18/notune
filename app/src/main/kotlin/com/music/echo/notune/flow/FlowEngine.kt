@@ -136,16 +136,15 @@ class FlowEngine @Inject constructor(
                     contextMode = currentState.contextMode
                 )
 
+                val preferredGenres = runCatching { musicDnaRepository.getTopGenres(5) }.getOrDefault(emptyList())
+
                 val filteredCandidates = candidateFilter.filterCandidates(
                     candidates = rawCandidates,
                     currentTrack = currentTrack,
                     activeQueueTrackIds = upcomingQueueTrackIds,
                     recentlySkippedIds = feedbackProcessor.getRecentlySkippedTrackIds().keys.toList(),
-                    recommendationHistory = feedbackProcessor.getRecommendationHistory(),
-                    preferredGenres = preferredGenres
+                    recommendationHistory = feedbackProcessor.getRecommendationHistory()
                 )
-
-                val preferredGenres = runCatching { musicDnaRepository.getTopGenres(5) }.getOrDefault(emptyList())
 
                 val scoredCandidates = candidateScorer.scoreCandidates(
                     candidates = filteredCandidates,
@@ -157,7 +156,8 @@ class FlowEngine @Inject constructor(
                     topArtistIds = feedbackProcessor.getBoostedArtistIds(),
                     favoriteTrackIds = feedbackProcessor.getFavoriteTrackIds(),
                     recentlySkippedTrackIds = feedbackProcessor.getRecentlySkippedTrackIds(),
-                    recommendationHistory = feedbackProcessor.getRecommendationHistory()
+                    recommendationHistory = feedbackProcessor.getRecommendationHistory(),
+                    preferredGenres = preferredGenres
                 )
 
                 val diversifiedScores = candidateFilter.diversifyCandidates(scoredCandidates)
