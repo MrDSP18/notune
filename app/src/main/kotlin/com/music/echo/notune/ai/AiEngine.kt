@@ -80,21 +80,51 @@ class AiEngine @Inject constructor(
         prompt: String,
         systemInstruction: String? = null,
         history: List<AiChatMessage>? = null,
-        maxSteps: Int = 4
+        maxSteps: Int = 4,
+        toolExecutor: (suspend (ToolCall) -> String)? = null
     ): Result<AiResponse> {
         val fullSystemInstruction = systemInstruction ?: "NØTUNE Neural Matrix Core"
         val tools = getMusicTools()
-        
-        var currentPrompt = prompt
-        var currentSteps = 0
-        var result = generateResponse(currentPrompt, tools = tools, systemInstruction = fullSystemInstruction, history = history)
-        
-        while (result.isSuccess && currentSteps < maxSteps) {
-            val response = result.getOrThrow()
-            if (response.toolCalls.isNullOrEmpty()) return result
-            currentSteps++
+        val response = generateResponse(
+            prompt = prompt,
+            tools = tools,
+            systemInstruction = fullSystemInstruction,
+            history = history
+        ).getOrElse { return Result.failure(it) }
+
+        val calls = response.toolCalls.orEmpty()
+        if (calls.isEmpty()) return Result.success(response)
+        if (toolExecutor == null) {
+            return Result.failure(IllegalStateException("The model requested an action, but no tool executor is connected."))
         }
-        return result
+
+        val results = mutableListOf<String>()
+        for (call in calls.take(maxSteps.coerceAtLeast(1))) {
+            val result = runCatching { toolExecutor(call) }
+                .getOrElse { error -> "Tool ${call.functionName} failed: ${error.message ?: "Unknown error"}" }
+            results += result
+
+            val isPlayRequest = prompt.trimStart().lowercase().let {
+                it.startsWith("play ") || it.startsWith("listen to ") || it.startsWith("put on ")
+            }
+            if (isPlayRequest && call.functionName == "search_songs") {
+                val songId = Regex("\\(ID:\\s*([^)]+)\\)", RegexOption.IGNORE_CASE)
+                    .find(result)?.groupValues?.getOrNull(1)?.trim()
+                if (!songId.isNullOrBlank()) {
+                    val playResult = runCatching {
+                        toolExecutor(ToolCall(functionName = "play_song", arguments = mapOf("song_id" to songId)))
+                    }.getOrElse { error -> "Playback failed: ${error.message ?: "Unknown error"}" }
+                    results += playResult
+                }
+            }
+        }
+
+        return Result.success(
+            response.copy(
+                text = (listOf(response.text) + results.filter { it.isNotBlank() }).joinToString("\n"),
+                toolCalls = null
+            )
+        )
     }
 
     suspend fun getMusicTools(): List<AiTool> = listOf(

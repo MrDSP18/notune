@@ -9,6 +9,8 @@ import timber.log.Timber
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.pow
+import kotlin.math.abs
+import kotlin.math.tanh
 
 
 @UnstableApi
@@ -46,7 +48,8 @@ class CustomEqualizerAudioProcessor : AudioProcessor {
         }
 
         
-        preampGain = 10.0.pow(parametricEQ.preamp / 20.0)
+        val safePreamp = parametricEQ.preamp.takeIf { it.isFinite() }?.coerceIn(-12.0, 12.0) ?: 0.0
+        preampGain = 10.0.pow(safePreamp / 20.0)
 
         createFilters(parametricEQ.bands)
         equalizerEnabled = true
@@ -80,7 +83,9 @@ class CustomEqualizerAudioProcessor : AudioProcessor {
 
         
         filters = bands
-            .filter { it.enabled && it.frequency < sampleRate / 2.0 }
+            .asSequence()
+            .filter { it.enabled && it.frequency.isFinite() && it.frequency > 0.0 && it.frequency < sampleRate / 2.0 }
+            .take(ParametricEQ.MAX_BANDS)
             .map { band ->
                 BiquadFilter(
                     sampleRate = sampleRate,
@@ -90,6 +95,7 @@ class CustomEqualizerAudioProcessor : AudioProcessor {
                     filterType = band.filterType
                 )
             }
+            .toList()
 
         Timber.tag(TAG)
             .d("Created ${filters.size} biquad filters from ${bands.size} bands (PK/LSC/HSC)")
@@ -105,7 +111,8 @@ class CustomEqualizerAudioProcessor : AudioProcessor {
 
         
         pendingProfile?.let { profile ->
-            preampGain = 10.0.pow(profile.preamp / 20.0)
+            val safePreamp = profile.preamp.takeIf { it.isFinite() }?.coerceIn(-12.0, 12.0) ?: 0.0
+            preampGain = 10.0.pow(safePreamp / 20.0)
             createFilters(profile.bands)
             equalizerEnabled = true
             pendingProfile = null
@@ -201,7 +208,8 @@ class CustomEqualizerAudioProcessor : AudioProcessor {
                     processed *= preampGain
 
                     
-                    val outputSample = (processed * 32768.0).coerceIn(-32768.0, 32767.0).toInt().toShort()
+                    val limited = limitSample(processed)
+                    val outputSample = (limited * 32768.0).coerceIn(-32768.0, 32767.0).toInt().toShort()
                     output.putShort(outputSample)
                 }
                 2 -> {
@@ -224,8 +232,8 @@ class CustomEqualizerAudioProcessor : AudioProcessor {
                     processedRight *= preampGain
 
                     
-                    val outputLeft = (processedLeft * 32768.0).coerceIn(-32768.0, 32767.0).toInt().toShort()
-                    val outputRight = (processedRight * 32768.0).coerceIn(-32768.0, 32767.0).toInt().toShort()
+                    val outputLeft = (limitSample(processedLeft) * 32768.0).coerceIn(-32768.0, 32767.0).toInt().toShort()
+                    val outputRight = (limitSample(processedRight) * 32768.0).coerceIn(-32768.0, 32767.0).toInt().toShort()
 
                     output.putShort(outputLeft)
                     output.putShort(outputRight)
@@ -238,6 +246,15 @@ class CustomEqualizerAudioProcessor : AudioProcessor {
                 }
             }
         }
+    }
+
+    internal fun limitSample(sample: Double): Double {
+        if (!sample.isFinite()) return 0.0
+        val magnitude = abs(sample)
+        if (magnitude <= 0.95) return sample
+        val limited = 0.95 + 0.05 * tanh((magnitude - 0.95) / 0.05)
+        val headroomLimited = limited.coerceAtMost(0.999)
+        return if (sample < 0.0) -headroomLimited else headroomLimited
     }
 
     override fun getOutput(): ByteBuffer {

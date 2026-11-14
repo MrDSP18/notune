@@ -42,7 +42,8 @@ sealed class AskNoTuneEvent {
 @HiltViewModel
 class AskNoTuneViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val aiEngine: AiEngine
+    private val aiEngine: AiEngine,
+    private val aiToolManager: AiToolManager
 ) : ViewModel() {
 
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
@@ -114,20 +115,31 @@ class AskNoTuneViewModel @Inject constructor(
         _isTyping.value = true
         
         viewModelScope.launch {
-            val result = aiEngine.runNeuralMatrixLoop(
-                prompt = content,
-                systemInstruction = systemInstruction,
-                history = _messages.value.map { it.toAiChatMessage() }
-            )
-            
-            result.onSuccess { response ->
-                _messages.value = _messages.value + ChatMessage("assistant", response.text)
-            }.onFailure {
-                _messages.value = _messages.value + ChatMessage("assistant", "FATAL_ERROR: NEURAL_LINK_FAILURE. LOCAL HEURISTICS ATTEMPTING RECOVERY.")
+            try {
+                val result = aiEngine.runNeuralMatrixLoop(
+                    prompt = content,
+                    systemInstruction = systemInstruction,
+                    history = _messages.value.map { it.toAiChatMessage() },
+                    toolExecutor = { toolCall -> aiToolManager.executeTool(toolCall) }
+                )
+
+                result.onSuccess { response ->
+                    _messages.value = _messages.value + ChatMessage("assistant", response.text)
+                }.onFailure { error ->
+                    _messages.value = _messages.value + ChatMessage(
+                        "assistant",
+                        "I couldn't complete that action: ${error.message ?: "AI execution failed"}"
+                    )
+                }
+            } catch (error: Exception) {
+                _messages.value = _messages.value + ChatMessage(
+                    "assistant",
+                    "I couldn't complete that action: ${error.message ?: "Unexpected error"}"
+                )
+            } finally {
+                _isTyping.value = false
+                saveHistory()
             }
-            
-            _isTyping.value = false
-            saveHistory()
         }
     }
     
