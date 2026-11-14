@@ -32,6 +32,10 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
+internal const val MAX_SYNC_BATCH_SIZE = 99
+
+internal fun <T> selectSyncBatch(events: List<T>): List<T> = events.take(MAX_SYNC_BATCH_SIZE)
+
 /**
  * NØTUNE Offline-First Cloud Synchronization Manager.
  * Preserves local Room database as the primary source of truth.
@@ -226,7 +230,7 @@ class CloudSyncManager @Inject constructor(
         withContext(Dispatchers.IO) {
             val sessionToken = secureStorageManager.getSecret("user_session_token")
             val eventsToSync = synchronized(pendingSyncQueue) {
-                pendingSyncQueue.toList()
+                selectSyncBatch(pendingSyncQueue.toList())
             }
 
             if (eventsToSync.isEmpty()) {
