@@ -10,6 +10,10 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import dagger.hilt.android.qualifiers.ApplicationContext
+import echo.music.iad1tya.constants.PrivateSessionEnabledKey
+import echo.music.iad1tya.constants.CloudPersonalizationKey
+import echo.music.iad1tya.utils.dataStore
+import echo.music.iad1tya.utils.get
 import echo.music.iad1tya.models.AppEvent
 import echo.music.iad1tya.repository.EventRepository
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +35,10 @@ import java.util.concurrent.TimeUnit
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+
+internal const val MAX_SYNC_BATCH_SIZE = 99
+
+internal fun <T> selectSyncBatch(events: List<T>): List<T> = events.take(MAX_SYNC_BATCH_SIZE)
 
 /**
  * NØTUNE Offline-First Cloud Synchronization Manager.
@@ -134,49 +142,85 @@ class CloudSyncManager @Inject constructor(
         persistOutbox(pendingSyncQueue.toList())
     }
 
+    companion object {
+        const val MAX_OUTBOX_SIZE = 500
+    }
+
+    /**
+     * Evaluates privacy preferences before queueing or transmitting sync telemetry.
+     * Returns false if user has enabled private/incognito mode or disabled cloud personalization.
+     */
+    fun isSyncPermitted(): Boolean {
+        val privateSession = runCatching { context.dataStore.get(PrivateSessionEnabledKey, false) }.getOrDefault(false)
+        if (privateSession) return false
+        val cloudPersonalization = runCatching { context.dataStore.get(CloudPersonalizationKey, true) }.getOrDefault(true)
+        return cloudPersonalization
+    }
+
     private fun observeAppEvents() {
         scope.launch {
-            eventRepository.events.collect { event ->
-                when (event) {
-                    is AppEvent.SongLiked -> {
-                        val payload = JSONObject().apply {
-                            put("songId", event.song.id)
-                            put("title", event.song.title)
-                            put("action", "LIKE")
-                        }.toString()
-                        enqueueSyncEvent("SONG_FAVORITE_TOGGLED", payload)
+            try {
+                eventRepository.events.collect { event ->
+                    if (!isSyncPermitted()) {
+                        Timber.d("Privacy gateway active; suppressing event sync: %s", event)
+                        return@collect
                     }
-                    is AppEvent.SongUnliked -> {
-                        val payload = JSONObject().apply {
-                            put("songId", event.song.id)
-                            put("action", "UNLIKE")
-                        }.toString()
-                        enqueueSyncEvent("SONG_FAVORITE_TOGGLED", payload)
+                    when (event) {
+                        is AppEvent.SongLiked -> {
+                            val payload = JSONObject().apply {
+                                put("songId", event.song.id)
+                                put("title", event.song.title)
+                                put("action", "LIKE")
+                            }.toString()
+                            enqueueSyncEvent("SONG_FAVORITE_TOGGLED", payload)
+                        }
+                        is AppEvent.SongUnliked -> {
+                            val payload = JSONObject().apply {
+                                put("songId", event.song.id)
+                                put("action", "UNLIKE")
+                            }.toString()
+                            enqueueSyncEvent("SONG_FAVORITE_TOGGLED", payload)
+                        }
+                        is AppEvent.PlaybackCompleted -> {
+                            val payload = JSONObject().apply {
+                                put("songId", event.song.id)
+                                put("playTimeMs", event.playTimeMs)
+                                put("action", "PLAYBACK_FINISHED")
+                            }.toString()
+                            enqueueSyncEvent("PLAYBACK_HISTORY_LOGGED", payload)
+                        }
+                        else -> { /* Ignore non-synced transient events */ }
                     }
-                    is AppEvent.PlaybackCompleted -> {
-                        val payload = JSONObject().apply {
-                            put("songId", event.song.id)
-                            put("playTimeMs", event.playTimeMs)
-                            put("action", "PLAYBACK_FINISHED")
-                        }.toString()
-                        enqueueSyncEvent("PLAYBACK_HISTORY_LOGGED", payload)
-                    }
-                    else -> { /* Ignore non-synced transient events */ }
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.w(e, "App event collection stopped")
             }
         }
     }
 
     /**
      * Enqueues a sync event locally in the persistent outbox. Never blocks playback.
+     * Enforces private session and user consent constraints.
      */
-    fun enqueueSyncEvent(eventType: String, payloadJson: String) {
+    fun enqueueSyncEvent(eventType: String, payloadJson: String): Boolean {
+        if (!isSyncPermitted()) {
+            Timber.d("Sync event %s discarded due to privacy restrictions (incognito session or disabled cloud personalization)", eventType)
+            return false
+        }
         val event = SyncEventPayload(
             eventId = java.util.UUID.randomUUID().toString(),
             eventType = eventType,
             payloadJson = payloadJson
         )
         synchronized(pendingSyncQueue) {
+            if (pendingSyncQueue.size >= MAX_OUTBOX_SIZE) {
+                val dropCount = pendingSyncQueue.size - MAX_OUTBOX_SIZE + 1
+                for (i in 0 until dropCount) {
+                    pendingSyncQueue.removeAt(0)
+                }
+            }
             pendingSyncQueue.add(event)
             _pendingQueueCount.value = pendingSyncQueue.size
         }
@@ -184,6 +228,26 @@ class CloudSyncManager @Inject constructor(
         Timber.d("Enqueued local sync event: %s. Outbox queue size: %d", eventType, pendingSyncQueue.size)
         triggerPendingSync()
         scheduleBackgroundSync()
+        return true
+    }
+
+    /**
+     * Completely purges the local outbox on demand (e.g. when toggling incognito or clearing private data).
+     */
+    fun clearPendingOutbox(): Boolean {
+        synchronized(pendingSyncQueue) {
+            pendingSyncQueue.clear()
+            _pendingQueueCount.value = 0
+        }
+        return try {
+            if (outboxFile.exists()) {
+                outboxFile.delete()
+            }
+            true
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to delete sync outbox file")
+            false
+        }
     }
 
     /**
@@ -226,7 +290,7 @@ class CloudSyncManager @Inject constructor(
         withContext(Dispatchers.IO) {
             val sessionToken = secureStorageManager.getSecret("user_session_token")
             val eventsToSync = synchronized(pendingSyncQueue) {
-                pendingSyncQueue.toList()
+                selectSyncBatch(pendingSyncQueue.toList())
             }
 
             if (eventsToSync.isEmpty()) {

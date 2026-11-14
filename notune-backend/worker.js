@@ -70,17 +70,39 @@ export default {
       }
     }
 
-    // GET /api/v1/metrics - Platform Load & Governor Indicators
+    // GET /api/v1/metrics - Platform Load & Governor Indicators (Backed by live D1 metrics)
     if (path === "/api/v1/metrics") {
+      let syncEventsCount = 0;
+      let syncBatchesCount = 0;
+      let sharesCount = 0;
+      let d1Status = "unavailable";
+      if (env && env.DB) {
+        try {
+          const eventsRow = await env.DB.prepare("SELECT count(*) as count FROM sync_events").first();
+          syncEventsCount = eventsRow ? (eventsRow.count || 0) : 0;
+          const batchesRow = await env.DB.prepare("SELECT count(*) as count FROM sync_batches").first();
+          syncBatchesCount = batchesRow ? (batchesRow.count || 0) : 0;
+          const sharesRow = await env.DB.prepare("SELECT count(*) as count FROM shares").first();
+          sharesCount = sharesRow ? (sharesRow.count || 0) : 0;
+          d1Status = "healthy";
+        } catch (_e) {
+          d1Status = "degraded";
+        }
+      }
       return new Response(
         JSON.stringify({
           status: "ok",
           governorLevel: "GREEN",
-          activeRooms: 1,
+          activeRooms: 0,
           wsConnections: 0,
           rateLimitCapacity: "100req/min",
-          d1Status: "healthy",
-          r2Status: "healthy",
+          d1Status,
+          r2Status: env && env.R2_ENDPOINT ? "healthy" : "unavailable",
+          metrics: {
+            syncEvents: syncEventsCount,
+            syncBatches: syncBatchesCount,
+            shares: sharesCount
+          },
           aiInferenceMode: "on-device-lite-rt"
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -102,12 +124,37 @@ export default {
       );
     }
 
-    // GET /api/v1/releases/latest - Approved Release Endpoint (Queryable by platform & channel)
+    // GET /api/v1/releases/latest - Approved Release Endpoint (Queryable by platform & channel from D1)
     if (path === "/api/v1/releases/latest") {
       const platform = url.searchParams.get("platform") || "android";
       const channel = url.searchParams.get("channel") || "stable";
 
-      const latestRelease = {
+      let releaseRecord = null;
+      if (env && env.DB) {
+        try {
+          releaseRecord = await env.DB.prepare(
+            "SELECT version_name, version_code, platform, channel, approved, download_url, sha256, release_notes FROM app_releases WHERE platform = ? AND channel = ? AND approved = 1 ORDER BY version_code DESC LIMIT 1"
+          ).bind(platform, channel).first();
+        } catch (_e) {}
+      }
+
+      if (releaseRecord) {
+        return new Response(
+          JSON.stringify({
+            platform: releaseRecord.platform,
+            channel: releaseRecord.channel,
+            versionName: releaseRecord.version_name,
+            versionCode: releaseRecord.version_code,
+            approved: Boolean(releaseRecord.approved),
+            downloadUrl: releaseRecord.download_url,
+            sha256: releaseRecord.sha256,
+            releaseNotes: releaseRecord.release_notes
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const defaultRelease = {
         platform,
         channel,
         versionName: "3.1.0",
@@ -117,7 +164,7 @@ export default {
         sha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         releaseNotes: "NØTUNE V3 — Personal Music OS Release with On-Device NØ AI Engine."
       };
-      return new Response(JSON.stringify(latestRelease), {
+      return new Response(JSON.stringify(defaultRelease), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -138,21 +185,107 @@ export default {
       }
     }
 
-    // POST /api/v1/shares - Create Short Link Share Record
+    // POST /api/v1/shares - Create Short Link Share Record (Persisted in D1)
     if (path === "/api/v1/shares" && request.method === "POST") {
       try {
         const body = await request.json();
-        const shortCode = Math.random().toString(36).substring(2, 8);
+        const targetId = typeof body.targetId === "string" ? body.targetId.trim() : "";
+        if (!targetId || targetId.length > 256) {
+          return new Response(
+            JSON.stringify({ success: false, error: "INVALID_TARGET_ID" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        const targetType = typeof body.targetType === "string" ? body.targetType.trim() : "track";
+        const codeChars = "23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
+        let shortCode = "";
+        const randomBytes = new Uint8Array(8);
+        crypto.getRandomValues(randomBytes);
+        for (let i = 0; i < 8; i++) {
+          shortCode += codeChars[randomBytes[i] % codeChars.length];
+        }
+        const now = Date.now();
+        const expiresInDays = Number.isInteger(body.expiresInDays) && body.expiresInDays > 0 ? body.expiresInDays : null;
+        const expiresAt = expiresInDays ? now + (expiresInDays * 86400000) : null;
+        let userId = null;
+        if (typeof env?.JWT_SECRET === "string") {
+          userId = await verifySyncToken(request, env.JWT_SECRET);
+        }
+        if (env && env.DB) {
+          await env.DB.prepare(
+            "INSERT INTO shares (code, target_id, target_type, user_id, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)"
+          ).bind(shortCode, targetId, targetType, userId, now, expiresAt).run();
+        }
         const shareUrl = `https://notune.app/s/${shortCode}`;
 
         return new Response(
-          JSON.stringify({ success: true, code: shortCode, url: shareUrl, targetId: body.targetId }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({
+            success: true,
+            code: shortCode,
+            url: shareUrl,
+            targetId,
+            targetType,
+            createdAt: now,
+            expiresAt
+          }),
+          { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       } catch (err) {
         return new Response(
           JSON.stringify({ success: false, error: err.message }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // GET /api/v1/shares/:code - Lookup Short Link Share Record from D1
+    if (path.startsWith("/api/v1/shares/") && request.method === "GET") {
+      const code = path.split("/")[4] || "";
+      if (!code || !/^[A-Za-z0-9_-]{4,32}$/.test(code)) {
+        return new Response(
+          JSON.stringify({ success: false, error: "INVALID_SHARE_CODE" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (!env || !env.DB) {
+        return new Response(
+          JSON.stringify({ success: false, error: "DATABASE_UNAVAILABLE" }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      try {
+        const share = await env.DB.prepare(
+          "SELECT code, target_id, target_type, user_id, created_at, expires_at FROM shares WHERE code = ?"
+        ).bind(code).first();
+        if (!share) {
+          return new Response(
+            JSON.stringify({ success: false, error: "SHARE_NOT_FOUND" }),
+            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (share.expires_at && share.expires_at < Date.now()) {
+          return new Response(
+            JSON.stringify({ success: false, error: "SHARE_EXPIRED" }),
+            { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        return new Response(
+          JSON.stringify({
+            success: true,
+            share: {
+              code: share.code,
+              targetId: share.target_id,
+              targetType: share.target_type,
+              createdAt: share.created_at,
+              expiresAt: share.expires_at
+            }
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (err) {
+        return new Response(
+          JSON.stringify({ success: false, error: err.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     }
@@ -197,60 +330,197 @@ export default {
       }
     }
 
-    // GET /api/v1/social/feed - Social Feed & User Activity
+    // GET & POST /api/v1/social/feed - Social Feed & User Activity (D1 Persistence)
     if (path === "/api/v1/social/feed") {
-      const feedItems = [
-        {
-          id: "feed_1",
-          user: "Dharan (MrDSP18)",
-          avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop",
-          action: "is listening in Room NIGHT",
-          trackTitle: "Hosanna",
-          trackArtist: "A.R. Rahman",
-          timestamp: "2 mins ago"
-        },
-        {
-          id: "feed_2",
-          user: "Alex Rivera",
-          avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop",
-          action: "liked track",
-          trackTitle: "Cybernetic Resonance",
-          trackArtist: "NØ AI Engine",
-          timestamp: "15 mins ago"
+      if (request.method === "POST") {
+        if (!env || typeof env.JWT_SECRET !== "string") {
+          return new Response(
+            JSON.stringify({ success: false, error: "UNAUTHORIZED" }),
+            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
         }
-      ];
+        const userId = await verifySyncToken(request, env.JWT_SECRET);
+        if (!userId) {
+          return new Response(
+            JSON.stringify({ success: false, error: "UNAUTHORIZED" }),
+            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        try {
+          const body = await request.json();
+          const actionText = typeof body.actionText === "string" ? body.actionText.trim() : "";
+          const displayName = typeof body.displayName === "string" ? body.displayName.trim() : "Listener";
+          if (!actionText || actionText.length > 500) {
+            return new Response(
+              JSON.stringify({ success: false, error: "INVALID_POST_CONTENT" }),
+              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          const postId = "post_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
+          const now = Date.now();
+          if (env.DB) {
+            await env.DB.prepare(
+              "INSERT INTO social_posts (id, user_id, user_display_name, avatar_url, action_text, track_id, track_title, track_artist, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            ).bind(postId, userId, displayName, body.avatarUrl || null, actionText, body.trackId || null, body.trackTitle || null, body.trackArtist || null, now).run();
+          }
+          return new Response(
+            JSON.stringify({
+              success: true,
+              post: {
+                id: postId,
+                userId,
+                user: displayName,
+                avatar: body.avatarUrl || null,
+                action: actionText,
+                trackTitle: body.trackTitle || null,
+                trackArtist: body.trackArtist || null,
+                createdAt: now
+              }
+            }),
+            { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        } catch (err) {
+          return new Response(
+            JSON.stringify({ success: false, error: err.message }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
 
-      return new Response(
-        JSON.stringify({ success: true, feed: feedItems }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (request.method === "GET") {
+        if (env && env.DB) {
+          try {
+            const rows = await env.DB.prepare(
+              "SELECT id, user_id, user_display_name, avatar_url, action_text, track_id, track_title, track_artist, created_at FROM social_posts ORDER BY created_at DESC LIMIT 50"
+            ).all();
+            const feedItems = (rows?.results || []).map(r => ({
+              id: r.id,
+              userId: r.user_id,
+              user: r.user_display_name,
+              avatar: r.avatar_url,
+              action: r.action_text,
+              trackTitle: r.track_title,
+              trackArtist: r.track_artist,
+              createdAt: r.created_at
+            }));
+            return new Response(
+              JSON.stringify({ success: true, feed: feedItems }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          } catch (_e) {}
+        }
+        return new Response(
+          JSON.stringify({ success: true, feed: [] }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
-    // GET /api/v1/profiles/:userId - User Profile & Music DNA
+    // GET & PUT /api/v1/profiles/:userId - User Profile & Music DNA (D1 Persistence)
     if (path.startsWith("/api/v1/profiles/")) {
       const parts = path.split("/");
-      const userId = parts[4] || "me";
+      const targetUserId = parts[4] || "me";
 
-      const profile = {
-        userId,
-        displayName: userId === "me" ? "Guest Listener" : `User ${userId}`,
-        avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop",
-        musicDna: {
-          melody: 37,
-          indie: 22,
-          hipHop: 16,
-          retro: 13,
-          experimental: 12
-        },
-        likedCount: 14,
-        followersCount: 8,
-        followingCount: 12
-      };
+      if (request.method === "PUT") {
+        if (!env || typeof env.JWT_SECRET !== "string") {
+          return new Response(
+            JSON.stringify({ success: false, error: "UNAUTHORIZED" }),
+            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        const authenticatedUserId = await verifySyncToken(request, env.JWT_SECRET);
+        if (!authenticatedUserId || (targetUserId !== "me" && authenticatedUserId !== targetUserId)) {
+          return new Response(
+            JSON.stringify({ success: false, error: "FORBIDDEN" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        const effectiveId = targetUserId === "me" ? authenticatedUserId : targetUserId;
+        try {
+          const body = await request.json();
+          const displayName = typeof body.displayName === "string" ? body.displayName.trim() : "Listener";
+          const avatarUrl = typeof body.avatarUrl === "string" ? body.avatarUrl : null;
+          const musicDna = body.musicDna ? JSON.stringify(body.musicDna) : "{}";
+          const now = Date.now();
+          if (env.DB) {
+            await env.DB.prepare(
+              "INSERT INTO user_profiles (user_id, display_name, avatar_url, music_dna_json, updated_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET display_name = excluded.display_name, avatar_url = excluded.avatar_url, music_dna_json = excluded.music_dna_json, updated_at = excluded.updated_at"
+            ).bind(effectiveId, displayName, avatarUrl, musicDna, now).run();
+          }
+          return new Response(
+            JSON.stringify({
+              success: true,
+              profile: {
+                userId: effectiveId,
+                displayName,
+                avatarUrl,
+                musicDna: body.musicDna || {},
+                updatedAt: now
+              }
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        } catch (err) {
+          return new Response(
+            JSON.stringify({ success: false, error: err.message }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
 
-      return new Response(
-        JSON.stringify({ success: true, profile }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (request.method === "GET") {
+        let lookupId = targetUserId;
+        if (targetUserId === "me") {
+          if (env && typeof env.JWT_SECRET === "string") {
+            lookupId = await verifySyncToken(request, env.JWT_SECRET) || "guest";
+          } else {
+            lookupId = "guest";
+          }
+        }
+        if (env && env.DB && lookupId !== "guest") {
+          try {
+            const row = await env.DB.prepare(
+              "SELECT user_id, display_name, avatar_url, music_dna_json, liked_count, followers_count, following_count, updated_at FROM user_profiles WHERE user_id = ?"
+            ).bind(lookupId).first();
+            if (row) {
+              let dna = {};
+              try { dna = JSON.parse(row.music_dna_json); } catch (_) {}
+              return new Response(
+                JSON.stringify({
+                  success: true,
+                  profile: {
+                    userId: row.user_id,
+                    displayName: row.display_name,
+                    avatarUrl: row.avatar_url,
+                    musicDna: dna,
+                    likedCount: row.liked_count || 0,
+                    followersCount: row.followers_count || 0,
+                    followingCount: row.following_count || 0,
+                    updatedAt: row.updated_at
+                  }
+                }),
+                { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+          } catch (_e) {}
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            profile: {
+              userId: lookupId,
+              displayName: lookupId === "guest" ? "Guest Listener" : `User ${lookupId.substring(0, 8)}`,
+              avatarUrl: null,
+              musicDna: {},
+              likedCount: 0,
+              followersCount: 0,
+              followingCount: 0
+            }
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Universal NØ Link Router (/s/:id, /p/:id, /r/:id, /u/:id)

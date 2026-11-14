@@ -4,6 +4,9 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import echo.music.iad1tya.db.MusicDatabase
 import echo.music.iad1tya.db.entities.Song
+import echo.music.iad1tya.notune.MusicDnaRepository
+import echo.music.iad1tya.utils.dataStore
+import echo.music.iad1tya.utils.get
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -20,7 +23,8 @@ import javax.inject.Singleton
 @Singleton
 class DataExporter @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val database: MusicDatabase
+    private val database: MusicDatabase,
+    private val musicDnaRepository: MusicDnaRepository
 ) {
 
     suspend fun generateDataExport(): File = withContext(Dispatchers.IO) {
@@ -86,43 +90,40 @@ class DataExporter @Inject constructor(
             }
             writeZipEntry(zos, "history.json", historyJson.toString(2))
 
-            // 5. Preferences
-            val preferencesJson = JSONObject().apply {
-                put("localPersonalization", true)
-                put("privateSessionDefault", false)
-                put("flowQueueTarget", 15)
+            // 5. Preferences (Actual DataStore values)
+            val preferencesJson = JSONObject()
+            val allPrefs = context.dataStore.data.first().asMap()
+            for ((key, value) in allPrefs) {
+                preferencesJson.put(key.name, value)
             }
             writeZipEntry(zos, "preferences.json", preferencesJson.toString(2))
 
-            // 6. Music DNA
+            // 6. Music DNA (Real database-inferred listening metrics)
+            val energyProfile = runCatching { musicDnaRepository.getEnergyProfile() }.getOrDefault("Balanced")
+            val discoveryScore = runCatching { (musicDnaRepository.getDiscoveryScore() * 100).toInt() }.getOrDefault(50)
+            val topGenres = runCatching { musicDnaRepository.getTopGenres(5) }.getOrDefault(emptyList())
             val dnaJson = JSONObject().apply {
-                put("energyProfile", "Balanced")
-                put("discoveryScore", 75)
-                put("topGenres", JSONArray(listOf("Pop", "Rock", "Lo-Fi")))
+                put("energyProfile", energyProfile)
+                put("discoveryScore", discoveryScore)
+                put("topGenres", JSONArray(topGenres))
             }
             writeZipEntry(zos, "music-dna.json", dnaJson.toString(2))
 
-            // 7. NØTUNE FLOW
+            // 7. NØTUNE FLOW Configuration
+            val flowEnabled = runCatching { context.dataStore.get(echo.music.iad1tya.constants.FlowEnabledKey, true) }.getOrDefault(true)
             val flowJson = JSONObject().apply {
-                put("flowEnabled", true)
-                put("discoveryRatio", 0.3)
+                put("flowEnabled", flowEnabled)
                 put("antiRepetitionEnabled", true)
             }
             writeZipEntry(zos, "flow.json", flowJson.toString(2))
 
-            // 8. Rooms
-            val roomsJson = JSONObject().apply {
-                put("activeRoomsCount", 0)
-                put("publicRoomHistory", JSONArray())
+            // 8. Outbox & Sync State
+            val outboxFile = File(context.filesDir, "notune_sync_outbox.json")
+            val syncJson = JSONObject().apply {
+                put("pendingOutboxFileExists", outboxFile.exists())
+                put("pendingOutboxBytes", if (outboxFile.exists()) outboxFile.length() else 0L)
             }
-            writeZipEntry(zos, "rooms.json", roomsJson.toString(2))
-
-            // 9. Couple Data
-            val coupleJson = JSONObject().apply {
-                put("coupleSessionActive", false)
-                put("ourSongs", JSONArray())
-            }
-            writeZipEntry(zos, "couple-data.json", coupleJson.toString(2))
+            writeZipEntry(zos, "sync.json", syncJson.toString(2))
         }
 
         zipFile
