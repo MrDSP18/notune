@@ -693,7 +693,17 @@ private fun ThumbnailItem(
                     rotationZ = rotation
                 }
                 .clip(artworkShape)
-                .border(1.dp, Color.White.copy(alpha = 0.1f), artworkShape)
+                .border(
+                    width = 1.dp,
+                    brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                        colors = listOf(
+                            Color(0xFFFF0031).copy(alpha = 0.5f),
+                            Color.White.copy(alpha = 0.2f),
+                            Color(0xFF00E5FF).copy(alpha = 0.35f)
+                        )
+                    ),
+                    shape = artworkShape
+                )
                 .graphicsLayer {
                     rotationZ = -rotation
                 }

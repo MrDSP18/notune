@@ -11,4 +11,6 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 interface LyricsHelperEntryPoint {
     fun lyricsHelper(): LyricsHelper
+    fun aiLyricGenerator(): com.music.echo.notune.lyrics.AiLyricGenerator
+    fun realtimeLyricsTranslator(): com.music.echo.notune.lyrics.RealtimeLyricsTranslator
 }

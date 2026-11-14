@@ -8,6 +8,7 @@ enum class LyricsSourceType {
     PLAIN_PROVIDER,
     CACHED_AUTHORIZED,
     USER_PROVIDED,
+    AI_GENERATED,
     UNAVAILABLE
 }
 
@@ -27,7 +28,8 @@ class LyricsResolver @Inject constructor() {
         songId: String,
         providerLines: List<LyricLine>?,
         cachedLines: List<LyricLine>?,
-        userLines: List<LyricLine>?
+        userLines: List<LyricLine>?,
+        aiLines: List<LyricLine>? = null
     ): ResolvedLyrics {
         // Priority 1: Synced provider lyrics
         if (!providerLines.isNullOrEmpty() && providerLines.any { it.startTime > 0 || it.endTime > 0 }) {
@@ -73,7 +75,18 @@ class LyricsResolver @Inject constructor() {
             )
         }
 
-        // Priority 5: Fallback - ZERO HALLUCINATION GUARANTEE
+        // Priority 5: AI-generated synthesized lyrics
+        if (!aiLines.isNullOrEmpty()) {
+            return ResolvedLyrics(
+                songId = songId,
+                isAvailable = true,
+                sourceType = LyricsSourceType.AI_GENERATED,
+                lines = aiLines,
+                statusMessage = "NØ AI Neural Lyrics"
+            )
+        }
+
+        // Priority 6: Fallback - ZERO HALLUCINATION GUARANTEE
         return ResolvedLyrics(
             songId = songId,
             isAvailable = false,
