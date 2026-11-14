@@ -25,6 +25,13 @@ tasks.register<Delete>("clean") {
 }
 
 subprojects {
+    tasks.withType<Test>().configureEach {
+        val testTmpDir = project.layout.buildDirectory.dir("testTmp").get().asFile.apply { mkdirs() }
+        systemProperty("java.io.tmpdir", testTmpDir.absolutePath)
+        systemProperty("user.home", "/tmp")
+        systemProperty("org.conscrypt.native.workdir", testTmpDir.absolutePath)
+        systemProperty("org.sqlite.tmpdir", testTmpDir.absolutePath)
+    }
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         compilerOptions {
             if (project.findProperty("enableComposeCompilerReports") == "true") {
