@@ -144,10 +144,27 @@ class NoTuneBasicAiProvider @Inject constructor(
             }
 
             "create playlist" in lowerPrompt || "make playlist" in lowerPrompt || "generate playlist" in lowerPrompt -> {
-                val name = prompt.substringAfter("playlist", "AI Mix").trim().removePrefix("called ").removePrefix("named ")
-                val cleanName = if (name.isNotBlank()) name else "NØTUNE Free AI Mix"
-                toolCalls.add(ToolCall(functionName = "create_playlist", arguments = mapOf("name" to cleanName, "songs" to "Blinding Lights - The Weeknd, Starboy - The Weeknd, Nightcall - Kavinsky")))
-                "Generating custom playlist '$cleanName'..."
+                val name = prompt.substringAfter("playlist", "AI Mix").trim()
+                    .removePrefix("called ")
+                    .removePrefix("named ")
+                val cleanName = name.ifBlank { "NØTUNE Personal Mix" }
+                val songs = runCatching {
+                    LocalRecommendationEngine.getLocalRecommendations(database, 10)
+                }.getOrDefault(emptyList())
+                val songDescriptions = songs.map { item ->
+                    "${item.song.title} - ${item.artists.joinToString { it.name }.ifBlank { "Unknown artist" }}"
+                }
+                if (songDescriptions.isEmpty()) {
+                    "Your local library is empty, so I can't build a real personalized playlist yet. Add or play some tracks first."
+                } else {
+                    toolCalls.add(
+                        ToolCall(
+                            functionName = "create_playlist",
+                            arguments = mapOf("name" to cleanName, "songs" to songDescriptions.joinToString(", "))
+                        )
+                    )
+                    "Building '$cleanName' from ${songDescriptions.size} tracks selected by your local NØTUNE model..."
+                }
             }
 
             "recommend" in lowerPrompt || "suggestion" in lowerPrompt || "discover" in lowerPrompt -> {
