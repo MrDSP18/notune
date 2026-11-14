@@ -1,6 +1,7 @@
 package com.music.echo.notune.sync
 
 import android.content.Context
+import android.util.AtomicFile
 import com.music.echo.notune.privacy.security.SecureStorageManager
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
@@ -17,6 +18,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -25,6 +28,7 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.TimeUnit
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -55,6 +59,7 @@ class CloudSyncManager @Inject constructor(
     val pendingQueueCount: StateFlow<Int> = _pendingQueueCount.asStateFlow()
 
     private val pendingSyncQueue = mutableListOf<SyncEventPayload>()
+    private val syncMutex = Mutex()
     private val outboxFile by lazy { File(context.filesDir, "notune_sync_outbox.json") }
 
     data class SyncEventPayload(
@@ -97,11 +102,10 @@ class CloudSyncManager @Inject constructor(
         }
     }
 
-    private fun saveOutboxToDisk() {
-        try {
-            val list = synchronized(pendingSyncQueue) { pendingSyncQueue.toList() }
+    private fun persistOutbox(events: List<SyncEventPayload>): Boolean {
+        return try {
             val array = JSONArray()
-            for (item in list) {
+            for (item in events) {
                 val obj = JSONObject().apply {
                     put("eventId", item.eventId)
                     put("eventType", item.eventType)
@@ -110,10 +114,24 @@ class CloudSyncManager @Inject constructor(
                 }
                 array.put(obj)
             }
-            outboxFile.writeText(array.toString(), Charsets.UTF_8)
+            val atomicFile = AtomicFile(outboxFile)
+            val stream = atomicFile.startWrite()
+            try {
+                stream.write(array.toString().toByteArray(Charsets.UTF_8))
+                atomicFile.finishWrite(stream)
+            } catch (e: Exception) {
+                atomicFile.failWrite(stream)
+                throw e
+            }
+            true
         } catch (e: Exception) {
-            Timber.e(e, "Failed to persist sync outbox to disk")
+            Timber.e(e, "Failed to persist sync outbox atomically")
+            false
         }
+    }
+
+    private fun saveOutboxToDisk(): Boolean = synchronized(pendingSyncQueue) {
+        persistOutbox(pendingSyncQueue.toList())
     }
 
     private fun observeAppEvents() {
@@ -204,79 +222,120 @@ class CloudSyncManager @Inject constructor(
      * Synchronizes all currently pending outbox events against the NØTUNE Cloud Sync API.
      * Returns true if successfully transmitted and acknowledged by the server.
      */
-    suspend fun syncPendingEventsNow(): Boolean = withContext(Dispatchers.IO) {
-        val sessionToken = secureStorageManager.getSecret("user_session_token")
-
-        val eventsToSync = synchronized(pendingSyncQueue) {
-            pendingSyncQueue.toList()
-        }
-
-        if (eventsToSync.isEmpty()) {
-            _syncState.value = SyncStatus.IDLE
-            return@withContext true
-        }
-
-        _syncState.value = SyncStatus.SYNCING
-        try {
-            val batchId = java.util.UUID.randomUUID().toString()
-            val backendUrlStr = "https://notune.dharansundarapandiyan24.workers.dev/api/v1/sync"
-            val url = URL(backendUrlStr)
-            val connection = (url.openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
-                connectTimeout = 4000
-                readTimeout = 4000
-                doOutput = true
-                setRequestProperty("Content-Type", "application/json")
-                setRequestProperty("X-Sync-Protocol-Version", "1.0")
-                setRequestProperty("X-Idempotency-Key", batchId)
-                if (sessionToken != null) {
-                    setRequestProperty("Authorization", "Bearer $sessionToken")
-                }
+    suspend fun syncPendingEventsNow(): Boolean = syncMutex.withLock {
+        withContext(Dispatchers.IO) {
+            val sessionToken = secureStorageManager.getSecret("user_session_token")
+            val eventsToSync = synchronized(pendingSyncQueue) {
+                pendingSyncQueue.toList()
             }
 
-            // Construct complete batch payload with serialized events
-            val eventsArray = JSONArray()
-            for (event in eventsToSync) {
-                val eventObj = JSONObject().apply {
-                    put("eventId", event.eventId)
-                    put("eventType", event.eventType)
-                    put("payload", event.payloadJson)
-                    put("timestamp", event.timestamp)
-                }
-                eventsArray.put(eventObj)
-            }
-
-            val jsonBody = JSONObject().apply {
-                put("batchId", batchId)
-                put("protocolVersion", "1.0")
-                put("eventsCount", eventsToSync.size)
-                put("events", eventsArray)
-                put("clientTimestamp", System.currentTimeMillis())
-            }.toString()
-
-            connection.outputStream.use { os ->
-                os.write(jsonBody.toByteArray(Charsets.UTF_8))
-            }
-
-            val responseCode = connection.responseCode
-            if (responseCode in 200..299) {
-                synchronized(pendingSyncQueue) {
-                    pendingSyncQueue.removeAll(eventsToSync)
-                    _pendingQueueCount.value = pendingSyncQueue.size
-                }
-                saveOutboxToDisk()
+            if (eventsToSync.isEmpty()) {
                 _syncState.value = SyncStatus.IDLE
-                Timber.i("Successfully synced %d events to NØTUNE Cloud API.", eventsToSync.size)
-                true
-            } else {
-                _syncState.value = SyncStatus.OFFLINE
-                Timber.w("Server returned response code %d. Retaining events in local outbox queue.", responseCode)
-                false
+                return@withContext true
             }
-        } catch (e: Exception) {
-            _syncState.value = SyncStatus.OFFLINE
-            Timber.w("Network connection unavailable. Retaining %d events in local outbox queue.", eventsToSync.size)
-            false
+
+            _syncState.value = SyncStatus.SYNCING
+            var connection: HttpURLConnection? = null
+            try {
+                val eventIds = eventsToSync.map { it.eventId }.sorted()
+                val batchId = UUID.nameUUIDFromBytes(
+                    eventIds.joinToString("|").toByteArray(Charsets.UTF_8)
+                ).toString()
+                val url = URL("https://notune.dharansundarapandiyan24.workers.dev/api/v1/sync")
+                connection = (url.openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    connectTimeout = 4000
+                    readTimeout = 4000
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json")
+                    setRequestProperty("X-Sync-Protocol-Version", "1.0")
+                    setRequestProperty("X-Idempotency-Key", batchId)
+                    if (sessionToken != null) {
+                        setRequestProperty("Authorization", "Bearer $sessionToken")
+                    }
+                }
+
+                val eventsArray = JSONArray()
+                for (event in eventsToSync) {
+                    eventsArray.put(JSONObject().apply {
+                        put("eventId", event.eventId)
+                        put("eventType", event.eventType)
+                        put("payload", event.payloadJson)
+                        put("timestamp", event.timestamp)
+                    })
+                }
+
+                val jsonBody = JSONObject().apply {
+                    put("batchId", batchId)
+                    put("protocolVersion", "1.0")
+                    put("eventsCount", eventsToSync.size)
+                    put("events", eventsArray)
+                    put("clientTimestamp", System.currentTimeMillis())
+                }.toString()
+
+                connection.outputStream.use { it.write(jsonBody.toByteArray(Charsets.UTF_8)) }
+                val responseCode = connection.responseCode
+                if (responseCode !in 200..299) {
+                    _syncState.value = SyncStatus.OFFLINE
+                    Timber.w("Sync endpoint returned HTTP %d; retaining local events", responseCode)
+                    return@withContext false
+                }
+
+                val responseText = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                val response = JSONObject(responseText)
+                val acknowledged = response.optJSONArray("acknowledgedEventIds")
+                    ?: response.optJSONArray("acceptedEventIds")
+                if (acknowledged == null) {
+                    _syncState.value = SyncStatus.ERROR
+                    Timber.w("Sync endpoint returned success without explicit event acknowledgements")
+                    return@withContext false
+                }
+
+                val acknowledgedIds = buildSet {
+                    for (i in 0 until acknowledged.length()) {
+                        val id = acknowledged.optString(i)
+                        if (id.isNotBlank()) add(id)
+                    }
+                }
+                val batchIds = eventsToSync.mapTo(mutableSetOf()) { it.eventId }
+                val safeAcknowledgements = acknowledgedIds.intersect(batchIds)
+                if (safeAcknowledgements.isEmpty()) {
+                    _syncState.value = SyncStatus.ERROR
+                    Timber.w("Sync endpoint acknowledged none of the submitted events")
+                    return@withContext false
+                }
+
+                val persisted = synchronized(pendingSyncQueue) {
+                    val remaining = pendingSyncQueue.filterNot { it.eventId in safeAcknowledgements }
+                    if (!persistOutbox(remaining)) {
+                        false
+                    } else {
+                        pendingSyncQueue.removeAll { it.eventId in safeAcknowledgements }
+                        _pendingQueueCount.value = pendingSyncQueue.size
+                        true
+                    }
+                }
+                if (!persisted) {
+                    _syncState.value = SyncStatus.ERROR
+                    return@withContext false
+                }
+
+                if (pendingSyncQueue.isEmpty()) {
+                    _syncState.value = SyncStatus.IDLE
+                    Timber.i("Server acknowledged all %d submitted sync events", safeAcknowledgements.size)
+                    true
+                } else {
+                    _syncState.value = SyncStatus.OFFLINE
+                    Timber.w("Server acknowledged %d/%d events; retaining the remainder", safeAcknowledgements.size, eventsToSync.size)
+                    false
+                }
+            } catch (e: Exception) {
+                _syncState.value = SyncStatus.OFFLINE
+                Timber.w("Sync attempt failed; retaining %d events in local outbox", eventsToSync.size)
+                false
+            } finally {
+                connection?.disconnect()
+            }
         }
     }
 }

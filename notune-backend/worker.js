@@ -9,7 +9,7 @@ export default {
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Idempotency-Key, X-Sync-Protocol-Version",
       "X-RateLimit-Limit": "100",
       "X-RateLimit-Remaining": "98",
       "X-NoTune-Governor": "GREEN"
@@ -436,6 +436,22 @@ export default {
       return new Response(
         JSON.stringify({ success: true, data: lyricsResult }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Fail closed until authenticated, durable event ingestion is configured.
+    // Never let the generic API fallback return HTTP 200 for a sync write.
+    if (path === "/api/v1/sync" && request.method === "POST") {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "SYNC_STORAGE_NOT_CONFIGURED",
+          message: "Cloud sync ingestion is unavailable; retain events locally."
+        }),
+        {
+          status: 503,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        }
       );
     }
 

@@ -10,7 +10,7 @@ import timber.log.Timber
 
 /**
  * Background WorkManager worker for guaranteed delivery of offline listening and library sync events.
- * Retries up to 3 times with exponential backoff on transient network failures.
+ * Keeps retrying transient failures so pending events are not abandoned after a fixed attempt count.
  */
 @HiltWorker
 class CloudSyncWorker @AssistedInject constructor(
@@ -28,11 +28,11 @@ class CloudSyncWorker @AssistedInject constructor(
                 Result.success()
             } else {
                 Timber.w("CloudSyncWorker: Sync returned false. Scheduling retry.")
-                if (runAttemptCount < 3) Result.retry() else Result.failure()
+                Result.retry()
             }
         } catch (e: Exception) {
             Timber.e(e, "CloudSyncWorker: Exception during cloud sync attempt %d", runAttemptCount + 1)
-            if (runAttemptCount < 3) Result.retry() else Result.failure()
+            Result.retry()
         }
     }
 }
