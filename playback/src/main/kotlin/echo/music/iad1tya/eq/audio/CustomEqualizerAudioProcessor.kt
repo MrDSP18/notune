@@ -95,6 +95,7 @@ class CustomEqualizerAudioProcessor : AudioProcessor {
                     filterType = band.filterType
                 )
             }
+            .toList()
 
         Timber.tag(TAG)
             .d("Created ${filters.size} biquad filters from ${bands.size} bands (PK/LSC/HSC)")
