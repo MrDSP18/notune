@@ -1,4 +1,4 @@
-package com.music.echo.notune.flow
+package echo.music.iad1tya.notune.flow
 
 import echo.music.iad1tya.models.MediaMetadata
 import java.util.Locale
