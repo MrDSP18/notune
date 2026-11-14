@@ -35,11 +35,19 @@ class MultilingualLyricsTest {
     }
 
     @Test
-    fun `LyricsTranslationEngine translates phrases into target languages`() {
+    fun `LyricsTranslationEngine preserves source lines when AI is unavailable`() = runBlocking {
         val engine = LyricsTranslationEngine()
+        val source = listOf(
+            LyricLine("1", 100L, 200L, "Until I found you"),
+            LyricLine("2", 250L, 400L, "Unknown lyric")
+        )
 
-        val tamilTranslation = engine.ruleBasedTranslate("Until I found you", LyricsLanguage.TAMIL)
-        assertEquals("நான் உன்னை கண்டுபிடிக்கும் வரை", tamilTranslation)
+        val result = engine.generateTranslation(source, LyricsLanguage.TAMIL)
+
+        assertEquals(source, result)
+        assertTrue(result.all { it.translatedText == null })
+        assertEquals(source.map { it.startTime }, result.map { it.startTime })
+        assertEquals(source.map { it.endTime }, result.map { it.endTime })
     }
 
     @Test
