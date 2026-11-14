@@ -1,23 +1,25 @@
-
 package echo.music.iad1tya.notune.ai
 
 import android.content.Context
+import com.music.echo.notune.privacy.ai.AIPrivacyGateway
+import com.music.echo.notune.privacy.ai.AiPrivacyDecision
+import com.music.echo.notune.privacy.ai.AiPrivacyRequest
+import dagger.hilt.android.qualifiers.ApplicationContext
+import echo.music.iad1tya.constants.AiPersonalizationKey
 import echo.music.iad1tya.constants.PreferredAiProviderKey
+import echo.music.iad1tya.constants.PrivateSessionEnabledKey
 import echo.music.iad1tya.notune.ai.providers.GeminiProvider
 import echo.music.iad1tya.notune.ai.providers.GroqProvider
+import echo.music.iad1tya.notune.ai.providers.NoTuneBasicAiProvider
+import echo.music.iad1tya.notune.ai.providers.OllamaProvider
+import echo.music.iad1tya.notune.ai.providers.OpenRouterProvider
+import echo.music.iad1tya.notune.ai.tools.AiToolManager
 import echo.music.iad1tya.utils.dataStore
 import echo.music.iad1tya.utils.get
-import io.ktor.client.*
-import kotlinx.coroutines.flow.first
 import timber.log.Timber
-import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
-
-import echo.music.iad1tya.notune.ai.providers.OpenRouterProvider
-import echo.music.iad1tya.notune.ai.providers.OllamaProvider
-
-import echo.music.iad1tya.notune.ai.providers.NoTuneBasicAiProvider
 
 @Singleton
 class AiEngine @Inject constructor(
@@ -26,7 +28,9 @@ class AiEngine @Inject constructor(
     private val groqProvider: GroqProvider,
     private val openRouterProvider: OpenRouterProvider,
     private val ollamaProvider: OllamaProvider,
-    private val noTuneBasicAiProvider: NoTuneBasicAiProvider
+    private val noTuneBasicAiProvider: NoTuneBasicAiProvider,
+    private val aiPrivacyGateway: AIPrivacyGateway,
+    private val aiToolManagerProvider: Provider<AiToolManager>
 ) {
     private val providers = mapOf(
         AiProviderType.NOTUNE_BASIC to noTuneBasicAiProvider,
@@ -55,25 +59,67 @@ class AiEngine @Inject constructor(
             runCatching { AiProviderType.valueOf(it) }.getOrDefault(AiProviderType.NOTUNE_BASIC)
         }
 
-        // Fallback chain: Preferred -> Gemini -> Groq -> OpenRouter -> Ollama -> NOTUNE_BASIC
-        val chain = mutableListOf(userPreferred)
-        val allTypes = listOf(AiProviderType.GEMINI, AiProviderType.GROQ, AiProviderType.OPENROUTER, AiProviderType.OLLAMA, AiProviderType.NOTUNE_BASIC)
-        allTypes.forEach { if (it != userPreferred) chain.add(it) }
+        // 1. Evaluate Privacy and Personalization Policies
+        val isPrivateSession = context.dataStore.get(PrivateSessionEnabledKey, false)
+        val isPersonalizationEnabled = context.dataStore.get(AiPersonalizationKey, true)
+
+        val privacyResult = aiPrivacyGateway.evaluate(
+            AiPrivacyRequest(
+                prompt = prompt,
+                provider = userPreferred,
+                privateSession = isPrivateSession,
+                aiPersonalizationEnabled = isPersonalizationEnabled
+            )
+        )
+
+        if (privacyResult.decision == AiPrivacyDecision.DENY) {
+            Timber.w("AI_ENGINE: Request blocked by privacy policy: %s", privacyResult.reason)
+            return Result.success(
+                AiResponse(
+                    text = "PRIVACY_GUARD: ${privacyResult.reason ?: "AI requests are restricted under current privacy mode."}",
+                    modelId = "notune-privacy-guard"
+                )
+            )
+        }
+
+        val effectivePrompt = privacyResult.prompt
+
+        // 2. Select Provider Chain based on Privacy Level
+        val chain = if (privacyResult.decision == AiPrivacyDecision.ALLOW_LOCAL) {
+            listOf(AiProviderType.NOTUNE_BASIC, AiProviderType.OLLAMA)
+        } else {
+            val list = mutableListOf(userPreferred)
+            val allTypes = listOf(AiProviderType.GEMINI, AiProviderType.GROQ, AiProviderType.OPENROUTER, AiProviderType.OLLAMA, AiProviderType.NOTUNE_BASIC)
+            allTypes.forEach { if (it != userPreferred) list.add(it) }
+            list
+        }
 
         var lastError: Throwable? = null
-        
+
         for (providerType in chain) {
             val provider = providers[providerType] ?: continue
             if (provider.isConfigured()) {
                 Timber.d("AI_ENGINE: Trying provider $providerType")
-                val result = provider.generateResponse(prompt, modelId = modelId, tools = tools, systemInstruction = systemInstruction, history = history)
+                val result = provider.generateResponse(
+                    effectivePrompt,
+                    modelId = modelId,
+                    tools = tools,
+                    systemInstruction = systemInstruction,
+                    history = history
+                )
                 if (result.isSuccess) return result
                 lastError = result.exceptionOrNull()
                 Timber.w("AI_ENGINE: Provider $providerType failed: ${lastError?.message}")
             }
         }
 
-        return noTuneBasicAiProvider.generateResponse(prompt, modelId = modelId, tools = tools, systemInstruction = systemInstruction, history = history)
+        return noTuneBasicAiProvider.generateResponse(
+            effectivePrompt,
+            modelId = modelId,
+            tools = tools,
+            systemInstruction = systemInstruction,
+            history = history
+        )
     }
 
     suspend fun runNeuralMatrixLoop(
@@ -84,16 +130,76 @@ class AiEngine @Inject constructor(
     ): Result<AiResponse> {
         val fullSystemInstruction = systemInstruction ?: "NØTUNE Neural Matrix Core"
         val tools = getMusicTools()
-        
-        var currentPrompt = prompt
+
+        val conversation = (history?.toMutableList() ?: mutableListOf()).apply {
+            add(AiChatMessage("user", prompt))
+        }
+
         var currentSteps = 0
-        var result = generateResponse(currentPrompt, tools = tools, systemInstruction = fullSystemInstruction, history = history)
-        
+        var currentPrompt = prompt
+
+        var result = generateResponse(
+            prompt = currentPrompt,
+            tools = tools,
+            systemInstruction = fullSystemInstruction,
+            history = conversation.dropLast(1)
+        )
+
         while (result.isSuccess && currentSteps < maxSteps) {
             val response = result.getOrThrow()
-            if (response.toolCalls.isNullOrEmpty()) return result
+            val toolCalls = response.toolCalls
+
+            // If no tools requested, return final model output
+            if (toolCalls.isNullOrEmpty()) {
+                return Result.success(response)
+            }
+
+            // Real execution of AI tool calls
+            val toolManager = aiToolManagerProvider.get()
+            val toolResults = mutableListOf<String>()
+
+            for (toolCall in toolCalls) {
+                Timber.d("AI_ENGINE: Executing tool %s with arguments: %s", toolCall.functionName, toolCall.arguments)
+                val executionOutput = try {
+                    toolManager.executeTool(toolCall)
+                } catch (e: Exception) {
+                    Timber.e(e, "AI_ENGINE: Failed to execute tool %s", toolCall.functionName)
+                    "Tool execution error: ${e.message}"
+                }
+                toolResults.add("TOOL_RESULT [${toolCall.functionName}]: $executionOutput")
+            }
+
+            // Append assistant tool request and user feedback results to conversation history
+            conversation.add(AiChatMessage("assistant", response.text.ifBlank { "EXECUTING_ACTIONS" }))
+            val feedbackText = toolResults.joinToString("\n")
+            conversation.add(AiChatMessage("user", "OBSERVED TOOL RESULTS:\n$feedbackText\nSynthesize the final technical summary for the user."))
+
             currentSteps++
+
+            // Re-invoke AI model with the observed tool results
+            result = generateResponse(
+                prompt = "OBSERVED TOOL RESULTS:\n$feedbackText",
+                tools = tools,
+                systemInstruction = fullSystemInstruction,
+                history = conversation
+            )
+
+            if (result.isFailure) {
+                // If subsequent reasoning query fails, synthesize tool results directly
+                val synthesizedFallback = if (response.text.isNotBlank()) {
+                    "${response.text}\n\n[ACTIONS EXECUTED]:\n" + toolResults.joinToString("\n")
+                } else {
+                    toolResults.joinToString("\n")
+                }
+                return Result.success(
+                    AiResponse(
+                        text = synthesizedFallback,
+                        modelId = response.modelId
+                    )
+                )
+            }
         }
+
         return result
     }
 

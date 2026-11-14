@@ -81,33 +81,10 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
 
-        // LastFM API keys — set in local.properties or CI environment variables.
-        // local.properties (git-ignored): LASTFM_API_KEY=<your_key>  LASTFM_SECRET=<your_secret>
-        // CI: add LASTFM_API_KEY and LASTFM_SECRET as repository secrets.
-        val lastFmKey = localProperties.getProperty("LASTFM_API_KEY")
-            ?: System.getenv("LASTFM_API_KEY")
-            ?: "" // empty string → Last.fm features will be disabled at runtime
-        val lastFmSecret = localProperties.getProperty("LASTFM_SECRET")
-            ?: System.getenv("LASTFM_SECRET")
-            ?: ""
-
-        buildConfigField("String", "LASTFM_API_KEY", "\"$lastFmKey\"")
-        buildConfigField("String", "LASTFM_SECRET", "\"$lastFmSecret\"")
-
-        // GitHub OAuth keys
-        val githubClientId = localProperties.getProperty("GH_CLIENT_ID") ?: System.getenv("GH_CLIENT_ID") ?: ""
-        val githubClientSecret = localProperties.getProperty("GH_CLIENT_SECRET") ?: System.getenv("GH_CLIENT_SECRET") ?: ""
-        buildConfigField("String", "GH_CLIENT_ID", "\"$githubClientId\"")
-        buildConfigField("String", "GH_CLIENT_SECRET", "\"$githubClientSecret\"")
-
-        buildConfigField("String", "FLOW_NEURO_BASE_URL", project.findProperty("FLOW_NEURO_BASE_URL")?.toString()?.let { "\"$it\"" } ?: "\"https://api.flowneuroengine.com\"")
-        buildConfigField("String", "FLOW_NEURO_API_KEY", project.findProperty("FLOW_NEURO_API_KEY")?.toString()?.let { "\"$it\"" } ?: "\"\"")
-
-        // NØTUNE AI Engine Keys
-        val geminiKey = localProperties.getProperty("GEMINI_API_KEY") ?: System.getenv("GEMINI_API_KEY") ?: ""
-        val groqKey = localProperties.getProperty("GROQ_API_KEY") ?: System.getenv("GROQ_API_KEY") ?: ""
-        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiKey\"")
-        buildConfigField("String", "GROQ_API_KEY", "\"$groqKey\"")
+        // LastFM API credentials: Empty fallbacks in BuildConfig.
+        // Live credentials should be configured at runtime or stored in secure storage, not baked into the APK.
+        buildConfigField("String", "LASTFM_API_KEY", "\"\"")
+        buildConfigField("String", "LASTFM_SECRET", "\"\"")
 
 //add nightly build label support
         val isNightly = project.hasProperty("nightly") && project.property("nightly") == "true"
