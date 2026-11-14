@@ -1,11 +1,12 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const vm = require("node:vm");
-const { webcrypto } = require("node:crypto");
-const { TextEncoder, TextDecoder } = require("node:util");
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import vm from "node:vm";
+import { webcrypto } from "node:crypto";
+import { TextEncoder, TextDecoder } from "node:util";
+import { Buffer } from "node:buffer";
 
-const source = fs.readFileSync(new URL("../worker.js", import.meta.url), "utf8")
+const source = readFileSync(new URL("../worker.js", import.meta.url), "utf8")
   .replace("export default {", "module.exports = {");
 const module = { exports: {} };
 vm.runInNewContext(source, {
